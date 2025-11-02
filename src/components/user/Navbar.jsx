@@ -1,16 +1,13 @@
 import React, { useState } from "react";
 import {
-  FaBars,
-  FaWhatsapp,
-  FaShoppingCart,
-  FaSearch,
+  // FaBars,
+  // FaWhatsapp,
+
   FaUser,
-  FaBell,
-  FaHeart,
 } from "react-icons/fa";
-import { CiMail } from "react-icons/ci";
+// import { CiMail } from "react-icons/ci";
 import { IoClose } from "react-icons/io5";
-import Logo from "../../assets/landing/Logo.png";
+import Logo from "../../assets/logo.png";
 import Vendor from "../../assets/vendor.png";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
