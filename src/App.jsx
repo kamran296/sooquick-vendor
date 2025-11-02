@@ -1,11 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Home from "./pages/landing/Home";
-import Service from "./pages/landing/Service";
-import About from "./pages/landing/About";
-import Faq from "./pages/landing/faq";
-import Contact from "./pages/landing/Contact";
 import appRoutes from "./appRoutes";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
@@ -35,12 +30,6 @@ function App() {
     <>
       {/* <ToastContainer> */}
       <Routes>
-        {/* Landing pages routes */}
-        {/* <Route exact path="/" element={<Home />} />
-        <Route exact path="/service" element={<Service />} />
-        <Route exact path="/about-us" element={<About />} />
-        <Route exact path="/faq" element={<Faq />} />
-        <Route exact path="/contact" element={<Contact />} /> */}
         <Route exact path="/" element={<Login />} />
         <Route exact path={appRoutes.signup} element={<Signup />} />
         <Route exact path={appRoutes.verifyEmail} element={<VerifyEmail />} />
