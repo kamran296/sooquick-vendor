@@ -421,6 +421,17 @@ const KycForm = () => {
               onRemoveFile={handleRemoveFile}
             />
 
+            {localData.businessType === "individual" && (
+              <FileInput
+                label="Aadhaar Card"
+                documentType="aadhaarCard"
+                accept="image/*,.pdf"
+                file={kycData.documents && kycData.documents.aadhaarCard}
+                onFileUpload={handleFileUpload}
+                onRemoveFile={handleRemoveFile}
+              />
+            )}
+
             {localData.businessType === "company" && (
               <>
                 <FileInput

@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// const baseURL = 'https://staging.api.cw.smartimmigrant.com/api/v1'
-const baseURL = "http://localhost:5000/api/v1";
+const baseURL = "https://api.sooquick.com/api/v1";
+// const baseURL = "http://localhost:5000/api/v1";
 
 const publicRequest = axios.create({ baseURL, withCredentials: true });
 
