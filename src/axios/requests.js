@@ -9,6 +9,10 @@ const login = async (payload) => {
   return await instances.publicRequest.post(API.AUTH.LOGIN, payload);
 };
 
+const logout = async (payload) => {
+  return await instances.privateRequest.get(API.AUTH.LOGOUT);
+};
+
 const emailVerify = async (token) => {
   return await instances.publicRequest.get(API.AUTH.VERIFY_EMAIL(token));
 };
@@ -150,6 +154,7 @@ const getAllSupportTickets = async () => {
 const request = {
   signup,
   login,
+  logout,
   emailVerify,
   requestOtp,
   verifyOtp,

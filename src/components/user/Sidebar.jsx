@@ -63,6 +63,14 @@ const Sidebar = () => {
     dispatch(setSidebarOpen(!sidebarOpen));
   };
 
+  const handleLogout = async () => {
+    try {
+      const response = await request.logout();
+      navigate("/");
+    } catch (error) {
+      console.log("error loggin out", error);
+    }
+  };
   return (
     <>
       {/* Mobile menu button */}
@@ -174,7 +182,10 @@ const Sidebar = () => {
           <div
             className={`absolute bottom-0 w-full border-t border-[#0a6f55] p-4 ${sidebarOpen ? "block" : "hidden"}`}
           >
-            <div className="flex items-center justify-between px-5">
+            <div
+              className="flex items-center justify-between px-5 hover:cursor-pointer"
+              onClick={handleLogout}
+            >
               <div className="log">Logout</div>
               <IoExitOutline className="text-2xl" />
             </div>
