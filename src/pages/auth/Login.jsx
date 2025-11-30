@@ -49,7 +49,7 @@ const Login = () => {
         } else {
           toast.success(data.message || "Login successful");
           // window.localStorage.setItem("token", data.accessToken);
-          navigate(`${appRoutes.services}`);
+          navigate(`${appRoutes.dashboard}`);
         }
       } else {
         toast.error(data.message || "Login failed");

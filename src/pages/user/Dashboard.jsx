@@ -106,7 +106,7 @@ const Dashboard = () => {
               </p>
             </div>
             <button
-              onClick={() => navigate("/vendor/training")}
+              // onClick={() => navigate("/vendor/training")}
               className="rounded-lg bg-white px-4 py-2 font-medium text-[#0b8263] hover:bg-green-50"
             >
               Start Training
