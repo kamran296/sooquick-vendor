@@ -5,6 +5,7 @@ import request from "../../axios/requests";
 const initialState = {
   name: null,
   user: {
+    name: null,
     email: null,
     firstName: null,
     lastName: null,
@@ -13,6 +14,7 @@ const initialState = {
     dob: null,
     gender: null,
     twoFactorEnabled: false,
+    kycVerified: "pending",
   },
   membership: {},
   status: "idle",
@@ -56,6 +58,7 @@ const userSlice = createSlice({
     resetUserState: () => initialState,
     setUserName: (state, action) => {
       state.name = action.payload;
+      state.user.firstName = action.payload;
     },
     addAddress: (state, action) => {
       state.user.addresses.push(action.payload);
@@ -78,6 +81,16 @@ const userSlice = createSlice({
     },
     setMembershipInfo: (state, action) => {
       state.membership = action.payload;
+    },
+    setkycVerified: (state, action) => {
+      state.user.kycVerified = action.payload;
+    },
+    setUser: (state, action) => {
+      state.name = action.payload.name;
+      state.user = action.payload;
+
+      // state.userkycVerified = action.payload.kycVerified;
+      state.membership = action.payload.membership;
     },
   },
   extraReducers: (builder) => {
@@ -125,5 +138,7 @@ export const {
   setDefaultAddress,
   setUserName,
   setMembershipInfo,
+  setkycVerified,
+  setUser,
 } = userSlice.actions;
 export default userSlice.reducer;

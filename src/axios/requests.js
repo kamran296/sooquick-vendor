@@ -50,6 +50,10 @@ const purchaseMembership = async (formData) => {
   );
 };
 
+const getVendorDashboard = async () => {
+  return await instances.privateRequest.get(API.USER.DASHBOARD);
+};
+
 // ====================Notification===================
 const getNotification = async () => {
   return await instances.privateRequest.get(API.NOTIFICATION.GET);
@@ -161,6 +165,7 @@ const request = {
   changePassword,
   checkAuth,
   getUser,
+  getVendorDashboard,
   updateUser,
   getKycDetails,
   submitKycDetails,

@@ -18,10 +18,14 @@ import OrdersDashboard from "./pages/user/OrdersDashboard";
 import Wallet from "./pages/user/Wallet";
 import ServiceDetail from "./pages/user/ServiceDetail";
 import Support from "./pages/user/Support";
+import Cookies from "js-cookie";
+import CompanyPolicy from "./pages/CompanyPolicy";
+import VendorPolicy from "./pages/VendorPolicy";
 
 function App() {
   useEffect(() => {
-    const token = localStorage.getItem("token"); // Or get from cookie
+    // const token = localStorage.getItem("token");
+    const token = Cookies.get("accessToken");
     if (token) {
       connectSocket(token); // Reconnect socket if token exists
     }
@@ -37,6 +41,12 @@ function App() {
           exact
           path={appRoutes.forgetPassword}
           element={<ForgetPassword />}
+        />
+        <Route exact path={appRoutes.terms} element={<CompanyPolicy />} />
+        <Route
+          exact
+          path={appRoutes.vendor_policy}
+          element={<VendorPolicy />}
         />
 
         {/* app routes */}

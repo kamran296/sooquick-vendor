@@ -14,6 +14,8 @@ const appRoutes = {
   orderDashboard: "/orders",
   wallet: "/wallet",
   support: "/support",
+  terms: "/terms-conditions",
+  vendor_policy: "/vendor-policy",
 };
 
 export default appRoutes;

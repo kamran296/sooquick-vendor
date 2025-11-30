@@ -35,7 +35,7 @@ const Wallet = () => {
   const [cashoutLoading, setCashoutLoading] = useState(false);
   const dispatch = useDispatch();
   useEffect(() => {
-    dispatch(setSidebarTab(2));
+    dispatch(setSidebarTab(3));
   }, []);
   // Filter transactions based on active tab and search term
   const filteredTransactions =

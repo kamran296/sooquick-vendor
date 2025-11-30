@@ -18,6 +18,8 @@ import {
 import EditServiceForm from "../../components/service/EditServiceForm";
 import { toast } from "react-toastify";
 import { FaPen } from "react-icons/fa6";
+import { setSidebarTab } from "../../redux/slices/sidebarSlice";
+import { useDispatch } from "react-redux";
 
 const ServiceDetail = () => {
   const navigate = useNavigate();
@@ -30,6 +32,11 @@ const ServiceDetail = () => {
   const [showVideo, setShowVideo] = useState(false);
   const [activeTab, setActiveTab] = useState("description");
   const [showEditModal, setShowEditModal] = useState(false);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(setSidebarTab(1));
+  }, []);
 
   // Fetch service details
   const fetchServiceDetails = async (serviceId) => {

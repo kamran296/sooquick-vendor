@@ -7,12 +7,14 @@ import {
   FaTools,
   FaStar,
   FaWallet,
+  FaHome,
 } from "react-icons/fa";
 import { FaCircleArrowLeft } from "react-icons/fa6";
 import { IoExitOutline } from "react-icons/io5";
 import { BiSupport } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
 import "../../App.css";
+import request from "../../axios/requests";
 
 const Sidebar = () => {
   const dispatch = useDispatch();
@@ -44,19 +46,25 @@ const Sidebar = () => {
   const headerTabs = [
     {
       idx: 0,
+      title: "Dashboard",
+      path: "/dashboard",
+      icon: <FaHome />,
+    },
+    {
+      idx: 1,
       title: "Service Management",
       path: "/services",
       icon: <FaTools />,
     },
-    { idx: 1, title: "Order Management", path: "/orders", icon: <FaBoxes /> },
+    { idx: 2, title: "Order Management", path: "/orders", icon: <FaBoxes /> },
     {
-      idx: 2,
+      idx: 3,
       title: "Wallet",
       path: "/wallet",
       icon: <FaWallet />,
     },
     // { idx: 3, title: "Ratings", path: "/ratings", icon: <FaStar /> },
-    { idx: 3, title: "Support & Help", path: "/support", icon: <BiSupport /> },
+    { idx: 4, title: "Support & Help", path: "/support", icon: <BiSupport /> },
   ];
 
   const toggleSidebar = () => {

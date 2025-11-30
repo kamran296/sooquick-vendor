@@ -70,7 +70,7 @@ const OrdersDashboard = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(setSidebarTab(1));
+    dispatch(setSidebarTab(2));
   }, []);
 
   const fetchAllOrders = async () => {

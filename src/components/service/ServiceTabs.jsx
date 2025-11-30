@@ -11,7 +11,7 @@ const ServiceTabs = () => {
     },
     {
       id: 1,
-      name: "Post/Edit Services",
+      name: "Post Services",
       path: "/",
     },
     {
@@ -36,39 +36,47 @@ const ServiceTabs = () => {
   };
 
   return (
-    <div className="relative flex w-full items-center justify-center p-4">
-      <nav
-        className="grid max-w-xl grid-cols-2 space-x-2 rounded-lg bg-gray-100 p-1 md:flex md:max-w-5xl"
-        aria-label="Tabs"
-      >
-        {serviceTabData.map((item) => (
+    <div className="p-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {serviceTabData.map((card) => (
           <button
-            key={item.id}
-            onClick={() => handleClick(item.id)}
-            className={`rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-200 ${
-              activeTab === item.id
-                ? "bg-white text-[#0b8263] shadow-sm" // Active: white pill, colored text
-                : "text-gray-500 hover:bg-white hover:text-gray-700" // Inactive: subtle background change
+            key={card.id}
+            onClick={() => handleClick(card.id)}
+            className={`flex items-center justify-between rounded-lg border p-3 transition-all duration-200 ${
+              activeTab === card.id
+                ? "border-teal-500 bg-teal-50 shadow-sm"
+                : "border-gray-200 bg-white hover:border-gray-300"
             }`}
-            aria-current={activeTab === item.id ? "page" : undefined}
           >
             <div className="flex items-center">
-              <span>{item.name}</span>
-              {/* FIXED: Remove the curly braces around the values */}
-              {item.name === "Pending Approvals" && requestedCount > 0 && (
-                <span className="ml-2 rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">
-                  {requestedCount}
+              <span
+                className={`text-sm font-medium ${
+                  activeTab === card.id ? "text-teal-700" : "text-gray-900"
+                }`}
+              >
+                {card.name}
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              {card.count > 0 && (
+                <span
+                  className={`rounded-full px-2 py-1 text-xs font-medium ${
+                    card.name === "Pending Approvals"
+                      ? "bg-red-100 text-red-800"
+                      : "bg-gray-100 text-gray-800"
+                  }`}
+                >
+                  {card.count}
                 </span>
               )}
-              {item.name === "Rejected Services" && rejectedCount > 0 && (
-                <span className="ml-2 rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800">
-                  {rejectedCount}
-                </span>
+              {activeTab === card.id && (
+                <div className="h-2 w-2 rounded-full bg-teal-500"></div>
               )}
             </div>
           </button>
         ))}
-      </nav>
+      </div>
     </div>
   );
 };

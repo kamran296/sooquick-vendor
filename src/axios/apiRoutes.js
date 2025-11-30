@@ -16,6 +16,7 @@ const API = {
     PUECHASE_MEMBERSHIP: "/vendor/membership",
     GET_WALLET: "/vendor/wallet",
     REQUEST_CASHOUT: "/vendor/cashout",
+    DASHBOARD: "/vendor/dashboard",
   },
   KYC: {
     GET: "/vendor/kyc/details",

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import PincodeInput from "./Pincode";
 import request from "../../axios/requests";
@@ -7,6 +7,8 @@ import {
   serviceTypeExamples,
   subCategories,
 } from "../../utils/categories";
+import { useDispatch, useSelector } from "react-redux";
+import { setSidebarTab } from "../../redux/slices/sidebarSlice";
 const FileUploadSection = ({ images, setImages, video, setVideo }) => {
   const imageInputRefs = [
     useRef(null),
@@ -218,11 +220,19 @@ const CreateService = () => {
     category: "",
     serviceType: "",
     servicePrice: "",
-    description: "",
+    // description: "",
     scopeOfWork: "",
     postalCodes: "",
     availability: "",
+    workingStartTime: "",
+    workingEndTime: "",
+    workingDays: [],
   });
+
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(setSidebarTab(1));
+  }, []);
 
   // State for file uploads - using the 4 individual images approach
   const [images, setImages] = useState([null, null, null, null]);
@@ -231,8 +241,8 @@ const CreateService = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({});
-
   const [serviceAreas, setServiceAreas] = useState([]);
+  const user = useSelector((state) => state.user);
 
   const handlePincodesChange = (pincodes) => {
     setServiceAreas(pincodes);
@@ -303,8 +313,8 @@ const CreateService = () => {
       newErrors.serviceType = "Service type is required";
     if (!formData.servicePrice || parseFloat(formData.servicePrice) <= 0)
       newErrors.servicePrice = "Valid service price is required";
-    if (!formData.description.trim())
-      newErrors.description = "Description is required";
+    // if (!formData.description.trim())
+    //   newErrors.description = "Description is required";
     if (!formData.scopeOfWork.trim())
       newErrors.scopeOfWork = "Scope of work is required";
     if (serviceAreas.length === 0) {
@@ -352,7 +362,7 @@ const CreateService = () => {
       }
 
       // Debug: Log all form data entries
-      console.log("FormData entries:");
+
       for (let [key, value] of formDataToSend.entries()) {
         console.log(key, value);
       }
@@ -363,7 +373,6 @@ const CreateService = () => {
         },
       });
 
-      console.log("Service created response:", response.data);
       setMessage("Service created successfully! Waiting for admin approval.");
 
       // Reset form
@@ -373,10 +382,13 @@ const CreateService = () => {
         category: "",
         serviceType: "",
         servicePrice: "",
-        description: "",
+        // description: "",
         scopeOfWork: "",
         postalCodes: "",
         availability: "",
+        workingStartTime: "",
+        workingEndTime: "",
+        workingDays: [],
       });
 
       // Reset service areas
@@ -397,6 +409,84 @@ const CreateService = () => {
       setLoading(false);
     }
   };
+  const handleDayToggle = (day) => {
+    setFormData((prev) => ({
+      ...prev,
+      workingDays: prev.workingDays.includes(day)
+        ? prev.workingDays.filter((d) => d !== day)
+        : [...prev.workingDays, day],
+    }));
+  };
+
+  if (user.kycVerified === "pending") {
+    return (
+      <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-yellow-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-yellow-800">
+                Complete KYC Verification
+              </h3>
+              <p className="mt-1 text-sm text-yellow-700">
+                You need to complete KYC verification to start creating
+                services.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => (window.location.href = "/kyc-verification")} // Update with your KYC route
+            className="rounded-md bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-yellow-50 focus:outline-none"
+          >
+            Complete KYC
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (user.kycVerified === "requested") {
+    return (
+      <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <div className="flex items-center">
+          <div className="flex-shrink-0">
+            <svg
+              className="h-5 w-5 text-blue-400"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-blue-800">
+              KYC Under Verification
+            </h3>
+            <p className="mt-1 text-sm text-blue-700">
+              Your KYC documents are under verification. Once verified, you'll
+              be able to create services.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto mt-5 max-w-5xl rounded-lg bg-white p-6 shadow-md">
@@ -547,7 +637,8 @@ const CreateService = () => {
           </label>
           <input
             type="number"
-            step="0.01"
+            step="10"
+            min={0}
             name="servicePrice"
             value={formData.servicePrice}
             onChange={handleInputChange}
@@ -558,7 +649,7 @@ const CreateService = () => {
           )}
         </div>
 
-        <div>
+        {/* <div>
           <label className="block text-sm font-medium text-gray-700">
             Description
           </label>
@@ -572,7 +663,7 @@ const CreateService = () => {
           {errors.description && (
             <p className="text-xs text-red-500">{errors.description}</p>
           )}
-        </div>
+        </div> */}
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
@@ -629,6 +720,68 @@ const CreateService = () => {
           {errors.availability && (
             <p className="text-xs text-red-500">{errors.availability}</p>
           )}
+        </div>
+        <div className="border-t border-gray-200 pt-6">
+          <h3 className="text-lg font-medium text-gray-900">Working Hours</h3>
+
+          {/* Days Selection */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Available Days
+            </label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {[
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
+              ].map((day) => (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => handleDayToggle(day)}
+                  className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+                    formData.workingDays.includes(day)
+                      ? "border border-teal-300 bg-teal-100 text-teal-800"
+                      : "border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200"
+                  }`}
+                >
+                  {day.substring(0, 3)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Time Range */}
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Start Time
+              </label>
+              <input
+                type="time"
+                name="workingStartTime"
+                value={formData.workingStartTime}
+                onChange={handleInputChange}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                End Time
+              </label>
+              <input
+                type="time"
+                name="workingEndTime"
+                value={formData.workingEndTime}
+                onChange={handleInputChange}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Enhanced File Upload Section */}

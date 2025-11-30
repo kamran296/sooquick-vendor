@@ -2,8 +2,8 @@ export const mainCategories = [
   "Repair & Maintenance",
   "Cleaning & Hygiene Services",
   "Fitness & Grooming",
-  "Manpower & Skilled Labour",
-  "Auto & Transport Services",
+  // "Manpower & Skilled Labour",
+  // "Auto & Transport Services",
 ];
 
 export const subCategories = {
@@ -38,24 +38,24 @@ export const subCategories = {
     "Yoga",
     "Dietician Services",
   ],
-  "Manpower & Skilled Labour": [
-    "Daily Wage Workers",
-    "Movers & Packers",
-    "Security Staff",
-    "Housekeeping Staff",
-    "Domestic Help",
-    "Temporary Staff",
-  ],
-  "Auto & Transport Services": [
-    "Car Mechanic",
-    "Car Wash",
-    "Battery Service",
-    "Fuel Delivery",
-    "Driver Services",
-  ],
+  // "Manpower & Skilled Labour": [
+  //   "Daily Wage Workers",
+  //   "Movers & Packers",
+  //   "Security Staff",
+  //   "Housekeeping Staff",
+  //   "Domestic Help",
+  //   "Temporary Staff",
+  // ],
+  // "Auto & Transport Services": [
+  //   "Car Mechanic",
+  //   "Car Wash",
+  //   "Battery Service",
+  //   "Fuel Delivery",
+  //   "Driver Services",
+  // ],
 };
 
-// NEW: Service type examples for each sub-category (you can expand this)
+// Service type examples for each sub-category (you can expand this)
 export const serviceTypeExamples = {
   Electrician: [
     "Fan installation/repair",

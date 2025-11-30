@@ -32,7 +32,7 @@ const Support = () => {
   });
 
   useEffect(() => {
-    dispatch(setSidebarTab(3));
+    dispatch(setSidebarTab(4));
   }, []);
   // Fetch tickets from API
   useEffect(() => {
