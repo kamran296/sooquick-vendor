@@ -4,10 +4,14 @@ import { addNotification } from "./redux/slices/notificationSlice";
 import { toast } from "react-toastify";
 
 let socket;
+// const url = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const url = "https://api.sooquick.com";
 
 export const connectSocket = (token) => {
-  socket = io("http://localhost:5000", {
-    auth: { token },
+  socket = io(url, {
+    // auth: { token },
+    withCredentials: true,
   });
 
   socket.on("connect", () => {

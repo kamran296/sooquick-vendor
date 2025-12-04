@@ -24,11 +24,7 @@ import VendorPolicy from "./pages/VendorPolicy";
 
 function App() {
   useEffect(() => {
-    // const token = localStorage.getItem("token");
-    const token = Cookies.get("accessToken");
-    if (token) {
-      connectSocket(token); // Reconnect socket if token exists
-    }
+    connectSocket();
   }, []);
   return (
     <>
