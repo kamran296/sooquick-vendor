@@ -506,34 +506,13 @@ const CreateService = () => {
             name="serviceName"
             value={formData.serviceName}
             onChange={handleInputChange}
-            className="mt-1 w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
           />
           {errors.serviceName && (
             <p className="text-xs text-red-500">{errors.serviceName}</p>
           )}
         </div>
 
-        {/* <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Category
-          </label>
-          <select
-            name="category"
-            value={formData.category}
-            onChange={handleInputChange}
-            className="mt-1 w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
-          >
-            <option value="">Select Category</option>
-            {Object.keys(categories).map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-          {errors.category && (
-            <p className="text-xs text-red-500">{errors.category}</p>
-          )}
-        </div> */}
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Main Category *
@@ -542,7 +521,7 @@ const CreateService = () => {
             name="mainCategory"
             value={formData.mainCategory}
             onChange={handleInputChange}
-            className="mt-1 w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
           >
             <option value="">Select Main Category</option>
             {mainCategories.map((mainCat) => (
@@ -556,28 +535,6 @@ const CreateService = () => {
           )}
         </div>
 
-        {/* <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Subcategory
-          </label>
-          <select
-            name="subCategory"
-            value={formData.subCategory}
-            onChange={handleInputChange}
-            className="mt-1 w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
-          >
-            <option value="">Select Subcategory</option>
-            {formData.category &&
-              categories[formData.category]?.map((subCat) => (
-                <option key={subCat} value={subCat}>
-                  {subCat}
-                </option>
-              ))}
-          </select>
-          {errors.subCategory && (
-            <p className="text-xs text-red-500">{errors.subCategory}</p>
-          )}
-        </div> */}
         {/* UPDATED: Category (now sub-category) */}
         <div>
           <label className="block text-sm font-medium text-gray-700">
@@ -588,7 +545,7 @@ const CreateService = () => {
             value={formData.category}
             onChange={handleInputChange}
             disabled={!formData.mainCategory}
-            className="mt-1 w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500 disabled:bg-gray-100"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-teal-500 disabled:bg-gray-100"
           >
             <option value="">Select Category</option>
             {formData.mainCategory &&
@@ -612,7 +569,7 @@ const CreateService = () => {
             name="serviceType"
             value={formData.serviceType}
             onChange={handleInputChange}
-            className="mt-1 w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
             placeholder="e.g., Fan installation/repair, Pipe leakage repair, 1BHK home cleaning"
             list="serviceTypeSuggestions"
           />
@@ -633,7 +590,7 @@ const CreateService = () => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Service Price ($)
+            Service Price (₹)
           </label>
           <input
             type="number"
@@ -642,28 +599,12 @@ const CreateService = () => {
             name="servicePrice"
             value={formData.servicePrice}
             onChange={handleInputChange}
-            className="mt-1 w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
           />
           {errors.servicePrice && (
             <p className="text-xs text-red-500">{errors.servicePrice}</p>
           )}
         </div>
-
-        {/* <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Description
-          </label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            rows={4}
-            className="mt-1 w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
-          />
-          {errors.description && (
-            <p className="text-xs text-red-500">{errors.description}</p>
-          )}
-        </div> */}
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
@@ -674,7 +615,7 @@ const CreateService = () => {
             value={formData.scopeOfWork}
             onChange={handleInputChange}
             rows={3}
-            className="mt-1 w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
           />
           {errors.scopeOfWork && (
             <p className="text-xs text-red-500">{errors.scopeOfWork}</p>
@@ -685,15 +626,7 @@ const CreateService = () => {
           <label className="block text-sm font-medium text-gray-700">
             Postal Codes (comma separated)
           </label>
-          {/* <input
-            type="text"
-            name="postalCodes"
-            value={formData.postalCodes}
-            onChange={handleInputChange}
-            className="mt-1 w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
-            placeholder="10001,10002,10003"
-          /> */}
-          {/* <PincodeInput onPincodesChange={handlePincodesChange}  /> */}
+
           <PincodeInput onServiceAreasChange={handleServiceAreasChange} />
 
           {errors.postalCodes && (
@@ -701,29 +634,31 @@ const CreateService = () => {
           )}
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Availability
-          </label>
-          <select
-            name="availability"
-            value={formData.availability}
-            onChange={handleInputChange}
-            className="mt-1 w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
-          >
-            <option value="">Select Availability</option>
-            <option value="Weekdays">Weekdays</option>
-            <option value="Weekends">Weekends</option>
-            <option value="Anytime">Anytime</option>
-            <option value="On Request">On Request</option>
-          </select>
-          {errors.availability && (
-            <p className="text-xs text-red-500">{errors.availability}</p>
-          )}
-        </div>
-        <div className="border-t border-gray-200 pt-6">
-          <h3 className="text-lg font-medium text-gray-900">Working Hours</h3>
+        <div className="pt-6">
+          <h3 className="mb-3 text-lg font-medium text-gray-900">
+            Working Hours
+          </h3>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Availability
+            </label>
+            <select
+              name="availability"
+              value={formData.availability}
+              onChange={handleInputChange}
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
+            >
+              <option value="">Select Availability</option>
+              <option value="Weekdays">Weekdays</option>
+              <option value="Weekends">Weekends</option>
+              <option value="Anytime">Anytime</option>
+              <option value="On Request">On Request</option>
+            </select>
+            {errors.availability && (
+              <p className="text-xs text-red-500">{errors.availability}</p>
+            )}
+          </div>
           {/* Days Selection */}
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700">
@@ -766,7 +701,7 @@ const CreateService = () => {
                 name="workingStartTime"
                 value={formData.workingStartTime}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none"
               />
             </div>
             <div>

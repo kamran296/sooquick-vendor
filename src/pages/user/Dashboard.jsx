@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import request from "../../axios/requests";
 import { setSidebarTab } from "../../redux/slices/sidebarSlice";
+import { LuClock, LuWalletCards } from "react-icons/lu";
+import { FaRegCheckCircle, FaRupeeSign } from "react-icons/fa";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -123,20 +125,11 @@ const Dashboard = () => {
                 Vendor Information
               </h2>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {/* <div>
-                  <p className="text-sm text-gray-600">Business Name</p>
-                  <p className="font-medium">
-                    {user?.businessName || "Not set"}
-                  </p>
-                </div> */}
                 <div>
                   <p className="text-sm text-gray-600">Email</p>
                   <p className="font-medium">{user?.email}</p>
                 </div>
-                {/* <div>
-                  <p className="text-sm text-gray-600">Phone</p>
-                  <p className="font-medium">{user?.phone || "Not set"}</p>
-                </div> */}
+
                 <div>
                   <p className="text-sm text-gray-600">KYC Status</p>
                   <span
@@ -153,19 +146,7 @@ const Dashboard = () => {
               <div className="rounded-lg bg-white p-4 shadow-sm">
                 <div className="flex items-center">
                   <div className="rounded-lg bg-blue-100 p-3">
-                    <svg
-                      className="h-6 w-6 text-blue-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                      />
-                    </svg>
+                    <LuWalletCards className="h-6 w-6 text-blue-600" />
                   </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">
@@ -181,19 +162,7 @@ const Dashboard = () => {
               <div className="rounded-lg bg-white p-4 shadow-sm">
                 <div className="flex items-center">
                   <div className="rounded-lg bg-yellow-100 p-3">
-                    <svg
-                      className="h-6 w-6 text-yellow-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
+                    <LuClock className="h-6 w-6 text-yellow-600" />
                   </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">
@@ -209,19 +178,7 @@ const Dashboard = () => {
               <div className="rounded-lg bg-white p-4 shadow-sm">
                 <div className="flex items-center">
                   <div className="rounded-lg bg-green-100 p-3">
-                    <svg
-                      className="h-6 w-6 text-green-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
+                    <FaRegCheckCircle className="h-6 w-6 text-green-600" />
                   </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">
@@ -237,19 +194,7 @@ const Dashboard = () => {
               <div className="rounded-lg bg-white p-4 shadow-sm">
                 <div className="flex items-center">
                   <div className="rounded-lg bg-purple-100 p-3">
-                    <svg
-                      className="h-6 w-6 text-purple-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
+                    <FaRupeeSign className="h-6 w-6 text-purple-600" />
                   </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">
