@@ -335,6 +335,7 @@ const CreateService = () => {
 
       // Append all form data
       Object.keys(formData).forEach((key) => {
+        if (key === "workingDays") return;
         formDataToSend.append(key, formData[key]);
       });
 
