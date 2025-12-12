@@ -257,14 +257,6 @@ const CreateService = () => {
     setServiceAreas(areas);
   };
 
-  const categories = {
-    Lawyer: ["LLB", "Corporate", "Criminal", "Family"],
-    Plumber: ["Residential", "Commercial", "Emergency"],
-    Electrician: ["Residential", "Commercial", "Industrial"],
-    Mechanic: ["Car", "Motorcycle", "Heavy Equipment"],
-    "AC Service": ["Installation", "Repair", "Maintenance"],
-  };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
@@ -348,6 +340,10 @@ const CreateService = () => {
 
       // Append service areas as JSON
       formDataToSend.append("serviceAreas", JSON.stringify(serviceAreas));
+      formDataToSend.append(
+        "workingDays",
+        JSON.stringify(formData.workingDays),
+      );
 
       // Append images (filter out null values)
       images
