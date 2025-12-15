@@ -47,6 +47,10 @@ const API = {
     ADD_MESSAGE: (ticketId) => `/support/add-message/${ticketId}`,
     GET_TICKET_BY_ID: (ticketId) => `/support/${ticketId}`,
   },
+  PAYMENT: {
+    createPaymentOrder: "/payment/create-order",
+    verifyRazorpayPayment: "/payment/verify",
+  },
 };
 
 export default API;

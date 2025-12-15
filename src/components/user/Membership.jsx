@@ -18,6 +18,9 @@ import {
 } from "react-icons/fa";
 import request from "../../axios/requests";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import useRazorpayPayment from "../../hooks/useRazorpayPayments";
+import { toast } from "react-toastify";
 
 // Card components for better structure
 const Card = ({ children, className, onClick }) => (
@@ -88,8 +91,15 @@ const VendorMembershipPurchase = () => {
   const [selectedDuration, setSelectedDuration] = useState("Monthly");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
+  const { user } = useSelector((state) => state.user);
   const navigate = useNavigate();
+  const {
+    initiatePayment,
+    loading: razorpayLoading,
+    razorpayLoaded,
+  } = useRazorpayPayment();
 
+  console.log(user, "uer");
   const handleSelectPlan = (planId, duration) => {
     setSelectedPlan(planId);
     setSelectedDuration(duration);
@@ -97,29 +107,53 @@ const VendorMembershipPurchase = () => {
   };
 
   const handleBuyNow = async (plan) => {
-    setLoading(true);
+    if (!plan) return;
+    if (!user.email) {
+      navigate("/");
+    }
+    // setLoading(true);
     setMessage({ text: "", type: "" });
 
     try {
-      const requestData = {
-        membershipType: plan.id,
-        paymentMode: "card", // Default, can be made dynamic
-        transactionId: `txn_${Date.now()}`, // This should come from your payment gateway
-      };
+      // const requestData = {
+      //   membershipType: plan.id,
+      //   paymentMode: "card", // Default, can be made dynamic
+      //   transactionId: `txn_${Date.now()}`, // This should come from your payment gateway
+      // };
 
-      const response = await request.purchaseMembership(requestData);
+      // const response = await request.purchaseMembership(requestData);
 
-      if (response.status === 200) {
-        setMessage({
-          text: "Vendor membership purchased successfully!",
-          type: "success",
-        });
+      await initiatePayment({
+        createOrderApi: () =>
+          request.createPaymentOrder({
+            purpose: "membership",
+            referenceId: plan.id, // membership plan id
+            amount: plan.pricing[selectedDuration],
+          }),
+        verifyPaymentApi: (payload) =>
+          request.verifyRazorpayPayment({
+            ...payload,
+            purpose: "membership",
+            membershipType: plan.id,
+            planDuration: selectedDuration,
+            referenceId: plan.id,
+          }),
 
-        // Redirect to vendor dashboard after a delay
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 2000);
-      }
+        onSuccess: () => {
+          toast.success("Membership activated successfully!");
+          navigate("/membership-info");
+        },
+
+        onFailure: (error) => {
+          console.error("Payment failed:", error);
+          toast.error("Membership payment failed");
+        },
+        prefill: {
+          name: user?.firstName,
+          email: user?.email,
+          phone: user?.phone,
+        },
+      });
     } catch (error) {
       console.error("Purchase error:", error);
 
@@ -136,8 +170,6 @@ const VendorMembershipPurchase = () => {
         text: errorMessage,
         type: "error",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -476,13 +508,14 @@ const VendorMembershipPurchase = () => {
                   className="w-full bg-amber-200 hover:bg-amber-300"
                   variant={plan.id}
                   onClick={() => handleBuyNow(plan)}
-                  disabled={loading || selectedPlan !== plan.id}
+                  // disabled={loading || selectedPlan !== plan.id}
+                  disabled={razorpayLoading || selectedPlan !== plan.id}
                 >
-                  {loading ? (
-                    <>
+                  {razorpayLoading ? (
+                    <div className="flex items-center gap-2">
                       <FaSpinner className="mr-2 animate-spin" />
                       Processing...
-                    </>
+                    </div>
                   ) : selectedPlan === plan.id ? (
                     `Subscribe - ₹${plan.pricing[selectedDuration]}`
                   ) : (

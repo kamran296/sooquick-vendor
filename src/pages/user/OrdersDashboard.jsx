@@ -847,12 +847,12 @@ const OrdersDashboard = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Price ($) *
+                        Price (₹) *
                       </label>
                       <input
                         type="number"
                         min="0"
-                        step="0.01"
+                        step="10"
                         value={additionalServiceForm.price}
                         onChange={(e) =>
                           setAdditionalServiceForm((prev) => ({
@@ -870,7 +870,7 @@ const OrdersDashboard = () => {
                   {additionalServiceForm.price && (
                     <div className="rounded-md bg-gray-50 p-3">
                       <p className="text-sm font-medium text-gray-700">
-                        Total: ${additionalServiceForm.price}
+                        Total: ₹{additionalServiceForm.price}
                       </p>
                       <p className="mt-1 text-xs text-gray-500">
                         This amount will be added to the customer's bill

@@ -9,6 +9,8 @@ import {
 } from "../../utils/categories";
 import { useDispatch, useSelector } from "react-redux";
 import { setSidebarTab } from "../../redux/slices/sidebarSlice";
+import { useNavigate } from "react-router-dom";
+
 const FileUploadSection = ({ images, setImages, video, setVideo }) => {
   const imageInputRefs = [
     useRef(null),
@@ -242,6 +244,7 @@ const CreateService = () => {
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({});
   const [serviceAreas, setServiceAreas] = useState([]);
+  const navigate = useNavigate();
   const user = useSelector((state) => state.user);
 
   const handlePincodesChange = (pincodes) => {
@@ -370,32 +373,35 @@ const CreateService = () => {
         },
       });
 
-      setMessage("Service created successfully! Waiting for admin approval.");
+      if (response.data) {
+        setMessage("Service created successfully! Waiting for admin approval.");
 
-      // Reset form
-      setFormData({
-        serviceName: "",
-        mainCategory: "",
-        category: "",
-        serviceType: "",
-        servicePrice: "",
-        // description: "",
-        scopeOfWork: "",
-        postalCodes: "",
-        availability: "",
-        workingStartTime: "",
-        workingEndTime: "",
-        workingDays: [],
-      });
+        // Reset form
+        setFormData({
+          serviceName: "",
+          mainCategory: "",
+          category: "",
+          serviceType: "",
+          servicePrice: "",
+          // description: "",
+          scopeOfWork: "",
+          postalCodes: "",
+          availability: "",
+          workingStartTime: "",
+          workingEndTime: "",
+          workingDays: [],
+        });
 
-      // Reset service areas
-      setServiceAreas([]);
+        // Reset service areas
+        setServiceAreas([]);
 
-      // Reset file uploads
-      setImages([null, null, null, null]);
-      setVideo(null);
+        // Reset file uploads
+        setImages([null, null, null, null]);
+        setVideo(null);
 
-      setErrors({});
+        setErrors({});
+        navigate("/services?tab=pending");
+      }
     } catch (error) {
       console.error("Error creating service:", error);
       setMessage(
@@ -737,15 +743,14 @@ const CreateService = () => {
         >
           {loading ? "Creating Service..." : "Create Service"}
         </button>
-
-        {message && (
-          <div
-            className={`rounded-md p-3 ${message.includes("Error") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}
-          >
-            {message}
-          </div>
-        )}
       </form>
+      {message && (
+        <div
+          className={`rounded-md p-3 ${message.includes("Error") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}
+        >
+          {message}
+        </div>
+      )}
     </div>
   );
 };

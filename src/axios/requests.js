@@ -155,6 +155,20 @@ const getAllSupportTickets = async () => {
   return await instances.privateRequest.get(API.SUPPORT.GET_TICKETS);
 };
 
+const createPaymentOrder = async (payload) => {
+  return await instances.privateRequest.post(
+    API.PAYMENT.createPaymentOrder,
+    payload,
+  );
+};
+
+const verifyRazorpayPayment = async (payload) => {
+  return await instances.privateRequest.post(
+    API.PAYMENT.verifyRazorpayPayment,
+    payload,
+  );
+};
+
 const request = {
   signup,
   login,
@@ -196,6 +210,9 @@ const request = {
   addMessageToTicket,
   getTicketById,
   getAllSupportTickets,
+
+  createPaymentOrder,
+  verifyRazorpayPayment,
 };
 
 export default request;
