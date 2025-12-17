@@ -157,7 +157,7 @@ const Sidebar = () => {
             <div className="relative mt-5 px-3">
               <button
                 onClick={() => {
-                  if (membership.type !== "None") {
+                  if (membership?.type?.toLowerCase() !== "None") {
                     navigate("/membership-info");
                     return;
                   }

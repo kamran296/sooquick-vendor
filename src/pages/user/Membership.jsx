@@ -10,10 +10,14 @@ import {
   FaShieldAlt,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import request from "../../axios/requests";
+import { toast } from "react-toastify";
+import { useState } from "react";
 
 const Membership = () => {
   const { membership } = useSelector((state) => state.user);
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   // Function to format date
   const formatDate = (dateString) => {
@@ -23,7 +27,42 @@ const Membership = () => {
 
   // Function to capitalize first letter
   const capitalizeFirst = (str) => {
-    return str.charAt(0).toUpperCase() + str.slice(1);
+    return str?.charAt(0).toUpperCase() + str.slice(1);
+  };
+
+  const handleCancelMembership = async () => {
+    try {
+      setLoading(true);
+      const response = await request.cancelMembership();
+      if (response.data.success) {
+        toast.success("Membership cancelled successfully");
+        await dispatch(getUser());
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to cancel membership",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const canCancelMembership = () => {
+    if (!membership || !membership.purchaseDate) {
+      return false;
+    }
+
+    const purchaseDate = new Date(membership.purchaseDate);
+    const currentDate = new Date();
+
+    // Calculate days since purchase
+    const timeDifference = currentDate - purchaseDate;
+    const daysSincePurchase = Math.floor(
+      timeDifference / (1000 * 60 * 60 * 24),
+    );
+
+    // Check if more than 7 days have passed
+    return daysSincePurchase <= 7;
   };
 
   return (
@@ -199,12 +238,15 @@ const Membership = () => {
                 >
                   Upgrade Plan
                 </button>
-                <button className="rounded-md bg-gray-200 px-4 py-2 text-gray-800 transition-colors hover:bg-gray-300">
-                  Download Invoice
-                </button>
-                {/* <button className="rounded-md border border-red-500 px-4 py-2 text-red-600 transition-colors hover:bg-red-50">
-                  Cancel Membership
-                </button> */}
+                {canCancelMembership() && (
+                  <button
+                    disabled={loading}
+                    onClick={handleCancelMembership}
+                    className={`rounded-md border border-red-500 px-4 py-2 text-red-600 transition-colors hover:bg-red-50 ${loading ? "cursor-not-allowed opacity-50" : ""} `}
+                  >
+                    {loading ? "Canceling..." : "Cancel Membership"}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -217,7 +259,10 @@ const Membership = () => {
             <p className="mb-6 text-gray-600">
               You don't have an active membership plan yet.
             </p>
-            <button className="rounded-md bg-teal-600 px-6 py-3 text-white transition-colors hover:bg-teal-700">
+            <button
+              onClick={() => navigate("/membership")}
+              className="rounded-md bg-teal-600 px-6 py-3 text-white transition-colors hover:bg-teal-700"
+            >
               Become a Member
             </button>
           </div>

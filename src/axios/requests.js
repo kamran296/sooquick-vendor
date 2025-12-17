@@ -50,6 +50,10 @@ const purchaseMembership = async (formData) => {
   );
 };
 
+const cancelMembership = async () => {
+  return await instances.privateRequest.post(API.USER.CANCEL_MEMBERSHIP);
+};
+
 const getVendorDashboard = async () => {
   return await instances.privateRequest.get(API.USER.DASHBOARD);
 };
@@ -184,6 +188,7 @@ const request = {
   getKycDetails,
   submitKycDetails,
   purchaseMembership,
+  cancelMembership,
   verifyTwoFactor,
 
   getNotification,

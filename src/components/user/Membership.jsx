@@ -527,39 +527,6 @@ const VendorMembershipPurchase = () => {
           ))}
         </div>
       </div>
-
-      {/* Performance Bonus Note */}
-      <div className="mb-6 rounded-lg bg-green-50 p-6">
-        <div className="flex items-start">
-          <FaChartLine className="mt-1 mr-4 text-xl text-green-500" />
-          <div>
-            <h3 className="text-lg font-semibold text-green-800">
-              Performance Bonus
-            </h3>
-            <p className="text-green-700">
-              Maintain high ratings to qualify for reduced commission rates.
-              Top-performing vendors can earn up to 2% additional commission
-              reduction.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Trial Discount Note */}
-      <div className="rounded-lg bg-blue-50 p-6">
-        <div className="flex items-start">
-          <FaStar className="mt-1 mr-4 text-xl text-blue-500" />
-          <div>
-            <h3 className="text-lg font-semibold text-blue-800">
-              New Vendor Offer
-            </h3>
-            <p className="text-blue-700">
-              First month free for new vendors or reduced commission rates
-              during trial period. Contact our sales team for details.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
