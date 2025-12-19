@@ -103,6 +103,17 @@ const OrdersDashboard = () => {
       if (response.status === 200) {
         setOtpOrderId(orderId);
         startOtpTimer();
+        // UPDATE ORDER STATUS LOCALLY
+        setOrdersData((prev) => ({
+          ...prev,
+          allOrders: prev.allOrders.map((o) =>
+            o._id === orderId ? { ...o, status: "otp_requested" } : o,
+          ),
+          ongoingOrders: prev.ongoingOrders.map((o) =>
+            o._id === orderId ? { ...o, status: "otp_requested" } : o,
+          ),
+        }));
+
         toast.success("OTP sent to customer successfully!");
         return true;
       }
@@ -228,23 +239,50 @@ const OrdersDashboard = () => {
     }
   };
 
+  // const openOtpModal = async (order) => {
+  //   setSelectedOrder(order);
+  //   setOtpOrderId(order._id);
+
+  //   if (order.status === "otp_requested") {
+  //     // If OTP was already requested, just open the modal
+  //     setShowOtpModal(true);
+  //     // Start timer if not already running
+  //     if (otpTimer === 0) {
+  //       startOtpTimer();
+  //     }
+  //   } else {
+  //     // For other statuses, initiate OTP process
+  //     const success = await initiateOrderCompletion(order._id);
+  //     if (success) {
+  //       setShowOtpModal(true);
+  //     }
+  //   }
+  // };
+
   const openOtpModal = async (order) => {
+    // 🔐 HARD GUARD
+    if (completingOrder) return;
+
     setSelectedOrder(order);
     setOtpOrderId(order._id);
 
+    // OTP already requested → just open modal
     if (order.status === "otp_requested") {
-      // If OTP was already requested, just open the modal
       setShowOtpModal(true);
-      // Start timer if not already running
-      if (otpTimer === 0) {
-        startOtpTimer();
-      }
-    } else {
-      // For other statuses, initiate OTP process
+      if (otpTimer === 0) startOtpTimer();
+      return;
+    }
+
+    try {
+      setCompletingOrder(true);
+
       const success = await initiateOrderCompletion(order._id);
+
       if (success) {
         setShowOtpModal(true);
       }
+    } finally {
+      setCompletingOrder(false);
     }
   };
 
@@ -698,6 +736,7 @@ const OrdersDashboard = () => {
               getStatusIcon={getStatusIcon}
               getStatusColor={getStatusColor}
               openOtpModal={openOtpModal}
+              completingOrder={completingOrder}
             />
           )}
 

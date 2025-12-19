@@ -1,176 +1,3 @@
-// import React from "react";
-// import { LuX } from "react-icons/lu";
-// import { formatDate, formatCurrency } from "../../utils/helpers";
-
-// const OrderDetails = ({
-//   selectedOrder,
-//   setSelectedOrder,
-//   getStatusIcon,
-//   getStatusColor,
-// }) => {
-//   return (
-//     <div
-//       className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-gray-300/30 p-4"
-//       onClick={() => setSelectedOrder(null)}
-//     >
-//       <div
-//         className="w-full rounded-lg bg-white p-6 md:max-w-3xl"
-//         onClick={(e) => e.stopPropagation()}
-//       >
-//         <div className="mb-6 flex items-center justify-between">
-//           <h3 className="text-lg font-semibold text-gray-900">Order Details</h3>
-//           <button
-//             onClick={() => setSelectedOrder(null)}
-//             className="text-gray-400 transition-colors hover:text-gray-600"
-//           >
-//             <LuX className="h-5 w-5" />
-//           </button>
-//         </div>
-
-//         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-//           <div>
-//             <h4 className="mb-2 font-medium text-gray-900">
-//               Order Information
-//             </h4>
-//             <dl className="space-y-2">
-//               <div>
-//                 <dt className="text-sm text-gray-600">Order ID</dt>
-//                 <dd className="text-sm font-medium">
-//                   #{selectedOrder._id?.slice(-8)}
-//                 </dd>
-//               </div>
-//               <div>
-//                 <dt className="text-sm text-gray-600">Service</dt>
-//                 <dd className="text-sm font-medium">
-//                   {selectedOrder.serviceDetails?.serviceName || "N/A"}
-//                 </dd>
-//               </div>
-//               <div>
-//                 <dt className="text-sm text-gray-600">Category</dt>
-//                 <dd className="text-sm font-medium">
-//                   {selectedOrder.serviceDetails?.category || "N/A"}
-//                 </dd>
-//               </div>
-//               <div>
-//                 <dt className="text-sm text-gray-600">Booking Date</dt>
-//                 <dd className="text-sm font-medium">
-//                   {formatDate(
-//                     selectedOrder.bookingDate || selectedOrder.createdAt,
-//                   )}
-//                 </dd>
-//               </div>
-//               <div>
-//                 <dt className="text-sm text-gray-600">Scheduled Date</dt>
-//                 <dd className="text-sm font-medium">
-//                   {formatDate(selectedOrder.scheduledDate)}
-//                 </dd>
-//               </div>
-//             </dl>
-//           </div>
-
-//           <div>
-//             <h4 className="mb-2 font-medium text-gray-900">Payment Details</h4>
-//             <dl className="space-y-2">
-//               <div>
-//                 <dt className="text-sm text-gray-600">Total Amount</dt>
-//                 <dd className="text-sm font-medium">
-//                   {formatCurrency(selectedOrder.payment?.amount || 0)}
-//                 </dd>
-//               </div>
-//               <div>
-//                 <dt className="text-sm text-gray-600">Service Price</dt>
-//                 <dd className="text-sm font-medium">
-//                   {formatCurrency(selectedOrder.serviceDetails?.price || 0)}
-//                 </dd>
-//               </div>
-//               <div>
-//                 <dt className="text-sm text-gray-600">Platform Fee</dt>
-//                 <dd className="text-sm font-medium">
-//                   {formatCurrency(selectedOrder.payment?.platformFee || 0)}
-//                 </dd>
-//               </div>
-//               <div>
-//                 <dt className="text-sm text-gray-600">Your Earning</dt>
-//                 <dd className="text-sm font-medium text-green-600">
-//                   {formatCurrency(selectedOrder.payment?.vendorEarning || 0)}
-//                 </dd>
-//               </div>
-//               <div>
-//                 <dt className="text-sm text-gray-600">Status</dt>
-//                 <dd>
-//                   <span
-//                     className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(
-//                       selectedOrder.status,
-//                     )}`}
-//                   >
-//                     {getStatusIcon(selectedOrder.status)}
-//                     <span className="ml-1 capitalize">
-//                       {selectedOrder.status.replace("_", " ")}
-//                     </span>
-//                   </span>
-//                 </dd>
-//               </div>
-//             </dl>
-//           </div>
-//         </div>
-
-//         {/* Service Address Section */}
-//         {selectedOrder.serviceAddress && (
-//           <div className="mt-6">
-//             <h4 className="mb-2 font-medium text-gray-900">Service Address</h4>
-//             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-//               <div className="text-sm text-gray-700">
-//                 <div>{selectedOrder.serviceAddress.street}</div>
-//                 <div>
-//                   {selectedOrder.serviceAddress.city},{" "}
-//                   {selectedOrder.serviceAddress.state}{" "}
-//                   {selectedOrder.serviceAddress.postalCode}
-//                 </div>
-//                 <div>{selectedOrder.serviceAddress.country}</div>
-//               </div>
-//             </div>
-//           </div>
-//         )}
-
-//         {selectedOrder.cancellationMessage && (
-//           <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
-//             <h4 className="mb-2 font-medium text-red-900">
-//               Cancellation Reason
-//             </h4>
-//             <p className="text-sm text-red-700">
-//               {selectedOrder.cancellationMessage}
-//             </p>
-//           </div>
-//         )}
-
-//         <div className="mt-6 flex justify-end space-x-3">
-//           {/* Show Complete button for orders that can be completed */}
-//           {(selectedOrder.status === "confirmed" ||
-//             selectedOrder.status === "in_progress" ||
-//             selectedOrder.status === "otp_requested") && (
-//             <button
-//               onClick={() => openOtpModal(selectedOrder)}
-//               className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
-//             >
-//               {selectedOrder.status === "otp_requested"
-//                 ? "Enter OTP"
-//                 : "Mark Complete"}
-//             </button>
-//           )}
-//           <button
-//             onClick={() => setSelectedOrder(null)}
-//             className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
-//           >
-//             Close
-//           </button>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default OrderDetails;
-
 import React from "react";
 import { LuX } from "react-icons/lu";
 import { formatDate, formatCurrency } from "../../utils/helpers";
@@ -181,6 +8,7 @@ const OrderDetails = ({
   getStatusIcon,
   getStatusColor,
   openOtpModal, // Added this prop since it's used in the component
+  completingOrder,
 }) => {
   return (
     <div
@@ -328,11 +156,22 @@ const OrderDetails = ({
             selectedOrder.status === "otp_requested") && (
             <button
               onClick={() => openOtpModal(selectedOrder)}
+              disabled={completingOrder}
               className="w-full rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none sm:w-auto"
             >
-              {selectedOrder.status === "otp_requested"
+              {/* {selectedOrder.status === "otp_requested"
                 ? "Enter OTP"
-                : "Mark Complete"}
+                : "Mark Complete"} */}
+              {completingOrder ? (
+                <span className="flex items-center justify-center">
+                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                  Processing...
+                </span>
+              ) : selectedOrder.status === "otp_requested" ? (
+                "Enter OTP"
+              ) : (
+                "Mark Complete"
+              )}
             </button>
           )}
           <button
