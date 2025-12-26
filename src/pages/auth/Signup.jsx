@@ -143,13 +143,17 @@ const Signup = () => {
 
       const data = await response.data;
 
-      if (response.status === 201) {
+      if (data) {
         toast.success(data.message || "Verification email sent to user.");
-      } else {
-        toast.error(data.message || "Registration failed");
+        navigate("/");
       }
     } catch (error) {
-      toast.error("An error occurred during registration");
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "An error occurred during registration";
+      toast.error(errorMessage);
+
       console.error("Registration error:", error);
     } finally {
       setIsSubmitting(false);

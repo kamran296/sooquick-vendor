@@ -117,10 +117,17 @@ const userSlice = createSlice({
       })
       .addCase(updateUser.fulfilled, (state, action) => {
         state.status = "succeeded";
+        // state.user = {
+        //   ...state.user,
+        //   ...action.payload.user,
+        //   addresses: action.payload.user.addresses || state.user.addresses,
+        // };
+        const updatedUser = action.payload.user || action.payload;
+
         state.user = {
           ...state.user,
-          ...action.payload.user,
-          addresses: action.payload.user.addresses || state.user.addresses,
+          ...updatedUser,
+          addresses: updatedUser.addresses || state.user.addresses,
         };
       })
       .addCase(updateUser.rejected, (state, action) => {

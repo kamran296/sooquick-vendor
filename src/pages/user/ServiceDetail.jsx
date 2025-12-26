@@ -85,7 +85,7 @@ const ServiceDetail = () => {
     switch (activeTab) {
       case "description":
         return (
-          <div className="rounded-lg bg-white p-6 shadow-sm">
+          <div className="font-mont rounded-lg bg-white p-6 shadow-sm">
             <div className="prose max-w-none">
               <div className="leading-relaxed whitespace-pre-line text-gray-700">
                 {service.fullDescription || service.description}
@@ -127,7 +127,7 @@ const ServiceDetail = () => {
         );
       case "features":
         return (
-          <div className="rounded-lg bg-white p-6 shadow-sm">
+          <div className="font-mont rounded-lg bg-white p-6 shadow-sm">
             <h3 className="mb-4 font-semibold text-gray-900">
               What's Included
             </h3>
@@ -148,7 +148,7 @@ const ServiceDetail = () => {
         break;
       case "reviews":
         return (
-          <div className="rounded-lg bg-white p-6 shadow-sm">
+          <div className="font-mont rounded-lg bg-white p-6 shadow-sm">
             {service.reviews && service.reviews.length > 0 ? (
               <div className="space-y-6">
                 {service.reviews.map((review) => (
@@ -203,18 +203,17 @@ const ServiceDetail = () => {
   if (loading) {
     return (
       <UserLayout>
-        <div className="flex items-center justify-center bg-gray-50">
+        <div className="font-mont flex items-center justify-center bg-gray-50">
           <Spinner />
         </div>
       </UserLayout>
     );
   }
 
-  console.log("Heelo service");
   if (error || !service) {
     return (
       <UserLayout>
-        <div className="flex h-full w-full items-center justify-center bg-gray-50">
+        <div className="font-mont flex h-full w-full items-center justify-center bg-gray-50">
           <div className="text-center">
             <h2 className="mb-4 text-2xl font-bold text-gray-800">
               {error || "Service not found"}
@@ -244,7 +243,7 @@ const ServiceDetail = () => {
 
   return (
     <UserLayout>
-      <div className="bg-gray-50">
+      <div className="font-mont bg-gray-50">
         {/* Header */}
         <div className="border-b border-gray-200 bg-white">
           <div className="container mx-auto px-4 py-4">
@@ -368,11 +367,9 @@ const ServiceDetail = () => {
                 <div className="mb-4 flex items-center gap-4">
                   <div className="flex items-center gap-1">
                     <FaStar className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                    <span className="font-semibold">
-                      {service.rating || "4.8"}
-                    </span>
+                    <span className="font-semibold">{service.rating}</span>
                     <span className="text-gray-500">
-                      ({service.reviewCount || "24"} reviews)
+                      ({service.reviewCount || "0"} reviews)
                     </span>
                   </div>
                   <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
@@ -392,12 +389,12 @@ const ServiceDetail = () => {
               <div className="rounded-lg bg-white p-6 shadow-sm">
                 <div className="mb-4 flex items-center gap-3">
                   <span className="text-3xl font-bold text-blue-600">
-                    ${service.finalPrice}
+                    ₹{service.finalPrice}
                   </span>
                   {service.originalPrice &&
                     service.originalPrice > service.finalPrice && (
                       <span className="text-lg text-gray-500 line-through">
-                        ${service.originalPrice}
+                        ₹{service.originalPrice}
                       </span>
                     )}
                 </div>
@@ -441,9 +438,9 @@ const ServiceDetail = () => {
                     </h3>
                     <div className="flex items-center gap-1 text-sm text-gray-500">
                       <FaStar className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                      <span>{service.vendor.rating || "4.9"}</span>
+                      <span>{service.vendor.rating}</span>
                       <span>
-                        ({service.vendor.completedOrders || "42"} orders)
+                        ({service.vendor.completedOrders || "0"} orders)
                       </span>
                     </div>
                   </div>

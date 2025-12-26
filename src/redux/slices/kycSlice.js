@@ -9,11 +9,13 @@ const initialState = {
     landlineNumber: "",
     panNumber: "",
     gstNumber: "",
+    aadhaarNumber: "",
     documents: {
       panCard: null,
       gstCertificate: null,
       cancelledCheque: null,
       cinCertificate: null,
+      aadhaarCard: null,
       otherDocs: [],
     },
   },
@@ -52,10 +54,11 @@ export const submitKycInfo = createAsyncThunk(
       // ✅ Validation rules
       const requiredFields = {
         individual: [
-          "companyName",
+          "aadhaarNumber",
           "panNumber",
           "documents.panCard",
           "documents.cancelledCheque",
+          "documents.aadhaarCard",
         ],
         company: [
           "companyName",
@@ -101,31 +104,73 @@ export const submitKycInfo = createAsyncThunk(
       });
 
       // Add documents - use tempFiles if available, otherwise use stored document references
-      Object.keys(kycDataToSubmit.documents).forEach((docKey) => {
-        // Only include documents relevant based on businessType
-        if (
-          kycDataToSubmit.businessType === "company" ||
-          (kycDataToSubmit.businessType === "individual" &&
-            ["panCard", "cancelledCheque", "otherDocs"].includes(docKey))
-        ) {
-          if (docKey === "otherDocs") {
-            kycDataToSubmit.documents.otherDocs.forEach((file, index) => {
-              // Use temp file if available, otherwise use stored reference
-              const fileToUse = tempFiles[`otherDocs-${index}`] || file;
-              if (fileToUse) {
-                formData.append(`documents.otherDocs[${index}]`, fileToUse);
-              }
-            });
-          } else {
-            // Use temp file if available, otherwise use stored reference
-            const fileToUse =
-              tempFiles[docKey] || kycDataToSubmit.documents[docKey];
-            if (fileToUse) {
-              formData.append(`documents.${docKey}`, fileToUse);
-            }
-          }
+      // Object.keys(kycDataToSubmit.documents).forEach((docKey) => {
+      //   // Only include documents relevant based on businessType
+      //   if (
+      //     kycDataToSubmit.businessType === "company" ||
+      //     (kycDataToSubmit.businessType === "individual" &&
+      //       ["panCard", "cancelledCheque", "otherDocs"].includes(docKey))
+      //   ) {
+      //     if (docKey === "otherDocs") {
+      //       kycDataToSubmit.documents.otherDocs.forEach((file, index) => {
+      //         // Use temp file if available, otherwise use stored reference
+      //         const fileToUse = tempFiles[`otherDocs-${index}`] || file;
+      //         if (fileToUse) {
+      //           formData.append(`documents.otherDocs[${index}]`, fileToUse);
+      //         }
+      //       });
+      //     }
+      //     if (
+      //       kycDataToSubmit.businessType === "individual" &&
+      //       docKey === "aadhaarCard"
+      //     ) {
+      //       const fileToUse =
+      //         tempFiles.aadhaarCard || kycDataToSubmit.documents.aadhaarCard;
+      //       if (fileToUse) {
+      //         formData.append("documents.aadhaarCard", fileToUse);
+      //       }
+      //     } else {
+      //       // Use temp file if available, otherwise use stored reference
+      //       const fileToUse =
+      //         tempFiles[docKey] || kycDataToSubmit.documents[docKey];
+      //       if (fileToUse) {
+      //         formData.append(`documents.${docKey}`, fileToUse);
+      //       }
+      //     }
+      //   }
+      // });
+      Object.entries(kycDataToSubmit.documents).forEach(([docKey, value]) => {
+        const fileToUse = tempFiles[docKey] || value;
+
+        if (!fileToUse) return;
+
+        // Individual allowed docs
+        if (kycDataToSubmit.businessType === "individual") {
+          const allowed = ["panCard", "cancelledCheque", "aadhaarCard"];
+          if (!allowed.includes(docKey)) return;
         }
+
+        // Company allowed docs
+        if (kycDataToSubmit.businessType === "company") {
+          const allowed = [
+            "panCard",
+            "cancelledCheque",
+            "gstCertificate",
+            "cinCertificate",
+          ];
+          if (!allowed.includes(docKey)) return;
+        }
+
+        formData.append(`documents.${docKey}`, fileToUse);
       });
+
+      if (
+        kycDataToSubmit.businessType === "individual" &&
+        !/^\d{12}$/.test(kycDataToSubmit.aadhaarNumber)
+      ) {
+        console.log("Aadhaar must have 12 numbers");
+        return rejectWithValue("Invalid Aadhaar");
+      }
 
       const response = await request.submitKycDetails(formData, {
         headers: {

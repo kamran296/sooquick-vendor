@@ -55,7 +55,7 @@ const FileUploadSection = ({ images, setImages, video, setVideo }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="font-mont space-y-6">
       <div>
         <h3 className="mb-4 text-lg font-medium text-gray-700">
           Upload Photos
@@ -423,7 +423,7 @@ const CreateService = () => {
 
   if (user.kycVerified === "pending") {
     return (
-      <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+      <div className="font-mont mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -462,7 +462,7 @@ const CreateService = () => {
 
   if (user.kycVerified === "requested") {
     return (
-      <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+      <div className="font-mont mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
         <div className="flex items-center">
           <div className="flex-shrink-0">
             <svg
@@ -492,7 +492,7 @@ const CreateService = () => {
   }
 
   return (
-    <div className="mx-auto mt-5 max-w-5xl rounded-lg bg-white p-6 shadow-md">
+    <div className="font-mont mx-auto mt-5 max-w-5xl rounded-lg bg-white p-6 shadow-md">
       <h2 className="mb-6 text-2xl font-bold text-gray-800">
         Create New Service
       </h2>

@@ -2,7 +2,6 @@ import React from "react";
 import appRoutes from "../../appRoutes";
 import { useState, useEffect } from "react";
 import { FiMail, FiLock } from "react-icons/fi";
-
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import request from "../../axios/requests";
@@ -14,6 +13,10 @@ const ForgetPassword = () => {
   const [timer, setTimer] = useState(59);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,15 +33,21 @@ const ForgetPassword = () => {
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     if (!email) return;
-
+    setEmailLoading(true);
     try {
       //   await dispatch(sendOtpThunk({ email })).unwrap();
+      setSubmitting(true);
       const response = await request.requestOtp({ email });
       console.log(response, "Otp request response");
       setStep("otp");
       setTimer(59);
     } catch (err) {
-      console.error("Failed to send OTP:", err);
+      const errorMessage =
+        err.response?.data?.message || err.message || "Failed to send OTP";
+      toast.error(errorMessage);
+      console.error("Failed to send OTP:", errorMessage);
+    } finally {
+      setEmailLoading(false);
     }
   };
 
@@ -56,6 +65,7 @@ const ForgetPassword = () => {
 
   const handleResend = async () => {
     if (timer === 0 && email) {
+      setResendLoading(true);
       try {
         setOtp(["", "", "", ""]);
         setTimer(59);
@@ -63,7 +73,12 @@ const ForgetPassword = () => {
         console.log(response, "resend otp response");
         // await dispatch(sendOtpThunk({ email })).unwrap();
       } catch (err) {
-        console.error("Resend OTP failed:", err);
+        const errorMessage =
+          err.response?.data?.message || err.message || "Failed to resend OTP";
+        toast.error(errorMessage);
+        console.error("Resend OTP failed:", errorMessage);
+      } finally {
+        setResendLoading(false);
       }
     }
   };
@@ -71,7 +86,7 @@ const ForgetPassword = () => {
   const handleVerifyOtp = async () => {
     const code = otp.join("");
     if (!email || code.length !== 4) return;
-
+    setOtpLoading(true);
     try {
       //   await dispatch(verifyOtpThunk({ email, otp: code })).unwrap();
       const response = await request.verifyOtp({ email, otp: code });
@@ -79,7 +94,12 @@ const ForgetPassword = () => {
       toast.success("OTP verified, proceed to reset password");
       setStep("reset");
     } catch (err) {
-      console.error("OTP verification failed:", err);
+      const errorMessage =
+        err.response?.data?.message || err.message || "OTP verification failed";
+      toast.error(errorMessage);
+      console.error("OTP verification failed:", errorMessage);
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -96,10 +116,9 @@ const ForgetPassword = () => {
       return;
     }
 
+    setResetLoading(true);
+
     try {
-      //   await dispatch(
-      //     changePasswordThunk({ email, password: newPassword }),
-      //   ).unwrap();
       const response = await request.changePassword({
         email,
         password: newPassword,
@@ -109,8 +128,14 @@ const ForgetPassword = () => {
       navigate(appRoutes.login);
       // optionally reset state or navigate
     } catch (err) {
-      console.error("Reset password error:", err);
-      toast.error("Something went wrong");
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to reset password";
+      toast.error(errorMessage);
+      console.error("Reset password error:", errorMessage);
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -143,9 +168,17 @@ const ForgetPassword = () => {
 
               <button
                 type="submit"
-                className="w-full rounded-full bg-[#0b8263] py-3 font-semibold text-white transition hover:bg-teal-800"
+                disabled={emailLoading}
+                className={`w-full rounded-full py-3 font-semibold text-white transition ${emailLoading ? "cursor-not-allowed bg-gray-400" : "bg-[#0b8263] hover:bg-teal-800"}`}
               >
-                Verify Your Email
+                {emailLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    Sending...
+                  </div>
+                ) : (
+                  "Verify Your Email"
+                )}
               </button>
             </form>
             <div className="mt-3 flex w-full items-end justify-end">
@@ -190,23 +223,31 @@ const ForgetPassword = () => {
               ) : (
                 <button
                   onClick={handleResend}
-                  className="text-blue-600 underline"
+                  disabled={resendLoading || timer > 0}
+                  className={`text-blue-600 underline ${resendLoading ? "cursor-not-allowed opacity-50" : ""}`}
                 >
-                  Resend
+                  {resendLoading ? "Resending..." : "Resend"}
                 </button>
               )}
             </p>
 
             <button
               onClick={handleVerifyOtp}
-              disabled={!isOtpComplete}
+              disabled={!isOtpComplete || otpLoading}
               className={`w-full rounded-full py-3 font-semibold text-white transition ${
                 isOtpComplete
                   ? "bg-[#0b8263] hover:bg-teal-800"
                   : "cursor-not-allowed bg-gray-200"
               }`}
             >
-              Verify Email
+              {otpLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                  Verifying...
+                </div>
+              ) : (
+                "Verify Email"
+              )}
             </button>
           </>
         )}
@@ -247,9 +288,17 @@ const ForgetPassword = () => {
 
               <button
                 type="submit"
-                className="w-full rounded-full bg-[#0b8263] py-3 font-semibold text-white transition hover:bg-teal-800"
+                disabled={resetLoading}
+                className={`w-full rounded-full py-3 font-semibold text-white transition ${resetLoading ? "cursor-not-allowed bg-gray-400" : "bg-[#0b8263] hover:bg-teal-800"}`}
               >
-                Reset Password
+                {resetLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    Resetting...
+                  </div>
+                ) : (
+                  "Reset Password"
+                )}
               </button>
             </form>
           </>

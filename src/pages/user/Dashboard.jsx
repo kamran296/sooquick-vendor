@@ -89,7 +89,7 @@ const Dashboard = () => {
   console.log(user, "user");
   return (
     <UserLayout>
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="font-mont min-h-screen bg-gray-50 p-6">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Vendor Dashboard</h1>
@@ -142,14 +142,14 @@ const Dashboard = () => {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div className="rounded-lg bg-white p-4 shadow-sm">
                 <div className="flex items-center">
                   <div className="rounded-lg bg-blue-100 p-3">
                     <LuWalletCards className="h-6 w-6 text-blue-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">
+                    <p className="text-xs font-medium text-gray-600 lg:text-sm">
                       Total Services
                     </p>
                     <p className="text-xl font-bold text-gray-900">
@@ -165,7 +165,7 @@ const Dashboard = () => {
                     <LuClock className="h-6 w-6 text-yellow-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">
+                    <p className="text-xs font-medium text-gray-600 lg:text-sm">
                       Pending Orders
                     </p>
                     <p className="text-xl font-bold text-gray-900">
@@ -181,7 +181,7 @@ const Dashboard = () => {
                     <FaRegCheckCircle className="h-6 w-6 text-green-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">
+                    <p className="text-xs font-medium text-gray-600 lg:text-sm">
                       Completed Orders
                     </p>
                     <p className="text-xl font-bold text-gray-900">
@@ -191,13 +191,13 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              <div className="rounded-lg bg-white p-4 shadow-sm">
+              {/* <div className="rounded-lg bg-white p-4 shadow-sm">
                 <div className="flex items-center">
                   <div className="rounded-lg bg-purple-100 p-3">
                     <FaRupeeSign className="h-6 w-6 text-purple-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">
+                    <p className="text-xs font-medium text-gray-600 lg:text-sm">
                       Total Earnings
                     </p>
                     <p className="text-xl font-bold text-gray-900">
@@ -205,7 +205,7 @@ const Dashboard = () => {
                     </p>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Recent Services */}
@@ -309,7 +309,7 @@ const Dashboard = () => {
                         {order.serviceName}
                       </p>
                       <p className="text-sm font-medium text-gray-900">
-                        ₹{order.amount}
+                        ₹{order.totalPaidAmount}
                       </p>
                       <p className="text-xs text-gray-500">
                         {new Date(order.createdAt).toLocaleDateString()}
@@ -337,14 +337,14 @@ const Dashboard = () => {
                   Add New Service
                 </button>
                 <button
-                  onClick={() => navigate("/setting")}
+                  onClick={() => navigate("/setting?tab=profile")}
                   className="w-full rounded-lg border border-[#0b8263] px-4 py-2 font-medium text-[#0b8263] transition-colors hover:bg-green-50"
                 >
                   Update Profile
                 </button>
                 {user?.kycVerified === "pending" && (
                   <button
-                    onClick={() => navigate("/setting")}
+                    onClick={() => navigate("/setting?tab=kyc")}
                     className="w-full rounded-lg bg-yellow-600 px-4 py-2 font-medium text-white transition-colors hover:bg-yellow-700"
                   >
                     Complete KYC

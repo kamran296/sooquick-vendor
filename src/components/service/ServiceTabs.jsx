@@ -6,7 +6,7 @@ const ServiceTabs = () => {
   const serviceTabData = [
     {
       id: 0,
-      name: "Your Services",
+      name: "My Services",
       path: "/",
     },
     {

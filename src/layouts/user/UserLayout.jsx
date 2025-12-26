@@ -4,7 +4,7 @@ import Sidebar from "../../components/user/Sidebar";
 
 const UserLayout = ({ children }) => {
   return (
-    <div className="flex h-screen flex-col">
+    <div className="font-mont flex h-screen flex-col">
       <Navbar />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />

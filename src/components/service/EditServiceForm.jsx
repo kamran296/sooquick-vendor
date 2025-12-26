@@ -190,7 +190,7 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
   }
 
   return (
-    <div className="mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-md">
+    <div className="font-mont mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-md">
       {/* <h2 className="mb-6 text-2xl font-bold text-gray-800">Edit Service</h2> */}
 
       {error && (

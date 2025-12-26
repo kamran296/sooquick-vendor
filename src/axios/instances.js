@@ -24,11 +24,25 @@ const privateRequest = axios.create({
 // );
 
 // Handle 401
+
+const logout = async () => {
+  try {
+    const request = await axios.post(
+      `${baseURL}/auth/logout`,
+      {},
+      { withCredentials: true },
+    );
+  } catch (err) {
+    console.log("Error loggin out", err);
+  }
+};
+
 privateRequest.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401) {
       // localStorage.removeItem("token");
+      logout();
       if (window.location.pathname !== "/") {
         window.location.href = "/";
       }
