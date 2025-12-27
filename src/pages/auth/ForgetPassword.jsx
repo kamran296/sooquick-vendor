@@ -37,7 +37,7 @@ const ForgetPassword = () => {
     setEmailLoading(true);
     try {
       //   await dispatch(sendOtpThunk({ email })).unwrap();
-      emailLoading(true);
+
       const response = await request.requestOtp({ email });
       console.log(response, "Otp request response");
       setStep("otp");
