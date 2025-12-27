@@ -212,10 +212,10 @@ const Dashboard = () => {
             <div className="rounded-lg bg-white p-6 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">
-                  Recent Services
+                  Recently Created Services
                 </h2>
                 <button
-                  onClick={() => navigate("/vendor/services")}
+                  onClick={() => navigate("/service")}
                   className="font-medium text-[#0b8263] hover:text-green-700"
                 >
                   View All
@@ -226,9 +226,7 @@ const Dashboard = () => {
                   recentServices.map((service) => (
                     <div
                       key={service._id}
-                      onClick={() =>
-                        navigate(`/vendor/services/${service._id}`)
-                      }
+                      onClick={() => navigate(`/service/${service._id}`)}
                       className="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
                     >
                       <div>

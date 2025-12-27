@@ -1524,7 +1524,7 @@ const KycForm = () => {
                 )}
 
                 <FileInput
-                  label="Cancelled Cheque"
+                  label="Cancelled Cheque / Bank Statement"
                   documentType="cancelledCheque"
                   accept="image/*,.pdf"
                   file={kycData.documents?.cancelledCheque}
