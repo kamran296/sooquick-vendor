@@ -17,6 +17,7 @@ const ForgetPassword = () => {
   const [otpLoading, setOtpLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,7 +37,7 @@ const ForgetPassword = () => {
     setEmailLoading(true);
     try {
       //   await dispatch(sendOtpThunk({ email })).unwrap();
-      setSubmitting(true);
+      emailLoading(true);
       const response = await request.requestOtp({ email });
       console.log(response, "Otp request response");
       setStep("otp");
