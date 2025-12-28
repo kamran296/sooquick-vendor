@@ -387,7 +387,7 @@ const Wallet = () => {
             </div>
 
             {/* Rewards Card */}
-            <div className="rounded-2xl border-l-4 border-l-amber-500 bg-white p-6 shadow-lg">
+            {/* <div className="rounded-2xl border-l-4 border-l-amber-500 bg-white p-6 shadow-lg">
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-700">
@@ -406,7 +406,7 @@ const Wallet = () => {
                   💎 Premium members earn 2x reward points on every booking
                 </p>
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* Quick Stats */}
