@@ -54,9 +54,26 @@ const Navbar = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between py-5 pt-4">
             <div className="flex w-full items-center justify-center gap-4">
-              <div className="text-xl font-bold text-gray-800">
+              {/* <div className="text-xl font-bold text-gray-800">
                 <Link to="/" className="flex items-center">
                   <img src={Logo} alt="Logo" className="h-8 md:h-[50px]" />
+                </Link>
+              </div> */}
+              <div className="flex font-bold text-gray-800">
+                <Link to="/" className="flex items-center">
+                  <img
+                    src={Logo}
+                    alt="Logo"
+                    className="h-8 scale-110 md:h-10"
+                  />
+                  <div className="flex flex-col">
+                    <p className="p-0 text-sm text-[#0b8263] md:text-xl">
+                      SooQuick
+                    </p>
+                    <p className="-mt-1 text-[5px] md:text-[8px]">
+                      Life too busy, but we're so quick
+                    </p>
+                  </div>
                 </Link>
               </div>
               {/* Vertical line */}
