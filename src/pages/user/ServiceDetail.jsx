@@ -115,12 +115,6 @@ const ServiceDetail = () => {
                     {service.availability}
                   </span>
                 </div>
-                <div>
-                  <span className="text-gray-500">Delivery Time:</span>
-                  <span className="ml-2 font-medium">
-                    {service.deliveryTime || "3-5 days"}
-                  </span>
-                </div>
               </div>
             </div>
           </div>
@@ -446,7 +440,7 @@ const ServiceDetail = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                {/* <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="text-gray-500">Response Time:</span>
                     <span className="ml-2 font-medium">
@@ -459,7 +453,7 @@ const ServiceDetail = () => {
                       {new Date(service.vendor.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                </div>
+                </div> */}
               </div>
 
               {/* Service Areas */}

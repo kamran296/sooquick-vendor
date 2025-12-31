@@ -215,7 +215,7 @@ const Dashboard = () => {
                   Recently Created Services
                 </h2>
                 <button
-                  onClick={() => navigate("/service")}
+                  onClick={() => navigate("/services")}
                   className="font-medium text-[#0b8263] hover:text-green-700"
                 >
                   View All
