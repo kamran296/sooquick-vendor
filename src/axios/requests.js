@@ -10,7 +10,7 @@ const login = async (payload) => {
 };
 
 const logout = async (payload) => {
-  return await instances.privateRequest.get(API.AUTH.LOGOUT);
+  return await instances.privateRequest.post(API.AUTH.LOGOUT);
 };
 
 const emailVerify = async (token) => {
