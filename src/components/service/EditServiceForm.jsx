@@ -205,12 +205,36 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
         </div>
       )}
 
-      {/* <div className="mb-4 rounded-md bg-yellow-50 p-3 text-yellow-700">
-        <p className="text-sm">
-          <strong>Note:</strong> Changing service name, category, or price will
-          require admin approval.
-        </p>
-      </div> */}
+      {/* Show rejection reason if editing a rejected service */}
+      {service?.isApproved === "rejected" && service?.rejectionMessage && (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
+          <div className="flex items-start gap-3">
+            <svg
+              className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.698-.833-2.464 0L4.232 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
+            </svg>
+            <div>
+              <h3 className="font-semibold text-red-800">
+                Service Was Rejected
+              </h3>
+              <p className="mt-1 text-red-700">{service.rejectionMessage}</p>
+              <p className="mt-2 text-sm text-red-600">
+                Please address the issues above before resubmitting for
+                approval.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

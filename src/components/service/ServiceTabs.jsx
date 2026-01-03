@@ -3,33 +3,38 @@ import { useDispatch, useSelector } from "react-redux";
 import { setServiceTab } from "../../redux/slices/serviceSlice";
 
 const ServiceTabs = () => {
+  const dispatch = useDispatch();
+  const activeTab = useSelector((state) => state.service.serviceTabActive);
+  const { requestedCount, rejectedCount, totalServices } = useSelector(
+    (state) => state.service,
+  );
+
   const serviceTabData = [
     {
       id: 0,
       name: "My Services",
       path: "/",
+      count: totalServices,
     },
     {
       id: 1,
       name: "Post Services",
       path: "/",
+      count: 0,
     },
     {
       id: 2,
       name: "Pending Approvals",
       path: "/",
+      count: requestedCount || 0,
     },
     {
       id: 3,
       name: "Rejected Services",
       path: "/",
+      count: rejectedCount || 0,
     },
   ];
-  const dispatch = useDispatch();
-  const activeTab = useSelector((state) => state.service.serviceTabActive);
-  const { requestedCount, rejectedCount } = useSelector(
-    (state) => state.service,
-  );
 
   const handleClick = (index) => {
     dispatch(setServiceTab(index));

@@ -394,12 +394,12 @@ const ServiceDetail = () => {
                 </div>
 
                 <div className="mb-6 grid grid-cols-2 gap-4 text-sm">
-                  <div>
+                  {/* <div>
                     <span className="text-gray-500">Delivery Time:</span>
                     <span className="ml-2 font-medium">
                       {service.deliveryTime || "3-5 days"}
                     </span>
-                  </div>
+                  </div> */}
                   <div>
                     <span className="text-gray-500">Availability:</span>
                     <span className="ml-2 font-medium">

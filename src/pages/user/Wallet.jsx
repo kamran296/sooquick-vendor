@@ -22,6 +22,8 @@ import UserLayout from "../../layouts/user/UserLayout";
 import request from "../../axios/requests";
 import { toast } from "react-toastify";
 import { setSidebarTab } from "../../redux/slices/sidebarSlice";
+import appRoutes from "../../appRoutes";
+import { useNavigate } from "react-router-dom";
 
 const Wallet = () => {
   const { user } = useSelector((state) => state.user);
@@ -33,6 +35,7 @@ const Wallet = () => {
   const [showCashoutModal, setShowCashoutModal] = useState(false);
   const [cashoutAmount, setCashoutAmount] = useState("");
   const [cashoutLoading, setCashoutLoading] = useState(false);
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(setSidebarTab(3));
@@ -619,7 +622,10 @@ const Wallet = () => {
                   Contact our support team for any wallet-related queries
                 </p>
               </div>
-              <button className="mt-4 rounded-lg bg-white px-6 py-2 font-semibold text-[#0b8263] transition-colors hover:bg-gray-100 md:mt-0">
+              <button
+                onClick={() => navigate(appRoutes.support)}
+                className="mt-4 rounded-lg bg-white px-6 py-2 font-semibold text-[#0b8263] transition-colors hover:bg-gray-100 md:mt-0"
+              >
                 Contact Support
               </button>
             </div>

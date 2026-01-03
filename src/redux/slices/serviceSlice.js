@@ -39,6 +39,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   serviceTabActive: 0,
   services: [],
+  totalServices: 0,
   requestedCount: 0,
   rejectedCount: 0,
   state: null,
@@ -55,6 +56,7 @@ const serviceSlice = createSlice({
     setServices: (state, action) => {
       const data = action.payload;
       state.services = data;
+      state.totalServices = data.length;
       state.requestedCount = data.filter(
         (item) => item.isApproved === "requested",
       ).length;

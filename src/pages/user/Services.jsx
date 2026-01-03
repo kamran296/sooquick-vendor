@@ -41,14 +41,20 @@ const Services = () => {
       dispatch(setActiveTabFromUrl(urlToTabMap[tabFromUrl]));
     } else {
       // If no tab in URL, set default and update URL
-      setSearchParams({ tab: tabToUrlMap[activeTab] });
+      setSearchParams({ tab: tabToUrlMap[activeTab] }, { replace: true });
     }
   }, []);
 
   // Update URL when active tab changes
   useEffect(() => {
-    setSearchParams({ tab: tabToUrlMap[activeTab] });
-  }, [activeTab, setSearchParams]);
+    // Only update if the tab actually changed
+    const currentTab = searchParams.get("tab");
+    const newTab = tabToUrlMap[activeTab];
+
+    if (currentTab !== newTab) {
+      setSearchParams({ tab: newTab }, { replace: true });
+    }
+  }, [activeTab, searchParams, setSearchParams]);
 
   useEffect(() => {
     const getAllServices = async () => {
