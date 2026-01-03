@@ -7,9 +7,11 @@ import {
   markNotificationRead,
 } from "../../redux/slices/notificationSlice";
 import { FaBell } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const NotificationBell = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { notifications, unreadCount } = useSelector(
     (state) => state.notifications,
   );
@@ -20,8 +22,11 @@ const NotificationBell = () => {
     dispatch(getAllNotifications());
   }, []);
 
-  const handleMarkAsRead = (id) => {
+  const handleMarkAsRead = (id, link) => {
     dispatch(markNotificationRead(id));
+    if (link) {
+      navigate(link);
+    }
   };
 
   useEffect(() => {
@@ -80,7 +85,9 @@ const NotificationBell = () => {
                   className={`cursor-pointer border-b border-gray-100 p-3 hover:bg-gray-50 ${
                     !notification.read ? "bg-blue-50" : ""
                   }`}
-                  onClick={() => handleMarkAsRead(notification._id)}
+                  onClick={() =>
+                    handleMarkAsRead(notification._id, notification.link)
+                  }
                 >
                   <p className="text-sm font-medium text-gray-900">
                     {notification.title}
