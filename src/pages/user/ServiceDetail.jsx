@@ -373,7 +373,7 @@ const ServiceDetail = () => {
 
                 {/* Rejection Banner */}
                 {service.isApproved === "rejected" && (
-                  <div className="rounded-lg border border-red-300 bg-red-50 p-4">
+                  <div className="mb-4 rounded-lg border border-red-300 bg-red-50 p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <h3 className="font-semibold text-red-700">
@@ -434,6 +434,12 @@ const ServiceDetail = () => {
                       {service.availability}
                     </span>
                   </div>
+                  <div>
+                    <span className="text-gray-500">Working hours:</span>
+                    <span className="ml-2 font-medium">
+                      {service.workingStartTime}-{service.workingEndTime}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex flex-col space-y-3">
@@ -447,7 +453,7 @@ const ServiceDetail = () => {
                   {service.isApproved === "rejected" && (
                     <button
                       onClick={handleDeleteService}
-                      className="rounded-md bg-red-500 px-3 py-1.5 text-sm text-white hover:bg-red-600"
+                      className="flex w-full items-center justify-center rounded-md border border-gray-300 px-4 py-3 hover:bg-red-500"
                     >
                       <FaTrash className="mr-2" /> Delete
                     </button>
