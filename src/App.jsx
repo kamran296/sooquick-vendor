@@ -18,7 +18,6 @@ import OrdersDashboard from "./pages/user/OrdersDashboard";
 import Wallet from "./pages/user/Wallet";
 import ServiceDetail from "./pages/user/ServiceDetail";
 import Support from "./pages/user/Support";
-import Cookies from "js-cookie";
 import CompanyPolicy from "./pages/CompanyPolicy";
 import VendorPolicy from "./pages/VendorPolicy";
 

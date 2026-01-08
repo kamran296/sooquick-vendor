@@ -35,6 +35,7 @@ const API = {
     CREATE: "/vendor/create-service",
     UPDATE: (id) => `/vendor/update-service/${id}`,
     GET: (serviceId) => `/service/${serviceId}`,
+    DELETE: (serviceId) => `/service/${serviceId}`,
   },
   ORDER: {
     GET_ALL: "/vendor/order/",

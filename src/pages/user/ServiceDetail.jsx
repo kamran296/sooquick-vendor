@@ -14,6 +14,7 @@ import {
   FaShoppingCart,
   FaComment,
   FaCheckCircle,
+  FaTrash,
 } from "react-icons/fa";
 import EditServiceForm from "../../components/service/EditServiceForm";
 import { toast } from "react-toastify";
@@ -101,18 +102,24 @@ const ServiceDetail = () => {
               <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
                 <div>
                   <span className="text-gray-500">Category:</span>
-                  <span className="ml-2 font-medium">{service.category}</span>
+                  <span className="ml-2 font-medium">
+                    {service.mainCategory}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-gray-500">Subcategory:</span>
-                  <span className="ml-2 font-medium">
-                    {service.subCategory}
-                  </span>
+                  <span className="text-gray-500">Category:</span>
+                  <span className="ml-2 font-medium">{service.category}</span>
                 </div>
                 <div>
                   <span className="text-gray-500">Availability:</span>
                   <span className="ml-2 font-medium">
                     {service.availability}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Working Time:</span>
+                  <span className="ml-2 font-medium">
+                    {service.workingStartTime} - {service.workingEndTime}
                   </span>
                 </div>
               </div>
@@ -122,20 +129,9 @@ const ServiceDetail = () => {
       case "features":
         return (
           <div className="font-mont rounded-lg bg-white p-6 shadow-sm">
-            <h3 className="mb-4 font-semibold text-gray-900">
-              What's Included
-            </h3>
+            <h3 className="mb-4 font-semibold text-gray-900">Scope Of Work</h3>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              {service.features && service.features.length > 0 ? (
-                service.features.map((feature, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <FaCheckCircle className="h-4 w-4 text-green-500" />
-                    <span>{feature}</span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-500">No specific features listed.</p>
-              )}
+              <p className="text-gray-500">{service.scopeOfWork}</p>
             </div>
           </div>
         );
@@ -233,6 +229,23 @@ const ServiceDetail = () => {
   // Handle cancel edit
   const handleCancelEdit = () => {
     setShowEditModal(false);
+  };
+
+  const handleDeleteService = async () => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this service? This action cannot be undone.",
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await request.deleteService(service._id);
+      toast.success("Service deleted successfully");
+      navigate("/services");
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.error("Failed to delete service");
+    }
   };
 
   return (
@@ -358,6 +371,27 @@ const ServiceDetail = () => {
                   </h1>
                 </div>
 
+                {/* Rejection Banner */}
+                {service.isApproved === "rejected" && (
+                  <div className="rounded-lg border border-red-300 bg-red-50 p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="font-semibold text-red-700">
+                          ❌ Service Rejected
+                        </h3>
+                        <p className="mt-1 text-sm text-red-600">
+                          <span className="font-medium">Reason:</span>{" "}
+                          {service.rejectionMessage || "No reason provided"}
+                        </p>
+                        <p className="mt-2 text-xs text-gray-600">
+                          You can edit this service to fix the issues or delete
+                          it and create a new one.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="mb-4 flex items-center gap-4">
                   <div className="flex items-center gap-1">
                     <FaStar className="h-5 w-5 fill-yellow-400 text-yellow-400" />
@@ -394,12 +428,6 @@ const ServiceDetail = () => {
                 </div>
 
                 <div className="mb-6 grid grid-cols-2 gap-4 text-sm">
-                  {/* <div>
-                    <span className="text-gray-500">Delivery Time:</span>
-                    <span className="ml-2 font-medium">
-                      {service.deliveryTime || "3-5 days"}
-                    </span>
-                  </div> */}
                   <div>
                     <span className="text-gray-500">Availability:</span>
                     <span className="ml-2 font-medium">
@@ -408,7 +436,7 @@ const ServiceDetail = () => {
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="flex flex-col space-y-3">
                   <button
                     onClick={() => setShowEditModal(!showEditModal)}
                     className="flex w-full items-center justify-center rounded-md border border-gray-300 px-4 py-3 hover:bg-gray-50"
@@ -416,6 +444,14 @@ const ServiceDetail = () => {
                     <FaPen className="mr-2" />
                     Edit service
                   </button>
+                  {service.isApproved === "rejected" && (
+                    <button
+                      onClick={handleDeleteService}
+                      className="rounded-md bg-red-500 px-3 py-1.5 text-sm text-white hover:bg-red-600"
+                    >
+                      <FaTrash className="mr-2" /> Delete
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -454,6 +490,19 @@ const ServiceDetail = () => {
                     </span>
                   </div>
                 </div> */}
+              </div>
+              {/* pricing info */}
+              <div className="rounded-lg bg-white p-4 shadow-sm">
+                <h3 className="mb-2 font-semibold text-gray-900">
+                  Earnings Breakdown
+                </h3>
+                <div className="space-y-1 text-sm">
+                  <p>Service Price: ₹{service.finalPrice}</p>
+                  <p>Platform Fee: ₹{service.vendorPlatformFee}</p>
+                  <p className="font-semibold text-green-600">
+                    You Earn: ₹{service.finalPrice - service.vendorPlatformFee}
+                  </p>
+                </div>
               </div>
 
               {/* Service Areas */}

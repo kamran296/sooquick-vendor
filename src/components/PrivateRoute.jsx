@@ -17,8 +17,7 @@ const PrivateRoute = () => {
   const checkAuth = useCallback(async () => {
     try {
       const res = await request.checkAuth();
-
-      if (res) {
+      if (res.status === 200) {
         setIsAuthenticated(true);
         // dispatch(setUserName(res.data.name));
         // dispatch(setkycVerified(res.data.kycVerified));

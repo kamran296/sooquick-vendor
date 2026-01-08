@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaRupeeSign, FaHeart, FaShoppingCart, FaCheck } from "react-icons/fa";
+import { FaRupeeSign, FaHeart, FaTrash, FaCheck } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import EditServiceForm from "./EditServiceForm"; // Import the edit form component
 
@@ -298,6 +298,16 @@ const ServiceCard = ({ service }) => {
             >
               Edit Service
             </button>
+            {service.isApproved === "rejected" && (
+              <button
+                onClick={() => onDelete(service._id)}
+                disabled={deleting}
+                title="Delete Service"
+                className={`rounded-lg border border-red-200 p-2 text-red-600 transition ${deleting ? "cursor-not-allowed opacity-50" : "hover:bg-red-50"}`}
+              >
+                <FaTrash />
+              </button>
+            )}
           </div>
         </div>
       </div>

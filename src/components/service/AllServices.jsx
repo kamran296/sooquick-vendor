@@ -2,12 +2,15 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import ServiceCard from "./ServiceCard";
 import { setSidebarTab } from "../../redux/slices/sidebarSlice";
+import { toast } from "react-toastify";
+import { setServices } from "../../redux/slices/serviceSlice";
 
 const AllServices = ({ filter = "all" }) => {
   const { services } = useSelector((state) => state.service);
   const [selectedService, setSelectedService] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   const dispatch = useDispatch();
   useEffect(() => {
@@ -32,6 +35,23 @@ const AllServices = ({ filter = "all" }) => {
         return services;
     }
   }, [services, filter]);
+
+  const handleDeleteService = async (serviceId) => {
+    try {
+      setDeletingId(serviceId);
+      await request.deleteService(serviceId);
+
+      // Refresh services after delete
+      // dispatch(fetchServices());
+      const service = request.getAllServices;
+      dispatch(setServices(service.data.services));
+    } catch (error) {
+      console.error("Failed to delete service", error);
+      toast.error("Failed to delete service. Please try again.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (!services || services.length === 0) {
     return (
@@ -63,7 +83,12 @@ const AllServices = ({ filter = "all" }) => {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredServices.map((service) => (
-          <ServiceCard key={service._id || service.id} service={service} />
+          <ServiceCard
+            key={service._id || service.id}
+            service={service}
+            onDelete={handleDeleteService}
+            deleting={deletingId === service._id}
+          />
         ))}
       </div>
 

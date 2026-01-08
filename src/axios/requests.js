@@ -88,6 +88,10 @@ const createService = async (formData) => {
 const updateService = async (id, formData) => {
   return await instances.privateRequest.put(API.SERVICES.UPDATE(id), formData);
 };
+const deleteService = async (id) => {
+  return await instances.privateRequest.delete(API.SERVICES.DELETE(id));
+};
+
 const getAllServices = async () => {
   return await instances.privateRequest.get(API.SERVICES.GET_ALL);
 };
@@ -204,6 +208,7 @@ const request = {
 
   createService,
   updateService,
+  deleteService,
   getAllServices,
   getRequestedService,
   getRejectedServices,
