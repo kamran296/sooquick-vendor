@@ -6,6 +6,7 @@ const API = {
     VERIFY_OTP: "/auth/verify-otp",
     RESET_PASSWORD: "/auth/reset-password/vendor",
     LOGIN: "/auth/login/vendor",
+    RESEND_VERIFICATION: "/auth/verification",
     LOGOUT: "/auth/logout",
     CHECK_AUTH: "/auth/check-auth/vendor",
     VERIFY_2FA: "/auth/verify-two-factor",

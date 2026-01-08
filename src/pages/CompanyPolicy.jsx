@@ -542,10 +542,10 @@ export default function CompanyPolicy() {
             })}{" "}
             • For policy inquiries, contact{" "}
             <a
-              href="mailto:legal@sooquick.com"
+              href="mailto:info@sooquick.com"
               className="text-[#0b8263] hover:underline"
             >
-              legal@sooquick.com
+              info@sooquick.com
             </a>
           </p>
         </div>

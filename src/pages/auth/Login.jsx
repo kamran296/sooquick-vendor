@@ -15,10 +15,13 @@ const Login = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [showTwoFactorModal, setShowTwoFactorModal] = useState(false);
   const [twoFactorData, setTwoFactorData] = useState(null);
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
+  const [resending, setResending] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setEmailNotVerified(false);
     setFormData({
       ...formData,
       [name]: value,
@@ -55,10 +58,22 @@ const Login = () => {
         toast.error(data.message || "Login failed");
       }
     } catch (error) {
-      toast.error(
-        error.response.data.message || "An error occurred during login",
-      );
+      const status = error?.response?.status;
+      const data = error?.response?.data;
+
+      // Email not verified flow
+      if (status === 403 && data?.code === "EMAIL_NOT_VERIFIED") {
+        setEmailNotVerified(true);
+        toast.warn(data.message || "Please verify your email");
+        return;
+      }
+
+      toast.error(data?.message || "Invalid email or password");
       console.error("Login error:", error);
+      // toast.error(
+      //   error.response.data.message || "An error occurred during login",
+      // );
+      // console.error("Login error:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -73,6 +88,25 @@ const Login = () => {
   const handleTwoFactorClose = () => {
     setShowTwoFactorModal(false);
     setTwoFactorData(null);
+  };
+  const handleResendVerification = async () => {
+    try {
+      setResending(true);
+
+      await request.resendVerification({
+        email: formData.email,
+        role: "customer", // or "vendor" if vendor login
+      });
+
+      toast.success("Verification email resent successfully");
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Failed to resend verification email",
+      );
+    } finally {
+      setEmailNotVerified(false);
+      setResending(false);
+    }
   };
   return (
     <>
@@ -137,7 +171,20 @@ const Login = () => {
                 </div>
               </div>
 
-              <div>
+              <div className="flex flex-col gap-1">
+                {emailNotVerified && (
+                  <div className="mb-2 rounded-md border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-800">
+                    <p>Your email is not verified.</p>
+                    <button
+                      type="button"
+                      disabled={resending}
+                      onClick={handleResendVerification}
+                      className="mt-2 text-sm font-medium text-green-700 hover:underline disabled:opacity-50"
+                    >
+                      {resending ? "Resending..." : "Resend verification email"}
+                    </button>
+                  </div>
+                )}
                 <button
                   type="submit"
                   disabled={isSubmitting}

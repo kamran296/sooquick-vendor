@@ -9,6 +9,13 @@ const login = async (payload) => {
   return await instances.publicRequest.post(API.AUTH.LOGIN, payload);
 };
 
+const resendVerification = async (payload) => {
+  return await instances.publicRequest.post(
+    API.AUTH.RESEND_VERIFICATION,
+    payload,
+  );
+};
+
 const logout = async (payload) => {
   return await instances.privateRequest.post(API.AUTH.LOGOUT);
 };
@@ -177,6 +184,7 @@ const request = {
   signup,
   login,
   logout,
+  resendVerification,
   emailVerify,
   requestOtp,
   verifyOtp,
