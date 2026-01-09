@@ -44,7 +44,7 @@ const AllServices = ({ filter = "all" }) => {
 
       // Refresh services after delete
       // dispatch(fetchServices());
-      const service = request.getAllServices;
+      const service = await request.getAllServices;
       dispatch(setServices(service.data.services));
     } catch (error) {
       console.error("Failed to delete service", error);
