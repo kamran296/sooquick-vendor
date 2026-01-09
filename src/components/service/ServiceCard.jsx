@@ -3,7 +3,7 @@ import { FaRupeeSign, FaHeart, FaTrash, FaCheck } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import EditServiceForm from "./EditServiceForm"; // Import the edit form component
 
-const ServiceCard = ({ service }) => {
+const ServiceCard = ({ service, onDelete, deleting }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false); // State for edit modal
