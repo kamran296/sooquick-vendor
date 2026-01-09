@@ -300,7 +300,10 @@ const ServiceCard = ({ service, onDelete, deleting }) => {
             </button>
             {service.isApproved === "rejected" && (
               <button
-                onClick={() => onDelete(service._id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(service._id);
+                }}
                 disabled={deleting}
                 title="Delete Service"
                 className={`rounded-lg border border-red-200 p-2 text-red-600 transition ${deleting ? "cursor-not-allowed opacity-50" : "hover:bg-red-50"}`}
