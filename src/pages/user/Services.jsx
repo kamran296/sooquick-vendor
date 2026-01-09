@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import UserLayout from "../../layouts/user/UserLayout";
 import ServiceTabs from "../../components/service/ServiceTabs";
 import { useDispatch, useSelector } from "react-redux";
@@ -11,9 +11,11 @@ import {
 } from "../../redux/slices/serviceSlice";
 import { toast } from "react-toastify";
 import AllServices from "../../components/service/AllServices";
+import { FaArrowLeft } from "react-icons/fa";
 
 const Services = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const activeTab = useSelector((state) => state.service.serviceTabActive);
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -104,6 +106,12 @@ const Services = () => {
 
   return (
     <UserLayout>
+      <div
+        onClick={() => navigate("/dashboard")}
+        className="flex items-center gap-2 text-teal-600 underline hover:text-teal-700"
+      >
+        <FaArrowLeft /> <div>back to dashboard</div>
+      </div>
       <ServiceTabs />
       {renderContent()}
     </UserLayout>

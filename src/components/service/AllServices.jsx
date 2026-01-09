@@ -4,6 +4,7 @@ import ServiceCard from "./ServiceCard";
 import { setSidebarTab } from "../../redux/slices/sidebarSlice";
 import { toast } from "react-toastify";
 import { setServices } from "../../redux/slices/serviceSlice";
+import request from "../../axios/requests";
 
 const AllServices = ({ filter = "all" }) => {
   const { services } = useSelector((state) => state.service);
