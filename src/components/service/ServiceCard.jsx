@@ -289,15 +289,18 @@ const ServiceCard = ({ service, onDelete, deleting }) => {
 
           {/* Actions */}
           <div className="mt-6 flex space-x-4 border-t border-gray-200 pt-6">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowEditModal(true);
-              }}
-              className="rounded-lg bg-[#0b8263] px-6 py-2 text-white transition-colors hover:bg-teal-700"
-            >
-              Edit Service
-            </button>
+            {service.isApproved !== "requested" && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowEditModal(true);
+                }}
+                className="rounded-lg bg-[#0b8263] px-6 py-2 text-white transition-colors hover:bg-teal-700"
+              >
+                Edit Service
+              </button>
+            )}
+
             {service.isApproved === "rejected" && (
               <button
                 onClick={(e) => {

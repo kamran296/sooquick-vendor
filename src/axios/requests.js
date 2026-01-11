@@ -49,6 +49,9 @@ const getUser = async () => {
 const updateUser = async (formData) => {
   return await instances.privateRequest.put(API.USER.UPDATE, formData);
 };
+const uploadProfileImage = async (payload) => {
+  return await instances.privateRequest.post(API.USER.UPDATE_IMAGE, payload);
+};
 
 const purchaseMembership = async (formData) => {
   return await instances.privateRequest.post(
@@ -80,6 +83,11 @@ const getKycDetails = async () => {
 const submitKycDetails = async (formData) => {
   return await instances.privateRequest.post(API.KYC.REQUEST, formData);
 };
+const deleteKycFile = async (payload) => {
+  return await instances.privateRequest.delete(API.KYC.DELETE_FILE, {
+    data: payload,
+  });
+};
 
 // ========================Services===================
 const createService = async (formData) => {
@@ -103,6 +111,11 @@ const getRejectedServices = async () => {
 };
 const getServiceDetails = async (serviceId) => {
   return await instances.privateRequest.get(API.SERVICES.GET(serviceId));
+};
+const deleteServiceImage = async (payload) => {
+  return await instances.privateRequest.delete(API.SERVICES.DELETE_IMAGE, {
+    data: payload,
+  });
 };
 
 // ------orders--------------
@@ -197,8 +210,10 @@ const request = {
   getUser,
   getVendorDashboard,
   updateUser,
+  uploadProfileImage,
   getKycDetails,
   submitKycDetails,
+  deleteKycFile,
   purchaseMembership,
   cancelMembership,
   verifyTwoFactor,
@@ -213,6 +228,7 @@ const request = {
   getRequestedService,
   getRejectedServices,
   getServiceDetails,
+  deleteServiceImage,
 
   getAllOrders,
   addAdditionalService,

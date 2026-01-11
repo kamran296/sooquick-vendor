@@ -19,10 +19,12 @@ const API = {
     GET_WALLET: "/vendor/wallet",
     REQUEST_CASHOUT: "/vendor/cashout",
     DASHBOARD: "/vendor/dashboard",
+    UPDATE_IMAGE: "/user/profile-image",
   },
   KYC: {
     GET: "/vendor/kyc/details",
     REQUEST: "/vendor/kyc",
+    DELETE_FILE: "/vendor/delete-kyc-file",
   },
   NOTIFICATION: {
     GET: "/notification",
@@ -36,6 +38,7 @@ const API = {
     UPDATE: (id) => `/vendor/update-service/${id}`,
     GET: (serviceId) => `/service/${serviceId}`,
     DELETE: (serviceId) => `/service/${serviceId}`,
+    DELETE_IMAGE: "/service/delete-image",
   },
   ORDER: {
     GET_ALL: "/vendor/order/",

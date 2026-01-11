@@ -19,7 +19,7 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const name = useSelector((state) => state.user.name);
   const membership = useSelector((state) => state.user.membership);
-
+  const { user } = useSelector((state) => state.user);
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
@@ -102,7 +102,15 @@ const Navbar = () => {
                 <div className="relative z-10 w-fit">
                   {/* Circular user icon */}
                   <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#0b8266]">
-                    <FaUser className="text-lg text-[#0b8266]" />
+                    {user?.profileImage ? (
+                      <img
+                        src={`${import.meta.env.VITE_API_URL}${user.profileImage}`}
+                        alt="Profile"
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <FaUser className="text-lg text-[#0b8266]" />
+                    )}
                   </div>
                   <p className="absolute top-10 -right-5 hidden w-20 truncate text-center text-sm text-nowrap md:block">
                     {name ? name : "Profile"}

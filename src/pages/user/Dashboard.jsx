@@ -14,11 +14,6 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    dispatch(setSidebarTab(0));
-    fetchDashboardData();
-  }, []);
-
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
@@ -30,6 +25,10 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    dispatch(setSidebarTab(0));
+    fetchDashboardData();
+  }, []);
 
   if (loading) {
     return (

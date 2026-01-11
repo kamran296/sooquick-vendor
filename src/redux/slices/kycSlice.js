@@ -25,6 +25,9 @@ const initialState = {
   error: null,
   success: false,
   kycStatus: "pending",
+  deleteLoading: false,
+  deleteError: null,
+  deletingDoc: null,
 };
 
 // Fetch KYC information
@@ -184,6 +187,26 @@ export const submitKycInfo = createAsyncThunk(
   },
 );
 
+// delete kyc documents
+export const deleteDocument = createAsyncThunk(
+  "kyc/deleteDocument",
+  async ({ documentType, documentPath }, { rejectWithValue }) => {
+    try {
+      const response = await request.deleteKycFile({
+        documentType,
+        documentPath,
+      });
+      return { documentType, documentPath, response: response.data };
+    } catch (error) {
+      return rejectWithValue({
+        documentType,
+        documentPath,
+        error: error.response?.data?.message || "Failed to delete document",
+      });
+    }
+  },
+);
+
 const kycSlice = createSlice({
   name: "kyc",
   initialState,
@@ -228,6 +251,13 @@ const kycSlice = createSlice({
         state.kycData.documents[documentType] = null;
       }
     },
+
+    // Add a reducer to clear deletion state
+    clearDeletionState: (state) => {
+      state.deletingDoc = null;
+      state.deleteError = null;
+    },
+
     resetKycState: (state) => {
       state.loading = false;
       state.error = null;

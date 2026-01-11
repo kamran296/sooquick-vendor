@@ -52,7 +52,7 @@ const Login = () => {
         } else {
           toast.success(data.message || "Login successful");
           // window.localStorage.setItem("token", data.accessToken);
-          navigate(`${appRoutes.dashboard}`);
+          navigate(appRoutes.dashboard, { replace: true });
         }
       } else {
         toast.error(data.message || "Login failed");
@@ -83,7 +83,7 @@ const Login = () => {
     toast.success(loginData.message || "Login successful");
     setShowTwoFactorModal(false);
     setTwoFactorData(null);
-    navigate(`${appRoutes.dashboard}`);
+    navigate(appRoutes.dashboard, { relace: true });
   };
   const handleTwoFactorClose = () => {
     setShowTwoFactorModal(false);

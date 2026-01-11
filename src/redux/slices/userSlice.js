@@ -15,6 +15,7 @@ const initialState = {
     gender: null,
     twoFactorEnabled: false,
     kycVerified: "pending",
+    profileImage: null,
   },
   membership: {},
   status: "idle",
@@ -51,6 +52,19 @@ export const updateUser = createAsyncThunk(
   },
 );
 
+export const uploadProfileImage = createAsyncThunk(
+  "user/uploadProfileImage",
+  async (formData, { rejectWithValue }) => {
+    try {
+      const response = await request.uploadProfileImage(formData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to upload profile image",
+      );
+    }
+  },
+);
 const userSlice = createSlice({
   name: "user",
   initialState,
@@ -133,6 +147,17 @@ const userSlice = createSlice({
       .addCase(updateUser.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
+      })
+      .addCase(uploadProfileImage.pending, (state) => {
+        state.uploadStatus = "uploading";
+      })
+      .addCase(uploadProfileImage.fulfilled, (state, action) => {
+        state.uploadStatus = "succeeded";
+        state.user.profileImage = action.payload.profileImage;
+      })
+      .addCase(uploadProfileImage.rejected, (state, action) => {
+        state.uploadStatus = "failed";
+        state.uploadError = action.payload;
       });
   },
 });

@@ -443,13 +443,16 @@ const ServiceDetail = () => {
                 </div>
 
                 <div className="flex flex-col space-y-3">
-                  <button
-                    onClick={() => setShowEditModal(!showEditModal)}
-                    className="flex w-full items-center justify-center rounded-md border border-gray-300 px-4 py-3 hover:bg-gray-50"
-                  >
-                    <FaPen className="mr-2" />
-                    Edit service
-                  </button>
+                  {service.isApproved !== "requested" && (
+                    <button
+                      onClick={() => setShowEditModal(!showEditModal)}
+                      className="flex w-full items-center justify-center rounded-md border border-gray-300 px-4 py-3 hover:bg-gray-50"
+                    >
+                      <FaPen className="mr-2" />
+                      Edit service
+                    </button>
+                  )}
+
                   {service.isApproved === "rejected" && (
                     <button
                       onClick={handleDeleteService}

@@ -7,7 +7,10 @@ import {
   updateDocument,
   removeDocument,
   updateBusinessType,
+  deleteDocument,
 } from "../../redux/slices/kycSlice";
+import { FaTrash } from "react-icons/fa";
+import request from "../../axios/requests";
 
 // Validation utilities
 const validateAadhaar = (aadhaar) => {
@@ -157,6 +160,7 @@ const FileInput = ({
   onRemoveFile,
   required = false,
   disabled = false,
+  isDeleting = false,
 }) => {
   const inputRef = useRef(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -206,6 +210,15 @@ const FileInput = ({
 
       {file ? (
         <div className="relative rounded-lg border bg-gray-50 p-4 transition-all hover:bg-gray-100">
+          {/* Show loading overlay when deleting */}
+          {isDeleting && (
+            <div className="bg-opacity-50 absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-black">
+              <div className="flex items-center gap-2 text-white">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                <span className="text-sm">Deleting...</span>
+              </div>
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               {isImage && previewUrl ? (
@@ -266,10 +279,10 @@ const FileInput = ({
               <button
                 type="button"
                 className="rounded-full p-2 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700"
-                onClick={() => onRemoveFile(documentType)}
-                disabled={disabled}
+                onClick={() => onRemoveFile(documentType, file)}
+                disabled={isDeleting || disabled}
               >
-                <svg
+                {/* <svg
                   className="h-5 w-5"
                   fill="none"
                   stroke="currentColor"
@@ -281,7 +294,12 @@ const FileInput = ({
                     strokeWidth={2}
                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                   />
-                </svg>
+                </svg> */}
+                {isDeleting ? (
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-red-500 border-t-transparent"></div>
+                ) : (
+                  <FaTrash className="h-5 w-5" />
+                )}
               </button>
             )}
           </div>
@@ -540,9 +558,15 @@ const CompanyForm = ({ formData, onChange, errors, disabled }) => {
 // Main KYC Component
 const KycForm = () => {
   const dispatch = useDispatch();
-  const { kycData, loading, error, success, kycStatus } = useSelector(
-    (state) => state.kyc,
-  );
+  const {
+    kycData,
+    loading,
+    error,
+    success,
+    kycStatus,
+    deleteLoading,
+    // deletingDoc,
+  } = useSelector((state) => state.kyc);
 
   const [formData, setFormData] = useState({
     businessType: "company",
@@ -555,6 +579,7 @@ const KycForm = () => {
 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [deletingDoc, setDeletingDoc] = useState(null);
 
   useEffect(() => {
     dispatch(getKycInfo());
@@ -651,10 +676,69 @@ const KycForm = () => {
     }
   };
 
-  const handleRemoveFile = (documentType) => {
-    dispatch(removeDocument({ documentType }));
-  };
+  // const handleRemoveFile = (documentType) => {
+  //   dispatch(removeDocument({ documentType }));
+  // };
+  // const handleRemoveFile = async (documentType, index = null) => {
+  //   let documentPath;
 
+  //   // Get the document path based on type
+  //   if (documentType === "otherDocs") {
+  //     documentPath = kycData.documents.otherDocs?.[index];
+  //   } else {
+  //     documentPath = kycData.documents[documentType];
+  //   }
+
+  //   // Check if it's a server-stored document
+  //   if (documentPath && typeof documentPath === "string") {
+  //     // Call the async thunk to delete from server
+  //     try {
+  //       await dispatch(
+  //         deleteDocument({
+  //           documentType,
+  //           documentPath,
+  //           index,
+  //         }),
+  //       ).unwrap();
+  //     } catch (error) {
+  //       console.error("Failed to delete document:", error);
+  //     }
+  //   } else {
+  //     // It's a local file, just remove from state
+  //     dispatch(removeDocument({ documentType, index }));
+  //   }
+  // };
+  const handleRemoveFile = async (documentType, file) => {
+    // Set deleting state for this specific document
+    setDeletingDoc(documentType);
+
+    try {
+      // Check if it's a server-stored document (string path)
+      if (file && typeof file === "string") {
+        // Call API to delete from server
+        await request.deleteKycFile({
+          documentType,
+          documentPath: file,
+        });
+
+        // Dispatch to remove from Redux after successful API call
+        dispatch(removeDocument({ documentType }));
+        toast.success("Document deleted successfully");
+
+        // Refresh KYC data to get updated state
+        dispatch(getKycInfo());
+      } else {
+        // It's a local file, just remove from state
+        dispatch(removeDocument({ documentType }));
+      }
+    } catch (error) {
+      console.error("Failed to delete document:", error);
+      toast.error("Failed to delete document");
+    } finally {
+      // Clear deleting state
+      setDeletingDoc(null);
+    }
+  };
   const validateForm = () => {
     const newErrors = {};
 
@@ -979,7 +1063,10 @@ const KycForm = () => {
                   accept="image/*,.pdf"
                   file={kycData.documents?.panCard}
                   onFileUpload={handleFileUpload}
-                  onRemoveFile={handleRemoveFile}
+                  // onRemoveFile={handleRemoveFile}
+                  onRemoveFile={() =>
+                    handleRemoveFile("panCard", kycData.documents?.panCard)
+                  }
                   required
                   disabled={kycStatus === "requested"}
                 />
@@ -991,7 +1078,14 @@ const KycForm = () => {
                     accept="image/*,.pdf"
                     file={kycData.documents?.aadhaarCard}
                     onFileUpload={handleFileUpload}
-                    onRemoveFile={handleRemoveFile}
+                    // onRemoveFile={handleRemoveFile}
+                    // onRemoveFile={() => handleRemoveFile("aadhaarCard")}
+                    onRemoveFile={() =>
+                      handleRemoveFile(
+                        "aadhaarCard",
+                        kycData.documents?.aadhaarCard,
+                      )
+                    }
                     required
                     disabled={kycStatus === "requested"}
                   />
@@ -1005,7 +1099,14 @@ const KycForm = () => {
                       accept="image/*,.pdf"
                       file={kycData.documents?.gstCertificate}
                       onFileUpload={handleFileUpload}
-                      onRemoveFile={handleRemoveFile}
+                      // onRemoveFile={handleRemoveFile}
+                      // onRemoveFile={() => handleRemoveFile("gstCertificate")}
+                      onRemoveFile={() =>
+                        handleRemoveFile(
+                          "gstCertificate",
+                          kycData.documents?.gstCertificate,
+                        )
+                      }
                       required
                       disabled={kycStatus === "requested"}
                     />
@@ -1015,7 +1116,14 @@ const KycForm = () => {
                       accept="image/*,.pdf"
                       file={kycData.documents?.cinCertificate}
                       onFileUpload={handleFileUpload}
-                      onRemoveFile={handleRemoveFile}
+                      // onRemoveFile={handleRemoveFile}
+                      // onRemoveFile={() => handleRemoveFile("cinCertificate")}
+                      onRemoveFile={() =>
+                        handleRemoveFile(
+                          "cinCertificate",
+                          kycData.documents?.cinCertificate,
+                        )
+                      }
                       required
                       disabled={kycStatus === "requested"}
                     />
@@ -1028,7 +1136,14 @@ const KycForm = () => {
                   accept="image/*,.pdf"
                   file={kycData.documents?.cancelledCheque}
                   onFileUpload={handleFileUpload}
-                  onRemoveFile={handleRemoveFile}
+                  // onRemoveFile={handleRemoveFile}
+                  // onRemoveFile={() => handleRemoveFile("cancelledCheque")}
+                  onRemoveFile={() =>
+                    handleRemoveFile(
+                      "cancelledCheque",
+                      kycData.documents?.cancelledCheque,
+                    )
+                  }
                   required
                   disabled={kycStatus === "requested"}
                 />
