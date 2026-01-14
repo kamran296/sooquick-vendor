@@ -20,6 +20,7 @@ import ServiceDetail from "./pages/user/ServiceDetail";
 import Support from "./pages/user/Support";
 import CompanyPolicy from "./pages/CompanyPolicy";
 import VendorPolicy from "./pages/VendorPolicy";
+import NotificationPage from "./pages/user/NotificationPage";
 
 function App() {
   useEffect(() => {
@@ -72,6 +73,11 @@ function App() {
           />
           <Route exact path={appRoutes.wallet} element={<Wallet />} />
           <Route exact path={appRoutes.support} element={<Support />} />
+          <Route
+            exact
+            path={appRoutes.notification}
+            element={<NotificationPage />}
+          />
         </Route>
 
         {/* Catch-all fallback */}

@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import request from "../../axios/requests";
 import { Link, useNavigate } from "react-router-dom";
 import appRoutes from "../../appRoutes";
 import { toast } from "react-toastify";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import TwoFactorModal from "../../components/TwoFactorModal";
+import { useDispatch, useSelector } from "react-redux";
+import LogoutModal from "../../components/LogoutModal";
+import { resetUserState } from "../../redux/slices/userSlice";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +21,43 @@ const Login = () => {
   const [emailNotVerified, setEmailNotVerified] = useState(false);
   const [resending, setResending] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.user);
+  const [logoutModal, setLogoutModal] = useState(false);
+
+  const isAuthenticated = !!user.email;
+
+  // Check if user is already authenticated when component mounts
+  useEffect(() => {
+    console.log("User state:", user);
+    if (isAuthenticated) {
+      console.log("User is authenticated, showing logout modal");
+      setLogoutModal(true);
+    }
+  }, [isAuthenticated, user]);
+
+  const handleLogout = async () => {
+    try {
+      dispatch(resetUserState());
+      const res = await request.logout();
+      console.log(res.data);
+      setLogoutModal(false);
+      toast.success("Logged out successfully");
+      // Optionally refresh the page to clear redux state
+      // window.location.reload();
+    } catch (error) {
+      dispatch(resetUserState());
+      console.error("Logout error:", error);
+      setLogoutModal(false);
+      // window.location.reload();
+    }
+  };
+
+  const handleStayLoggedIn = () => {
+    setLogoutModal(false);
+    // Redirect to dashboard
+    navigate(appRoutes.dashboard);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -52,7 +92,7 @@ const Login = () => {
         } else {
           toast.success(data.message || "Login successful");
           // window.localStorage.setItem("token", data.accessToken);
-          navigate(appRoutes.dashboard, { replace: true });
+          navigate(appRoutes.dashboard);
         }
       } else {
         toast.error(data.message || "Login failed");
@@ -83,7 +123,7 @@ const Login = () => {
     toast.success(loginData.message || "Login successful");
     setShowTwoFactorModal(false);
     setTwoFactorData(null);
-    navigate(appRoutes.dashboard, { relace: true });
+    navigate(appRoutes.dashboard, { replace: true });
   };
   const handleTwoFactorClose = () => {
     setShowTwoFactorModal(false);
@@ -108,6 +148,7 @@ const Login = () => {
       setResending(false);
     }
   };
+
   return (
     <>
       <div className="font-mont flex min-h-screen flex-col justify-center bg-gray-50 py-4 sm:px-6 lg:px-8">
@@ -237,6 +278,14 @@ const Login = () => {
           tempToken={twoFactorData.tempToken}
           onSuccess={handleTwoFactorSuccess}
           onClose={handleTwoFactorClose}
+        />
+      )}
+      {/* Logout Confirmation Modal */}
+      {logoutModal && (
+        <LogoutModal
+          isOpen={logoutModal}
+          onLogout={handleLogout}
+          onCancel={handleStayLoggedIn}
         />
       )}
     </>

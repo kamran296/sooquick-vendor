@@ -15,6 +15,7 @@ import { BiSupport } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
 import "../../App.css";
 import request from "../../axios/requests";
+import { resetUserState } from "../../redux/slices/userSlice";
 
 const Sidebar = () => {
   const dispatch = useDispatch();
@@ -73,9 +74,11 @@ const Sidebar = () => {
 
   const handleLogout = async () => {
     try {
+      dispatch(resetUserState());
       const response = await request.logout();
       navigate("/");
     } catch (error) {
+      dispatch(resetUserState());
       console.log("error loggin out", error);
     }
   };

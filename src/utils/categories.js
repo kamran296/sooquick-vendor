@@ -29,7 +29,7 @@ export const subCategories = {
     "Water Tank Cleaning",
   ],
   "Fitness & Grooming": [
-    "Salon Services",
+    // "Salon Services",
     // "Massage Therapy",
     // "Spa Services",
     "Mehendi Services",

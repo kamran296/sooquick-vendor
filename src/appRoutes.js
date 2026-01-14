@@ -16,6 +16,7 @@ const appRoutes = {
   support: "/support",
   terms: "/terms-conditions",
   vendor_policy: "/vendor-policy",
+  notification: "/notifications",
 };
 
 export default appRoutes;

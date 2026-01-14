@@ -60,7 +60,7 @@ const Navbar = () => {
                 </Link>
               </div> */}
               <div className="flex font-bold text-gray-800">
-                <Link to="/" className="flex items-center">
+                <div className="flex items-center">
                   <img
                     src={Logo}
                     alt="Logo"
@@ -71,10 +71,10 @@ const Navbar = () => {
                       SooQuick
                     </p>
                     <p className="-mt-1 text-[5px] md:text-[8px]">
-                      Life too busy, but we're so quick
+                      Connecting Services with Convenience.
                     </p>
                   </div>
-                </Link>
+                </div>
               </div>
               {/* Vertical line */}
               <div className="h-10 w-px bg-[#0b8263]"></div>

@@ -29,6 +29,8 @@ const API = {
   NOTIFICATION: {
     GET: "/notification",
     UPDATE: (id) => `/notification/mark-read/${id}`,
+    GET_ALL: "/notification/all-notifications",
+    markAllAsRead: "/notification/mark-all-read",
   },
   SERVICES: {
     GET_ALL: "/vendor/services",

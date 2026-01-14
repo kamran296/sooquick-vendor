@@ -69,11 +69,20 @@ const getVendorDashboard = async () => {
 };
 
 // ====================Notification===================
-const getNotification = async () => {
+const getUnreadNotification = async () => {
   return await instances.privateRequest.get(API.NOTIFICATION.GET);
 };
 const markNotification = async (id) => {
   return await instances.privateRequest.put(API.NOTIFICATION.UPDATE(id));
+};
+
+const getAllNotifications = async (params) => {
+  return await instances.privateRequest.get(API.NOTIFICATION.GET_ALL, {
+    params,
+  });
+};
+const markAllNotificationsAsRead = async (payload) => {
+  return await instances.privateRequest.patch(API.NOTIFICATION.markAllAsRead);
 };
 
 // ===============KYC==================
@@ -218,8 +227,10 @@ const request = {
   cancelMembership,
   verifyTwoFactor,
 
-  getNotification,
+  getUnreadNotification,
   markNotification,
+  getAllNotifications,
+  markAllNotificationsAsRead,
 
   createService,
   updateService,
