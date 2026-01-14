@@ -164,7 +164,7 @@ const Membership = () => {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Amount Paid</span>
                       <span className="font-medium">
-                        ${membership.payment.amount}
+                        ₹{membership.payment.amount}
                       </span>
                     </div>
                     <div className="flex justify-between">
