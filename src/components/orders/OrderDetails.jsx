@@ -121,6 +121,7 @@ const OrderDetails = ({
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 sm:p-4">
               <div className="space-y-1 text-sm text-gray-700">
                 <div className="font-medium">
+                  {selectedOrder.serviceAddress?.building || ""}
                   {selectedOrder.serviceAddress.street}
                 </div>
                 <div>
