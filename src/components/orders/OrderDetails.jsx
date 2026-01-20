@@ -2,6 +2,39 @@ import React from "react";
 import { LuX } from "react-icons/lu";
 import { formatDate, formatCurrency } from "../../utils/helpers";
 
+const splitVendorPayments = (order) => {
+  if (!order?.payments?.length) {
+    return {
+      baseEarning: 0,
+      additionalEarning: 0,
+      additionalPayments: [],
+    };
+  }
+
+  let baseEarning = 0;
+  let additionalEarning = 0;
+  const additionalPayments = [];
+
+  order.payments.forEach((payment) => {
+    if (payment.status !== "successful") return;
+
+    if (payment.type === "initial") {
+      baseEarning += payment.vendorEarning || 0;
+    }
+
+    if (payment.type === "additional") {
+      additionalEarning += payment.vendorEarning || 0;
+      additionalPayments.push(payment);
+    }
+  });
+
+  return {
+    baseEarning,
+    additionalEarning,
+    additionalPayments,
+  };
+};
+
 const OrderDetails = ({
   selectedOrder,
   setSelectedOrder,
@@ -10,6 +43,10 @@ const OrderDetails = ({
   openOtpModal, // Added this prop since it's used in the component
   completingOrder,
 }) => {
+  const { baseEarning, additionalEarning, additionalPayments } =
+    splitVendorPayments(selectedOrder);
+
+  const totalVendorEarning = selectedOrder.vendorEarning;
   return (
     <div
       className="bg-opacity-50 fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gray-300/30 p-2 sm:p-4"
@@ -43,7 +80,7 @@ const OrderDetails = ({
             <dl className="space-y-2 sm:space-y-3">
               <InfoItem
                 label="Order ID"
-                value={`#${selectedOrder._id?.slice(-8)}`}
+                value={`#${selectedOrder.customOrderId ? selectedOrder.customOrderId : selectedOrder._id?.slice(-8)} `}
               />
               <InfoItem
                 label="Service"
@@ -69,28 +106,58 @@ const OrderDetails = ({
           {/* Payment Details */}
           <div className="space-y-3 sm:space-y-4">
             <h4 className="text-base font-medium text-gray-900 sm:text-lg">
-              Payment Details
+              Earnings Summary
             </h4>
+
             <dl className="space-y-2 sm:space-y-3">
+              {/* Base Service */}
               <InfoItem
-                label="Total Amount"
-                value={formatCurrency(selectedOrder.payment?.amount || 0)}
-              />
-              <InfoItem
-                label="Service Price"
-                value={formatCurrency(selectedOrder.serviceDetails?.price || 0)}
-              />
-              <InfoItem
-                label="Platform Fee"
-                value={formatCurrency(selectedOrder.payment?.platformFee || 0)}
-              />
-              <InfoItem
-                label="Your Earning"
-                value={formatCurrency(
-                  selectedOrder.payment?.vendorEarning || 0,
-                )}
+                label="Service Earning"
+                value={formatCurrency(baseEarning)}
                 isEarning
               />
+
+              {/* Additional Services – ONLY if exists */}
+              {additionalPayments.length > 0 && (
+                <>
+                  <InfoItem
+                    label="Additional Service Earning"
+                    value={formatCurrency(additionalEarning)}
+                    isEarning
+                  />
+
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm">
+                    <p className="mb-2 font-medium text-gray-700">
+                      Additional Payments
+                    </p>
+
+                    <ul className="space-y-1">
+                      {additionalPayments.map((payment, index) => (
+                        <li
+                          key={payment._id || index}
+                          className="flex justify-between text-gray-600"
+                        >
+                          <span>Extra Service #{index + 1}</span>
+                          <span className="font-medium text-green-600">
+                            {formatCurrency(payment.vendorEarning)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </>
+              )}
+
+              {/* Total */}
+              <div className="mt-2 border-t pt-2">
+                <InfoItem
+                  label="Total Earning"
+                  value={formatCurrency(totalVendorEarning)}
+                  isEarning
+                />
+              </div>
+
+              {/* Status */}
               <div>
                 <dt className="mb-1 text-xs text-gray-600 sm:text-sm">
                   Status
@@ -122,6 +189,7 @@ const OrderDetails = ({
               <div className="space-y-1 text-sm text-gray-700">
                 <div className="font-medium">
                   {selectedOrder.serviceAddress?.building || ""}
+                  {","}
                   {selectedOrder.serviceAddress.street}
                 </div>
                 <div>
