@@ -24,6 +24,7 @@ const Support = () => {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [showTicketForm, setShowTicketForm] = useState(false);
   const [newMessage, setNewMessage] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
   const dispatch = useDispatch();
   // Form state
   const [formData, setFormData] = useState({
@@ -86,7 +87,7 @@ const Support = () => {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !selectedTicket) return;
-
+    setSendingMessage(true);
     try {
       // This would be a new API endpoint to add user message to existing ticket
       const response = await request.addMessageToTicket(selectedTicket._id, {
@@ -111,6 +112,8 @@ const Support = () => {
     } catch (error) {
       console.error("Failed to send message:", error);
       toast.error("Failed to send message. Please try again.");
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -191,6 +194,24 @@ const Support = () => {
             <p className="text-lg text-slate-600">
               Get help with your questions and issues
             </p>
+            <div className="mt-1 flex w-full items-center justify-center gap-3 text-xs font-bold text-slate-600">
+              <div>
+                {" "}
+                Email:{" "}
+                <a href="mailto:customersupport@sooquick.com">
+                  customersupport@sooquick.com
+                </a>
+              </div>
+              <p
+                className="hover:cursor-pointer"
+                onClick={() => {
+                  navigator.clipboard.writeText("+919650309376");
+                  toast.success("Contact number copied to clipboard!");
+                }}
+              >
+                Contact: +919650309376
+              </p>
+            </div>
           </div>
 
           {/* Main Content Grid */}
@@ -487,11 +508,11 @@ const Support = () => {
                         />
                         <button
                           type="submit"
-                          disabled={!newMessage.trim()}
+                          disabled={!newMessage.trim() || sendingMessage}
                           className="flex w-full items-center justify-center space-x-2 rounded-lg bg-[#0b8263] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
                         >
                           <FiSend className="text-sm" />
-                          <span>Send Message</span>
+                          {sendingMessage ? "Sending..." : "Send Message"}
                         </button>
                       </form>
                     </div>

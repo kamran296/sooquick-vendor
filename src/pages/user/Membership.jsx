@@ -18,7 +18,12 @@ const Membership = () => {
   const { membership } = useSelector((state) => state.user);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
+  useEffect(() => {
+    if (!membership) {
+      dispatch(getUser);
+    }
+  }, []);
   // Function to format date
   const formatDate = (dateString) => {
     const options = { year: "numeric", month: "long", day: "numeric" };
@@ -75,7 +80,7 @@ const Membership = () => {
           Manage your subscription and view membership details
         </p>
 
-        {membership ? (
+        {membership && membership.type !== "none" ? (
           <div className="overflow-hidden rounded-lg bg-white shadow-md">
             {/* Membership Header */}
             <div
@@ -232,19 +237,20 @@ const Membership = () => {
 
               {/* Actions */}
               <div className="mt-8 flex flex-wrap gap-4">
-                <button
+                {/* <button
                   onClick={() => navigate("/membership")}
                   className="rounded-md bg-teal-600 px-4 py-2 text-white transition-colors hover:bg-teal-700"
                 >
                   Upgrade Plan
-                </button>
+                </button> */}
                 {canCancelMembership() && (
                   <button
                     disabled={loading}
-                    onClick={handleCancelMembership}
+                    onClick={() => setShowCancelConfirmation(true)} // Changed from direct API call
+                    // onClick={handleCancelMembership}
                     className={`rounded-md border border-red-500 px-4 py-2 text-red-600 transition-colors hover:bg-red-50 ${loading ? "cursor-not-allowed opacity-50" : ""} `}
                   >
-                    {loading ? "Canceling..." : "Cancel Membership"}
+                    Cancel Membership
                   </button>
                 )}
               </div>
@@ -268,6 +274,85 @@ const Membership = () => {
           </div>
         )}
       </div>
+      {/* Cancel Confirmation Modal */}
+      {showCancelConfirmation && (
+        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-start">
+              <div className="mt-1 mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+                <FaTimesCircle className="text-xl text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Cancel Membership
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Are you sure you want to cancel your membership?
+                </p>
+                <div className="mt-4 rounded-md bg-red-50 p-3">
+                  <p className="text-sm text-red-700">
+                    <strong>Important:</strong> Cancelling your membership will:
+                  </p>
+                  <ul className="mt-2 list-inside list-disc text-sm text-red-700">
+                    <li>Remove all premium benefits immediately</li>
+                    <li>Start charging ₹50 booking fee for new orders</li>
+                    <li>You won't be able to reschedule services for free</li>
+                    {canCancelMembership() && (
+                      <li className="font-semibold">
+                        You are eligible for a full refund as it's within 7 days
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowCancelConfirmation(false)}
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:outline-none"
+                disabled={loading}
+              >
+                Keep Membership
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelMembership}
+                disabled={loading}
+                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? (
+                  <span className="flex items-center">
+                    <svg
+                      className="mr-2 h-4 w-4 animate-spin text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    Cancelling...
+                  </span>
+                ) : (
+                  "Yes, Cancel Membership"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </UserLayout>
   );
 };

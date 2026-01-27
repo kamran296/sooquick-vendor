@@ -41,14 +41,28 @@ const Wallet = () => {
     dispatch(setSidebarTab(3));
   }, []);
   // Filter transactions based on active tab and search term
+  // const filteredTransactions =
+  //   walletData?.transactions?.filter((transaction) => {
+  //     const matchesTab = activeTab === "all" || transaction.type === activeTab;
+  //     const matchesSearch = transaction.description
+  //       .toLowerCase()
+  //       .includes(searchTerm.toLowerCase());
+  //     return matchesTab && matchesSearch;
+  //   }) || [];
   const filteredTransactions =
-    walletData?.transactions?.filter((transaction) => {
-      const matchesTab = activeTab === "all" || transaction.type === activeTab;
-      const matchesSearch = transaction.description
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-      return matchesTab && matchesSearch;
-    }) || [];
+    walletData?.transactions
+      ?.filter((transaction) => {
+        const matchesTab =
+          activeTab === "all" || transaction.type === activeTab;
+
+        const matchesSearch = transaction.description
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
+
+        return matchesTab && matchesSearch;
+      })
+      .slice()
+      .reverse() || [];
 
   // Get transaction icon based on type
   const getTransactionIcon = (type) => {
@@ -570,10 +584,14 @@ const Wallet = () => {
                         <div
                           className={`text-lg font-semibold ${getTransactionColor(transaction.type, transaction.amount)}`}
                         >
-                          {transaction.amount > 0 &&
-                          transaction.type !== "cashout"
+                          {(transaction.amount > 0 &&
+                            transaction.type === "cashout") ||
+                          transaction.type === "refund" ||
+                          transaction.type === "service_completion"
                             ? "+"
-                            : ""}
+                            : transaction.type === "purchase"
+                              ? "-"
+                              : ""}
                           {formatAmount(transaction.amount)}
                         </div>
                         <span
