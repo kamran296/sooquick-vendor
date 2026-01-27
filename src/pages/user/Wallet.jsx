@@ -24,6 +24,7 @@ import { toast } from "react-toastify";
 import { setSidebarTab } from "../../redux/slices/sidebarSlice";
 import appRoutes from "../../appRoutes";
 import { useNavigate } from "react-router-dom";
+import { formatDateWithoutTime } from "../../utils/helpers";
 
 const Wallet = () => {
   const { user } = useSelector((state) => state.user);
@@ -569,8 +570,8 @@ const Wallet = () => {
                             {transaction.description}
                           </h4>
                           <p className="text-sm text-gray-600">
-                            {formatDate(transaction.createdAt)} • Balance:{" "}
-                            {formatAmount(transaction.balanceAfter)}
+                            {formatDateWithoutTime(transaction.createdAt)} •
+                            Balance: {formatAmount(transaction.balanceAfter)}
                           </p>
                           {transaction.referenceId && (
                             <p className="text-xs text-gray-500">

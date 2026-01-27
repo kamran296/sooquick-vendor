@@ -23,6 +23,7 @@ import { toast } from "react-toastify";
 import OrderDetails from "../../components/orders/OrderDetails";
 import { setSidebarOpen, setSidebarTab } from "../../redux/slices/sidebarSlice";
 import { useDispatch } from "react-redux";
+import { formatDateWithoutTime } from "../../utils/helpers";
 const OrdersDashboard = () => {
   const [ordersData, setOrdersData] = useState({
     allOrders: [],
@@ -618,7 +619,9 @@ const OrdersDashboard = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {formatDate(order.bookingDate || order.createdAt)}
+                          {formatDateWithoutTime(
+                            order.bookingDate || order.createdAt,
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
