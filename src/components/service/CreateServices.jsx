@@ -306,7 +306,7 @@ const CreateService = () => {
     if (!formData.category) newErrors.category = "Category is required";
     if (!formData.serviceType.trim())
       newErrors.serviceType = "Service type is required";
-    if (!formData.servicePrice || parseFloat(formData.servicePrice) <= 0)
+    if (!formData.servicePrice || parseInt(formData.servicePrice) <= 0)
       newErrors.servicePrice = "Valid service price is required";
     // if (!formData.description.trim())
     //   newErrors.description = "Description is required";
@@ -596,9 +596,9 @@ const CreateService = () => {
             Service Price (₹)
           </label>
           <input
-            type="number"
-            step="10"
-            min={0}
+            type="text"
+            // step="10"
+            // min={0}
             name="servicePrice"
             value={formData.servicePrice}
             onChange={handleInputChange}

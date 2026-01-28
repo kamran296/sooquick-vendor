@@ -198,8 +198,8 @@ const Support = () => {
               <div>
                 {" "}
                 Email:{" "}
-                <a href="mailto:customersupport@sooquick.com">
-                  customersupport@sooquick.com
+                <a href="mailto:vendorsupport@sooquick.com">
+                  vendorsupport@sooquick.com
                 </a>
               </div>
               <p
