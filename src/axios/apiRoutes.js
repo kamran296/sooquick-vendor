@@ -25,6 +25,7 @@ const API = {
     GET: "/vendor/kyc/details",
     REQUEST: "/vendor/kyc",
     DELETE_FILE: "/vendor/delete-kyc-file",
+    GET_AGREEMENT: "/vendor/vendor-agreement/download",
   },
   NOTIFICATION: {
     GET: "/notification",

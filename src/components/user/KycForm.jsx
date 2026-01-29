@@ -11,6 +11,7 @@ import {
 } from "../../redux/slices/kycSlice";
 import { FaTrash } from "react-icons/fa";
 import request from "../../axios/requests";
+import { toast } from "react-toastify";
 
 // Validation utilities
 const validateAadhaar = (aadhaar) => {
@@ -161,10 +162,16 @@ const FileInput = ({
   required = false,
   disabled = false,
   isDeleting = false,
+  isAgreement = false, // NEW: Flag for agreement type
+  onDownloadAgreement, // NEW: Callback to download from backend
 }) => {
   const inputRef = useRef(null);
   const [previewUrl, setPreviewUrl] = useState(null);
-
+  const [downloadState, setDownloadState] = useState({
+    isLoading: false,
+    hasDownloaded: false,
+    error: null,
+  });
   const handleDivClick = () => {
     if (!disabled) {
       inputRef.current?.click();
@@ -202,14 +209,140 @@ const FileInput = ({
   const isImage = fileName && /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileName);
   const isPDF = fileName && /\.pdf$/i.test(fileName);
 
+  const handleDownloadAgreement = async () => {
+    if (!onDownloadAgreement) return;
+
+    setDownloadState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+    try {
+      await onDownloadAgreement();
+      setDownloadState((prev) => ({
+        ...prev,
+        isLoading: false,
+        hasDownloaded: true,
+      }));
+    } catch (error) {
+      setDownloadState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: "Failed to download agreement. Please try again.",
+      }));
+    }
+  };
   return (
     <div className="mb-6">
       <label className="mb-2 block text-sm font-medium text-gray-700">
         {label} {required && <span className="text-red-500">*</span>}
+        {isAgreement && (
+          <span className="ml-2 text-xs text-gray-500">
+            (Download, sign, and re-upload)
+          </span>
+        )}
       </label>
+
+      {/* NEW: Agreement download section - shown when no file uploaded */}
+      {isAgreement && !file && (
+        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+          {/* Step 1: Download */}
+          <div className="flex items-start gap-3">
+            <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100">
+              <span className="text-sm font-semibold text-blue-600">1</span>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-800">
+                    Download Agreement Document
+                  </p>
+                  <p className="mt-1 text-xs text-blue-700">
+                    Click below to download the agreement. Read carefully, sign,
+                    then upload the signed copy.
+                  </p>
+                </div>
+
+                {downloadState.error && (
+                  <p className="text-xs text-red-600">{downloadState.error}</p>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleDownloadAgreement}
+                disabled={disabled || downloadState.isLoading}
+                className={`mt-2 flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  downloadState.isLoading
+                    ? "cursor-not-allowed bg-blue-400 text-white"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                }`}
+              >
+                {downloadState.isLoading ? (
+                  <>
+                    <div className="h-3 w-3 animate-spin rounded-full border border-white border-t-transparent"></div>
+                    Downloading...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    Download Agreement PDF
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Step 2: Upload - shown after successful download */}
+          {downloadState.hasDownloaded && (
+            <div className="mt-3 flex items-start gap-3 border-t border-blue-100 pt-3">
+              <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-green-100">
+                <span className="text-sm font-semibold text-green-600">2</span>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-green-800">
+                      Upload Signed Agreement
+                    </p>
+                    <p className="mt-1 text-xs text-green-700">
+                      Now upload the signed agreement using the upload area
+                      below.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDownloadAgreement}
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    Download again?
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {file ? (
         <div className="relative rounded-lg border bg-gray-50 p-4 transition-all hover:bg-gray-100">
+          {/* Signed badge for agreement */}
+          {isAgreement && (
+            <div className="absolute -top-2 left-4">
+              <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
+                ✓ Signed Agreement Uploaded
+              </span>
+            </div>
+          )}
           {/* Show loading overlay when deleting */}
           {isDeleting && (
             <div className="bg-opacity-50 absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-black">
@@ -265,7 +398,7 @@ const FileInput = ({
 
               <div className="flex flex-col">
                 <span className="max-w-xs truncate text-sm font-medium text-gray-900">
-                  {fileName || "Uploaded file"}
+                  {fileName.slice(0, 4) || "Uploaded file"}
                 </span>
                 {isFileObject && (
                   <span className="text-xs text-gray-500">
@@ -318,6 +451,30 @@ const FileInput = ({
             disabled={disabled}
           />
 
+          {/* Contextual message for agreement */}
+          {isAgreement && downloadState.hasDownloaded && (
+            <div className="mb-4 flex items-center justify-center gap-2 rounded-md bg-teal-50 p-2">
+              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-100">
+                <svg
+                  className="h-3 w-3 text-teal-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <p className="text-sm text-teal-800">
+                Now upload your signed agreement
+              </p>
+            </div>
+          )}
+
           <div className="flex flex-col items-center justify-center space-y-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-teal-100">
               <svg
@@ -337,6 +494,22 @@ const FileInput = ({
 
             <div>
               <p className="text-sm font-medium text-gray-700">
+                {isAgreement && downloadState.hasDownloaded
+                  ? "Upload signed agreement"
+                  : disabled
+                    ? "Document uploaded"
+                    : `Click to upload ${label.toLowerCase()}`}
+              </p>
+              <p className="mt-1 text-xs text-gray-500">
+                {isAgreement
+                  ? "Signed PDF, JPG, or PNG"
+                  : accept === "*"
+                    ? "Any file type"
+                    : `Formats: ${accept}`}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-700">
                 {disabled
                   ? "Document uploaded"
                   : `Click to upload ${label.toLowerCase()}`}
@@ -351,7 +524,9 @@ const FileInput = ({
                 type="button"
                 className="rounded-md bg-teal-600 px-3 py-1.5 text-xs text-white transition-colors hover:bg-teal-700"
               >
-                Browse Files
+                {isAgreement && downloadState.hasDownloaded
+                  ? "Upload Signed Copy"
+                  : "Browse Files"}
               </button>
             )}
           </div>
@@ -676,38 +851,6 @@ const KycForm = () => {
     }
   };
 
-  // const handleRemoveFile = (documentType) => {
-  //   dispatch(removeDocument({ documentType }));
-  // };
-  // const handleRemoveFile = async (documentType, index = null) => {
-  //   let documentPath;
-
-  //   // Get the document path based on type
-  //   if (documentType === "otherDocs") {
-  //     documentPath = kycData.documents.otherDocs?.[index];
-  //   } else {
-  //     documentPath = kycData.documents[documentType];
-  //   }
-
-  //   // Check if it's a server-stored document
-  //   if (documentPath && typeof documentPath === "string") {
-  //     // Call the async thunk to delete from server
-  //     try {
-  //       await dispatch(
-  //         deleteDocument({
-  //           documentType,
-  //           documentPath,
-  //           index,
-  //         }),
-  //       ).unwrap();
-  //     } catch (error) {
-  //       console.error("Failed to delete document:", error);
-  //     }
-  //   } else {
-  //     // It's a local file, just remove from state
-  //     dispatch(removeDocument({ documentType, index }));
-  //   }
-  // };
   const handleRemoveFile = async (documentType, file) => {
     // Set deleting state for this specific document
     setDeletingDoc(documentType);
@@ -784,6 +927,32 @@ const KycForm = () => {
     }
   };
 
+  const handleDownloadAgreement = async () => {
+    try {
+      const response = await request.getAgreement();
+
+      const blob = new Blob([response.data], {
+        type: "application/pdf",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "Terms-and-Agreement.pdf";
+
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Agreement downloaded successfully");
+    } catch (error) {
+      console.error("Failed to download agreement:", error);
+      toast.error("Failed to download agreement. Please try again.");
+    }
+  };
   // If KYC is not pending, show data display
   if (kycStatus && kycStatus !== "pending" && kycStatus !== "rejected") {
     return (
@@ -874,6 +1043,11 @@ const KycForm = () => {
                     value={kycData.documents?.cancelledCheque}
                     type="file"
                   />
+                  <DataDisplay
+                    label="Agreement"
+                    value={kycData.documents?.agreement}
+                    type="file"
+                  />
                   {formData.businessType === "company" && (
                     <>
                       <DataDisplay
@@ -915,7 +1089,6 @@ const KycForm = () => {
     );
   }
 
-  // Show form if KYC is pending or rejected
   return (
     <div className="font-mont min-h-screen bg-gray-50 px-4 py-8">
       <div className="mx-auto max-w-4xl">
@@ -1056,96 +1229,113 @@ const KycForm = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <FileInput
-                  label="PAN Card"
-                  documentType="panCard"
-                  accept="image/*,.pdf"
-                  file={kycData.documents?.panCard}
-                  onFileUpload={handleFileUpload}
-                  // onRemoveFile={handleRemoveFile}
-                  onRemoveFile={() =>
-                    handleRemoveFile("panCard", kycData.documents?.panCard)
-                  }
-                  required
-                  disabled={kycStatus === "requested"}
-                />
-
-                {formData.businessType === "individual" && (
+              <div className="flex flex-col gap-5 md:flex-row">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <FileInput
-                    label="Aadhaar Card"
-                    documentType="aadhaarCard"
+                    label="PAN Card"
+                    documentType="panCard"
                     accept="image/*,.pdf"
-                    file={kycData.documents?.aadhaarCard}
+                    file={kycData.documents?.panCard}
                     onFileUpload={handleFileUpload}
                     // onRemoveFile={handleRemoveFile}
-                    // onRemoveFile={() => handleRemoveFile("aadhaarCard")}
+                    onRemoveFile={() =>
+                      handleRemoveFile("panCard", kycData.documents?.panCard)
+                    }
+                    required
+                    disabled={kycStatus === "requested"}
+                  />
+
+                  {formData.businessType === "individual" && (
+                    <FileInput
+                      label="Aadhaar Card"
+                      documentType="aadhaarCard"
+                      accept="image/*,.pdf"
+                      file={kycData.documents?.aadhaarCard}
+                      onFileUpload={handleFileUpload}
+                      // onRemoveFile={handleRemoveFile}
+                      // onRemoveFile={() => handleRemoveFile("aadhaarCard")}
+                      onRemoveFile={() =>
+                        handleRemoveFile(
+                          "aadhaarCard",
+                          kycData.documents?.aadhaarCard,
+                        )
+                      }
+                      required
+                      disabled={kycStatus === "requested"}
+                    />
+                  )}
+
+                  {formData.businessType === "company" && (
+                    <>
+                      <FileInput
+                        label="GST Certificate"
+                        documentType="gstCertificate"
+                        accept="image/*,.pdf"
+                        file={kycData.documents?.gstCertificate}
+                        onFileUpload={handleFileUpload}
+                        // onRemoveFile={handleRemoveFile}
+                        // onRemoveFile={() => handleRemoveFile("gstCertificate")}
+                        onRemoveFile={() =>
+                          handleRemoveFile(
+                            "gstCertificate",
+                            kycData.documents?.gstCertificate,
+                          )
+                        }
+                        required
+                        disabled={kycStatus === "requested"}
+                      />
+                      <FileInput
+                        label="CIN Certificate"
+                        documentType="cinCertificate"
+                        accept="image/*,.pdf"
+                        file={kycData.documents?.cinCertificate}
+                        onFileUpload={handleFileUpload}
+                        // onRemoveFile={handleRemoveFile}
+                        // onRemoveFile={() => handleRemoveFile("cinCertificate")}
+                        onRemoveFile={() =>
+                          handleRemoveFile(
+                            "cinCertificate",
+                            kycData.documents?.cinCertificate,
+                          )
+                        }
+                        required
+                        disabled={kycStatus === "requested"}
+                      />
+                    </>
+                  )}
+
+                  <FileInput
+                    label="Cancelled Cheque / Bank Statement"
+                    documentType="cancelledCheque"
+                    accept="image/*,.pdf"
+                    file={kycData.documents?.cancelledCheque}
+                    onFileUpload={handleFileUpload}
+                    // onRemoveFile={handleRemoveFile}
+                    // onRemoveFile={() => handleRemoveFile("cancelledCheque")}
                     onRemoveFile={() =>
                       handleRemoveFile(
-                        "aadhaarCard",
-                        kycData.documents?.aadhaarCard,
+                        "cancelledCheque",
+                        kycData.documents?.cancelledCheque,
                       )
                     }
                     required
                     disabled={kycStatus === "requested"}
                   />
-                )}
-
-                {formData.businessType === "company" && (
-                  <>
-                    <FileInput
-                      label="GST Certificate"
-                      documentType="gstCertificate"
-                      accept="image/*,.pdf"
-                      file={kycData.documents?.gstCertificate}
-                      onFileUpload={handleFileUpload}
-                      // onRemoveFile={handleRemoveFile}
-                      // onRemoveFile={() => handleRemoveFile("gstCertificate")}
-                      onRemoveFile={() =>
-                        handleRemoveFile(
-                          "gstCertificate",
-                          kycData.documents?.gstCertificate,
-                        )
-                      }
-                      required
-                      disabled={kycStatus === "requested"}
-                    />
-                    <FileInput
-                      label="CIN Certificate"
-                      documentType="cinCertificate"
-                      accept="image/*,.pdf"
-                      file={kycData.documents?.cinCertificate}
-                      onFileUpload={handleFileUpload}
-                      // onRemoveFile={handleRemoveFile}
-                      // onRemoveFile={() => handleRemoveFile("cinCertificate")}
-                      onRemoveFile={() =>
-                        handleRemoveFile(
-                          "cinCertificate",
-                          kycData.documents?.cinCertificate,
-                        )
-                      }
-                      required
-                      disabled={kycStatus === "requested"}
-                    />
-                  </>
-                )}
+                </div>
 
                 <FileInput
-                  label="Cancelled Cheque / Bank Statement"
-                  documentType="cancelledCheque"
-                  accept="image/*,.pdf"
-                  file={kycData.documents?.cancelledCheque}
+                  label="Terms & Agreement"
+                  documentType="agreement"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  file={kycData.documents?.agreement}
                   onFileUpload={handleFileUpload}
-                  // onRemoveFile={handleRemoveFile}
-                  // onRemoveFile={() => handleRemoveFile("cancelledCheque")}
                   onRemoveFile={() =>
-                    handleRemoveFile(
-                      "cancelledCheque",
-                      kycData.documents?.cancelledCheque,
-                    )
+                    handleRemoveFile("agreement", kycData.documents?.agreement)
                   }
-                  required
+                  required={true}
                   disabled={kycStatus === "requested"}
+                  isAgreement={true}
+                  onDownloadAgreement={handleDownloadAgreement} // Pass the download function
                 />
               </div>
             </div>

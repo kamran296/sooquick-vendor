@@ -16,6 +16,7 @@ const initialState = {
       cancelledCheque: null,
       cinCertificate: null,
       aadhaarCard: null,
+      agreement: null,
       otherDocs: [],
     },
   },
@@ -62,6 +63,7 @@ export const submitKycInfo = createAsyncThunk(
           "documents.panCard",
           "documents.cancelledCheque",
           "documents.aadhaarCard",
+          "documents.agreement",
         ],
         company: [
           "companyName",
@@ -71,6 +73,7 @@ export const submitKycInfo = createAsyncThunk(
           "documents.cancelledCheque",
           "documents.gstCertificate",
           "documents.cinCertificate",
+          "documents.agreement",
         ],
       };
 
@@ -106,42 +109,6 @@ export const submitKycInfo = createAsyncThunk(
         }
       });
 
-      // Add documents - use tempFiles if available, otherwise use stored document references
-      // Object.keys(kycDataToSubmit.documents).forEach((docKey) => {
-      //   // Only include documents relevant based on businessType
-      //   if (
-      //     kycDataToSubmit.businessType === "company" ||
-      //     (kycDataToSubmit.businessType === "individual" &&
-      //       ["panCard", "cancelledCheque", "otherDocs"].includes(docKey))
-      //   ) {
-      //     if (docKey === "otherDocs") {
-      //       kycDataToSubmit.documents.otherDocs.forEach((file, index) => {
-      //         // Use temp file if available, otherwise use stored reference
-      //         const fileToUse = tempFiles[`otherDocs-${index}`] || file;
-      //         if (fileToUse) {
-      //           formData.append(`documents.otherDocs[${index}]`, fileToUse);
-      //         }
-      //       });
-      //     }
-      //     if (
-      //       kycDataToSubmit.businessType === "individual" &&
-      //       docKey === "aadhaarCard"
-      //     ) {
-      //       const fileToUse =
-      //         tempFiles.aadhaarCard || kycDataToSubmit.documents.aadhaarCard;
-      //       if (fileToUse) {
-      //         formData.append("documents.aadhaarCard", fileToUse);
-      //       }
-      //     } else {
-      //       // Use temp file if available, otherwise use stored reference
-      //       const fileToUse =
-      //         tempFiles[docKey] || kycDataToSubmit.documents[docKey];
-      //       if (fileToUse) {
-      //         formData.append(`documents.${docKey}`, fileToUse);
-      //       }
-      //     }
-      //   }
-      // });
       Object.entries(kycDataToSubmit.documents).forEach(([docKey, value]) => {
         const fileToUse = tempFiles[docKey] || value;
 
@@ -149,7 +116,12 @@ export const submitKycInfo = createAsyncThunk(
 
         // Individual allowed docs
         if (kycDataToSubmit.businessType === "individual") {
-          const allowed = ["panCard", "cancelledCheque", "aadhaarCard"];
+          const allowed = [
+            "panCard",
+            "cancelledCheque",
+            "aadhaarCard",
+            "agreement",
+          ];
           if (!allowed.includes(docKey)) return;
         }
 
@@ -160,6 +132,7 @@ export const submitKycInfo = createAsyncThunk(
             "cancelledCheque",
             "gstCertificate",
             "cinCertificate",
+            "agreement",
           ];
           if (!allowed.includes(docKey)) return;
         }

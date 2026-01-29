@@ -98,6 +98,12 @@ const deleteKycFile = async (payload) => {
   });
 };
 
+const getAgreement = async () => {
+  return await instances.privateRequest.get(API.KYC.GET_AGREEMENT, {
+    responseType: "blob",
+  });
+};
+
 // ========================Services===================
 const createService = async (formData) => {
   return await instances.privateRequest.post(API.SERVICES.CREATE, formData);
@@ -223,6 +229,7 @@ const request = {
   getKycDetails,
   submitKycDetails,
   deleteKycFile,
+  getAgreement,
   purchaseMembership,
   cancelMembership,
   verifyTwoFactor,
