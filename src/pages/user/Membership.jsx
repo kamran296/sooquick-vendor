@@ -1,5 +1,5 @@
-import React from "react";
-import { useSelector } from "react-redux";
+import { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import UserLayout from "../../layouts/user/UserLayout";
 import {
   FaCrown,
@@ -12,10 +12,10 @@ import {
 import { useNavigate } from "react-router-dom";
 import request from "../../axios/requests";
 import { toast } from "react-toastify";
-import { useState } from "react";
 
 const Membership = () => {
   const { membership } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
