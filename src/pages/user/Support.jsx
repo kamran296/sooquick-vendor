@@ -1076,6 +1076,7 @@ const Support = () => {
             </div>
 
             {/* Right Sidebar - Ticket Details */}
+            {/* Right Sidebar - Ticket Details */}
             <div className="lg:col-span-2">
               {selectedTicketLoading ? (
                 <div className="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
@@ -1085,8 +1086,8 @@ const Support = () => {
                   </p>
                 </div>
               ) : selectedTicket ? (
-                <div className="sticky top-4 rounded-lg border border-slate-200 bg-white shadow-sm">
-                  {/* Header */}
+                <div className="sticky top-4 flex h-[calc(100vh-8rem)] flex-col rounded-lg border border-slate-200 bg-white shadow-sm">
+                  {/* Header - Fixed height */}
                   <div className="border-b border-slate-200 p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -1123,7 +1124,21 @@ const Support = () => {
                         <div className="mt-2 flex items-center space-x-2 text-sm">
                           <div className="flex items-center space-x-1">
                             <FiUser className="text-slate-400" />
-                            <span className="font-medium text-slate-700 hover:cursor-pointer">
+                            <span
+                              className="font-medium text-slate-700 hover:cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (selectedTicket.createdByModel === "User") {
+                                  navigate(
+                                    `/user/${selectedTicket.createdBy._id}`,
+                                  );
+                                } else {
+                                  navigate(
+                                    `/vendor/${selectedTicket.createdBy._id}`,
+                                  );
+                                }
+                              }}
+                            >
                               {getUserName(selectedTicket.createdBy)}
                             </span>
                             <span className="text-slate-500">
@@ -1153,103 +1168,120 @@ const Support = () => {
                     </div>
                   </div>
 
-                  {/* Messages */}
-                  <div className="max-h-[500px] space-y-4 overflow-y-auto p-4">
-                    {/* Messages List */}
-                    {selectedTicket.messages &&
-                    selectedTicket.messages.length > 0 ? (
-                      selectedTicket.messages.map((message, index) => {
-                        const isAdminMsg = message?.sender.role === "admin";
-                        const senderName = isAdminMsg
-                          ? "Admin"
-                          : getUserName(
-                              message.sender || selectedTicket.createdBy,
-                            );
+                  {/* Messages Container - Scrollable */}
+                  <div className="flex flex-1 flex-col overflow-hidden">
+                    {/* Messages Area - Scrollable with reverse flex */}
+                    <div className="flex-1 overflow-y-auto p-4">
+                      <div className="flex min-h-full flex-col-reverse space-y-4 space-y-reverse">
+                        {selectedTicket.messages &&
+                        selectedTicket.messages.length > 0 ? (
+                          // Reverse the messages array to show newest at bottom
+                          [...selectedTicket.messages]
+                            .reverse()
+                            .map((message, index) => {
+                              const isAdminMsg =
+                                message?.sender?.role === "admin";
+                              const senderName = isAdminMsg
+                                ? "Admin"
+                                : getUserName(
+                                    message.sender || selectedTicket.createdBy,
+                                  );
 
-                        return (
-                          <div
-                            key={message._id || index}
-                            className={`rounded-lg p-4 ${
-                              isAdminMsg
-                                ? "border border-[#0b8263]/20 bg-[#0b8263]/10"
-                                : "bg-slate-50"
-                            }`}
-                          >
-                            <div className="mb-2 flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
+                              return (
                                 <div
-                                  className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                                    isAdminMsg ? "bg-[#0b8263]" : "bg-slate-300"
+                                  key={message._id || index}
+                                  className={`rounded-lg p-4 ${
+                                    isAdminMsg
+                                      ? "border border-[#0b8263]/20 bg-[#0b8263]/10"
+                                      : "bg-slate-50"
                                   }`}
                                 >
-                                  {isAdminMsg ? (
-                                    <span className="text-sm font-medium text-white">
-                                      A
+                                  <div className="mb-2 flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                      <div
+                                        className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                                          isAdminMsg
+                                            ? "bg-[#0b8263]"
+                                            : "bg-slate-300"
+                                        }`}
+                                      >
+                                        {isAdminMsg ? (
+                                          <span className="text-sm font-medium text-white">
+                                            A
+                                          </span>
+                                        ) : (
+                                          <FiUser className="text-slate-600" />
+                                        )}
+                                      </div>
+                                      <div>
+                                        <span className="text-sm font-medium text-slate-700">
+                                          {senderName}
+                                        </span>
+                                        <span className="ml-2 text-xs text-slate-500">
+                                          {isAdminMsg
+                                            ? "(Admin)"
+                                            : `(${selectedTicket.createdByModel})`}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <span className="text-xs text-slate-500">
+                                      {formatDate(message.createdAt)}
                                     </span>
-                                  ) : (
-                                    <FiUser className="text-slate-600" />
-                                  )}
+                                  </div>
+                                  <p className="text-sm whitespace-pre-wrap text-slate-700">
+                                    {message.message}
+                                  </p>
                                 </div>
-                                <div>
-                                  <span className="text-sm font-medium text-slate-700">
-                                    {senderName}
-                                  </span>
-                                  <span className="ml-2 text-xs text-slate-500">
-                                    {isAdminMsg
-                                      ? "(Admin)"
-                                      : `(${selectedTicket.createdByModel})`}
-                                  </span>
-                                </div>
-                              </div>
-                              <span className="text-xs text-slate-500">
-                                {formatDate(message.createdAt)}
-                              </span>
+                              );
+                            })
+                        ) : (
+                          <div className="flex h-full items-center justify-center">
+                            <div className="text-center">
+                              <FiMessageSquare className="mx-auto mb-2 text-3xl text-slate-400" />
+                              <p className="text-slate-500">No messages yet</p>
                             </div>
-                            <p className="text-sm whitespace-pre-wrap text-slate-700">
-                              {message.message}
-                            </p>
                           </div>
-                        );
-                      })
-                    ) : (
-                      <div className="py-8 text-center">
-                        <FiMessageSquare className="mx-auto mb-2 text-3xl text-slate-400" />
-                        <p className="text-slate-500">No messages yet</p>
+                        )}
+                      </div>
+                      <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Message Input - Fixed at bottom */}
+                    {selectedTicket.status !== "closed" && (
+                      <div className="border-t border-slate-200 bg-white p-4">
+                        <form
+                          onSubmit={handleSendMessage}
+                          className="space-y-3"
+                        >
+                          <textarea
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            placeholder="Type your response..."
+                            rows="3"
+                            disabled={sendingMessage}
+                            className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[#0b8263] focus:outline-none disabled:opacity-50"
+                          />
+                          <div className="flex justify-between">
+                            <span className="text-xs text-slate-500">
+                              Replying as Admin
+                            </span>
+                            <button
+                              type="submit"
+                              disabled={!newMessage.trim() || sendingMessage}
+                              className="flex items-center space-x-2 rounded-lg bg-[#0b8263] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                            >
+                              <FiSend className="text-sm" />
+                              <span>
+                                {sendingMessage
+                                  ? "Sending..."
+                                  : "Send Response"}
+                              </span>
+                            </button>
+                          </div>
+                        </form>
                       </div>
                     )}
-                    <div ref={messagesEndRef} />
                   </div>
-
-                  {/* Message Input */}
-                  {selectedTicket.status !== "closed" && (
-                    <div className="border-t border-slate-200 p-4">
-                      <form onSubmit={handleSendMessage} className="space-y-3">
-                        <textarea
-                          value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
-                          placeholder="Type your response..."
-                          rows="3"
-                          disabled={sendingMessage}
-                          className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[#0b8263] focus:outline-none disabled:opacity-50"
-                        />
-                        <div className="flex justify-between">
-                          <span className="text-xs text-slate-500">
-                            Replying as Admin
-                          </span>
-                          <button
-                            type="submit"
-                            disabled={!newMessage.trim() || sendingMessage}
-                            className="flex items-center space-x-2 rounded-lg bg-[#0b8263] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
-                          >
-                            <FiSend className="text-sm" />
-                            <span>
-                              {sendingMessage ? "Sending..." : "Send Response"}
-                            </span>
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
