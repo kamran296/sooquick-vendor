@@ -194,8 +194,10 @@ const getTicketById = async (ticketId) => {
     API.SUPPORT.GET_TICKET_BY_ID(ticketId),
   );
 };
-const getAllSupportTickets = async () => {
-  return await instances.privateRequest.get(API.SUPPORT.GET_TICKETS);
+const getAllSupportTickets = async (params) => {
+  return await instances.privateRequest.get(API.SUPPORT.GET_TICKETS, {
+    params,
+  });
 };
 
 const createPaymentOrder = async (payload) => {
