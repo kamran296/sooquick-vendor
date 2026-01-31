@@ -7,6 +7,7 @@ import {
   FaClock,
   FaCreditCard,
   FaCalendarAlt,
+  FaTimesCircle,
   FaShieldAlt,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
@@ -276,7 +277,7 @@ const Membership = () => {
       </div>
       {/* Cancel Confirmation Modal */}
       {showCancelConfirmation && (
-        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
+        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
             <div className="mb-4 flex items-start">
               <div className="mt-1 mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
@@ -295,8 +296,7 @@ const Membership = () => {
                   </p>
                   <ul className="mt-2 list-inside list-disc text-sm text-red-700">
                     <li>Remove all premium benefits immediately</li>
-                    <li>Start charging ₹50 booking fee for new orders</li>
-                    <li>You won't be able to reschedule services for free</li>
+
                     {canCancelMembership() && (
                       <li className="font-semibold">
                         You are eligible for a full refund as it's within 7 days
