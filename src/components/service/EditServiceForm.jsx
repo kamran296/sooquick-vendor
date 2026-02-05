@@ -134,15 +134,33 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
   }, [service]);
 
   // Service Areas Management Functions
-  const handleAddNewServiceArea = (newArea) => {
-    // Check if area already exists
-    const exists = [...existingServiceAreas, ...newServiceAreas].some(
-      (area) => area.pincode === newArea.pincode,
-    );
+  // const handleAddNewServiceArea = (newArea) => {
+  //   // Check if area already exists
+  //   const exists = [...existingServiceAreas, ...newServiceAreas].some(
+  //     (area) => area.pincode === newArea.pincode,
+  //   );
 
-    if (!exists) {
-      setNewServiceAreas((prev) => [...prev, newArea]);
-    }
+  //   if (!exists) {
+  //     setNewServiceAreas((prev) => [...prev, newArea]);
+  //   }
+  // };
+  const handleAddNewServiceArea = (areas) => {
+    if (!Array.isArray(areas)) return;
+
+    setNewServiceAreas((prev) => {
+      const combined = [...prev, ...areas];
+
+      // Deduplicate by pincode + areaName
+      const unique = combined.filter(
+        (area, index, self) =>
+          index ===
+          self.findIndex(
+            (a) => a.pincode === area.pincode && a.areaName === area.areaName,
+          ),
+      );
+
+      return unique;
+    });
   };
 
   const handleRemoveExistingServiceArea = (areaId) => {
@@ -364,6 +382,17 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
     setSubmitting(true);
     setError("");
     setSuccess("");
+    const cleanServiceAreas = [...existingServiceAreas, ...newServiceAreas]
+      .flat()
+      .filter(
+        (a) =>
+          a &&
+          typeof a === "object" &&
+          a.pincode &&
+          a.areaName &&
+          a.city &&
+          a.state,
+      );
 
     try {
       // Prepare FormData
@@ -374,7 +403,8 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
         ...formData,
         servicePrice: parseInt(formData.servicePrice),
         // Combine existing and new service areas, exclude removed ones
-        serviceAreas: [...existingServiceAreas, ...newServiceAreas],
+        // serviceAreas: [...existingServiceAreas, ...newServiceAreas],
+        serviceAreas: cleanServiceAreas,
       };
 
       // Append all data fields

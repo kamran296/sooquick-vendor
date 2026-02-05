@@ -13,6 +13,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import request from "../../axios/requests";
 import { toast } from "react-toastify";
+import { getUser } from "../../redux/slices/userSlice";
 
 const Membership = () => {
   const { membership } = useSelector((state) => state.user);
@@ -22,7 +23,7 @@ const Membership = () => {
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   useEffect(() => {
     if (!membership) {
-      dispatch(getUser);
+      dispatch(getUser()).unwrap();
     }
   }, []);
   // Function to format date
@@ -40,14 +41,17 @@ const Membership = () => {
     try {
       setLoading(true);
       const response = await request.cancelMembership();
+      console.log(response);
       if (response.data.success) {
+        setShowCancelConfirmation(false);
         toast.success("Membership cancelled successfully");
-        await dispatch(getUser());
+        await dispatch(getUser()).unwrap();
       }
     } catch (error) {
       toast.error(
         error.response?.data?.message || "Failed to cancel membership",
       );
+      console.log("error cancelling membership", error);
     } finally {
       setLoading(false);
     }

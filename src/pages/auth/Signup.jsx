@@ -26,6 +26,7 @@ const Signup = () => {
     hasNumber: false,
     hasSpecialChar: false,
   });
+  const [phoneInput, setPhoneInput] = useState("");
 
   const validatePasswordStrength = (password) => {
     setPasswordStrength({
@@ -61,7 +62,8 @@ const Signup = () => {
   const validateForm = () => {
     const newErrors = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^[0-9]{10,15}$/;
+    // const phoneRegex = /^[0-9]{10,15}$/;
+    const phoneRegex = /^91[0-9]{10}$/;
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
@@ -77,8 +79,11 @@ const Signup = () => {
 
     if (!formData.phone.trim()) {
       newErrors.phone = "Phone number is required";
-    } else if (!phoneRegex.test(formData.phone)) {
-      newErrors.phone = "Please enter a valid phone number (10-15 digits)";
+    } else if (
+      !phoneRegex.test(formData.phone) ||
+      formData.phone.length !== 12
+    ) {
+      newErrors.phone = "Please enter a valid phone number.";
     }
 
     if (!formData.password) {
@@ -98,9 +103,46 @@ const Signup = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+  const handlePhoneChange = (e) => {
+    const { value } = e.target;
 
+    // Remove any non-digit characters
+    const digitsOnly = value.replace(/\D/g, "");
+
+    // Update display input
+    setPhoneInput(value);
+
+    // If user starts typing with 91, keep it as is
+    // if (digitsOnly.startsWith("91")) {
+    //   // Ensure total length is 12 digits (91 + 10 digits)
+    //   const phoneNumber = digitsOnly.slice(0, 12);
+    //   setFormData({
+    //     ...formData,
+    //     phone: phoneNumber,
+    //   });
+    // } else {
+    // Automatically prepend 91 and limit to 10 additional digits
+    const phoneNumber = "91" + digitsOnly.slice(0, 10);
+    setFormData({
+      ...formData,
+      phone: phoneNumber,
+    });
+    // }
+
+    // Clear error when user starts typing
+    if (errors.phone) {
+      setErrors({
+        ...errors,
+        phone: "",
+      });
+    }
+  };
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === "phone") {
+      handlePhoneChange(e);
+      return;
+    }
     setFormData({
       ...formData,
       [name]: value,
@@ -254,7 +296,7 @@ const Signup = () => {
               </div>
             </div>
 
-            <div>
+            {/* <div>
               <label
                 htmlFor="phone"
                 className="block text-sm font-medium text-gray-700"
@@ -275,6 +317,36 @@ const Signup = () => {
                   <p className="mt-2 text-sm text-red-600">{errors.phone}</p>
                 )}
               </div>
+            </div> */}
+            <div>
+              <label
+                htmlFor="phone"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Phone number
+              </label>
+              <div className="mt-1 flex">
+                <div className="flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 py-2">
+                  <span className="text-sm text-gray-500">+91</span>
+                </div>
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  autoComplete="tel"
+                  placeholder="Enter 10-digit number"
+                  value={phoneInput}
+                  onChange={handleChange}
+                  maxLength={10} // Limit to 10 digits
+                  className={`block w-full appearance-none border px-3 py-2 ${errors.phone ? "border-red-300" : "border-gray-300"} rounded-r-md placeholder-gray-400 shadow-sm focus:border-green-500 focus:ring-green-500 focus:outline-none sm:text-sm`}
+                />
+              </div>
+              {errors.phone && (
+                <p className="mt-2 text-sm text-red-600">{errors.phone}</p>
+              )}
+              {/* <p className="mt-1 text-xs text-gray-500">
+                Enter your 10-digit mobile number without country code
+              </p> */}
             </div>
 
             <div>
@@ -434,7 +506,7 @@ const Signup = () => {
 
             <div className="mt-6">
               <Link
-                to="/login"
+                to="/"
                 className="flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none"
               >
                 Sign in

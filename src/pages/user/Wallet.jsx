@@ -511,7 +511,6 @@ const Wallet = () => {
                     label: "All",
                     count: walletData?.transactions?.length || 0,
                   },
-
                   {
                     id: "refund",
                     label: "Refunds",
@@ -531,10 +530,7 @@ const Wallet = () => {
                   {
                     id: "cashout",
                     label: "Cashout",
-                    count:
-                      walletData?.transactions?.filter(
-                        (t) => t.type === "cashout",
-                      ).length || 0,
+                    count: walletData?.cashoutRequest?.length || 0,
                   },
                 ].map((tab) => (
                   <button
@@ -552,82 +548,162 @@ const Wallet = () => {
               </div>
             </div>
 
-            {/* Transactions List */}
-            <div className="divide-y divide-gray-100">
-              {filteredTransactions.length > 0 ? (
-                filteredTransactions.map((transaction) => (
-                  <div
-                    key={transaction._id}
-                    className="p-6 transition-colors hover:bg-gray-50"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="rounded-lg bg-gray-100 p-3">
-                          {getTransactionIcon(transaction.type)}
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-gray-900">
-                            {transaction.description}
-                          </h4>
-                          <p className="text-sm text-gray-600">
-                            {formatDateWithoutTime(transaction.createdAt)} •
-                            Balance: {formatAmount(transaction.balanceAfter)}
-                          </p>
-                          {transaction.referenceId && (
-                            <p className="text-xs text-gray-500">
-                              Ref: {transaction.referenceId}
+            {/* Content based on active tab */}
+            {activeTab === "cashout" ? (
+              /* Cashout Requests List */
+              <div className="divide-y divide-gray-100">
+                {walletData?.cashoutRequest?.length > 0 ? (
+                  walletData.cashoutRequest.map((request) => (
+                    <div
+                      key={request._id}
+                      className="p-6 transition-colors hover:bg-gray-50"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="rounded-lg bg-gray-100 p-3">
+                            {/* Cashout icon */}
+                            <svg
+                              className="h-6 w-6 text-gray-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="md:text-md text-sm font-semibold text-gray-900">
+                              Cashout Request - {formatAmount(request.amount)}
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              UPI ID: {request.bankDetails.upiId}
                             </p>
-                          )}
+                            <p className="text-sm text-gray-600">
+                              Requested:{" "}
+                              {formatDateWithoutTime(request.requestedAt)}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Type: {request.type}
+                            </p>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="text-right">
-                        <div
-                          className={`text-lg font-semibold ${getTransactionColor(transaction.type, transaction.amount)}`}
-                        >
-                          {(transaction.amount > 0 &&
-                            transaction.type === "cashout") ||
-                          transaction.type === "refund" ||
-                          transaction.type === "service_completion"
-                            ? "+"
-                            : transaction.type === "purchase"
-                              ? "-"
-                              : ""}
-                          {formatAmount(transaction.amount)}
+                        <div className="text-right">
+                          <div className="text-lg font-semibold text-gray-900">
+                            {formatAmount(request.amount)}
+                          </div>
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                              request.status === "completed"
+                                ? "bg-green-100 text-green-800"
+                                : request.status === "pending"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : request.status === "rejected"
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {request.status.charAt(0).toUpperCase() +
+                              request.status.slice(1)}
+                          </span>
                         </div>
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                            transaction.type === "membership_purchase"
-                              ? "bg-purple-100 text-purple-800"
-                              : transaction.type === "service_payment"
-                                ? "bg-blue-100 text-blue-800"
-                                : transaction.type === "refund"
-                                  ? "bg-green-100 text-green-800"
-                                  : transaction.type === "reward_points"
-                                    ? "bg-yellow-100 text-yellow-800"
-                                    : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {getTransactionTypeLabel(transaction.type)}
-                        </span>
                       </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="p-12 text-center">
+                    <FaWallet className="mx-auto mb-4 text-4xl text-gray-300" />
+                    <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                      No cashout requests found
+                    </h3>
+                    <p className="text-gray-600">
+                      Your cashout requests will appear here
+                    </p>
                   </div>
-                ))
-              ) : (
-                <div className="p-12 text-center">
-                  <FaWallet className="mx-auto mb-4 text-4xl text-gray-300" />
-                  <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                    No transactions found
-                  </h3>
-                  <p className="text-gray-600">
-                    {searchTerm || activeTab !== "all"
-                      ? "Try changing your filters or search term"
-                      : "Your transaction history will appear here"}
-                  </p>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            ) : (
+              /* Transactions List for other tabs */
+              <div className="divide-y divide-gray-100">
+                {filteredTransactions.length > 0 ? (
+                  filteredTransactions.map((transaction) => (
+                    <div
+                      key={transaction._id}
+                      className="p-6 transition-colors hover:bg-gray-50"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="rounded-lg bg-gray-100 p-3">
+                            {getTransactionIcon(transaction.type)}
+                          </div>
+                          <div>
+                            <h4 className="md:text-md text-sm font-semibold text-gray-900">
+                              {transaction.description.slice(0, 50)}
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              {formatDateWithoutTime(transaction.createdAt)} •
+                              Balance: {formatAmount(transaction.balanceAfter)}
+                            </p>
+                            {transaction.referenceId && (
+                              <p className="text-xs text-gray-500">
+                                Ref: {transaction.referenceId}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <div
+                            className={`text-lg font-semibold ${getTransactionColor(transaction.type, transaction.amount)}`}
+                          >
+                            {(transaction.amount > 0 &&
+                              transaction.type === "cashout") ||
+                            transaction.type === "refund"
+                              ? "+"
+                              : transaction.type === "purchase"
+                                ? "-"
+                                : ""}
+                            {formatAmount(transaction.amount)}
+                          </div>
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                              transaction.type === "membership_purchase"
+                                ? "bg-purple-100 text-purple-800"
+                                : transaction.type === "service_payment"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : transaction.type === "refund"
+                                    ? "bg-green-100 text-green-800"
+                                    : transaction.type === "reward_points"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {getTransactionTypeLabel(transaction.type)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-12 text-center">
+                    <FaWallet className="mx-auto mb-4 text-4xl text-gray-300" />
+                    <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                      No transactions found
+                    </h3>
+                    <p className="text-gray-600">
+                      {searchTerm || activeTab !== "all"
+                        ? "Try changing your filters or search term"
+                        : "Your transaction history will appear here"}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Help Section */}

@@ -1,6 +1,10 @@
 import React from "react";
 import { LuX } from "react-icons/lu";
-import { formatDate, formatCurrency } from "../../utils/helpers";
+import {
+  formatDate,
+  formatCurrency,
+  formatDateWithoutTime,
+} from "../../utils/helpers";
 
 const splitVendorPayments = (order) => {
   if (!order?.payments?.length) {
@@ -98,7 +102,11 @@ const OrderDetails = ({
               />
               <InfoItem
                 label="Scheduled Date"
-                value={formatDate(selectedOrder.scheduledDate)}
+                value={formatDateWithoutTime(selectedOrder.scheduledDate)}
+              />
+              <InfoItem
+                label="Scheduled Time"
+                value={selectedOrder.scheduledTime || "N/A"}
               />
             </dl>
           </div>
