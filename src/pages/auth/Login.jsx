@@ -135,7 +135,7 @@ const Login = () => {
 
       await request.resendVerification({
         email: formData.email,
-        role: "customer", // or "vendor" if vendor login
+        role: "vendor", // or "vendor" if vendor login
       });
 
       toast.success("Verification email resent successfully");
