@@ -59,6 +59,16 @@ const purchaseMembership = async (formData) => {
     formData,
   );
 };
+const validateCoupon = async (payload) => {
+  return await instances.privateRequest.post(API.USER.VALIDATE_COUPON, payload);
+};
+
+const activateFreeMembership = async (payload) => {
+  return await instances.privateRequest.post(
+    API.USER.ACTIVATE_FREE_MEMBERSHIP,
+    payload,
+  );
+};
 
 const cancelMembership = async () => {
   return await instances.privateRequest.post(API.USER.CANCEL_MEMBERSHIP);
@@ -234,6 +244,8 @@ const request = {
   getAgreement,
   purchaseMembership,
   cancelMembership,
+  validateCoupon,
+  activateFreeMembership,
   verifyTwoFactor,
 
   getUnreadNotification,

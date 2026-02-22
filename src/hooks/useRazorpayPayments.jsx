@@ -43,6 +43,22 @@ export default function useRazorpayPayment() {
     };
   }, []);
 
+  // Warn before refresh/close while payment is processing
+  useEffect(() => {
+    if (!loading) return;
+
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [loading]);
+
   const initiatePayment = async ({
     createOrderApi,
     verifyPaymentApi,
@@ -70,6 +86,7 @@ export default function useRazorpayPayment() {
 
       if (!order?.id) {
         toast.error("Failed to create payment order.");
+        setLoading(false);
         return;
       }
 

@@ -20,6 +20,8 @@ const API = {
     REQUEST_CASHOUT: "/vendor/cashout",
     DASHBOARD: "/vendor/dashboard",
     UPDATE_IMAGE: "/user/profile-image",
+    VALIDATE_COUPON: "/coupon/validate",
+    ACTIVATE_FREE_MEMBERSHIP: "/vendor/activate-free-membership",
   },
   KYC: {
     GET: "/vendor/kyc/details",

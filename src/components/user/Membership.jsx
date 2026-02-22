@@ -21,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import useRazorpayPayment from "../../hooks/useRazorpayPayments";
 import { toast } from "react-toastify";
+import CouponModal from "./CouponModal";
 
 // Card components for better structure
 const Card = ({ children, className, onClick }) => (
@@ -93,6 +94,9 @@ const VendorMembershipPurchase = () => {
   const [message, setMessage] = useState({ text: "", type: "" });
   const { user } = useSelector((state) => state.user);
   const navigate = useNavigate();
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [planToPurchase, setPlanToPurchase] = useState(null);
+
   const {
     initiatePayment,
     loading: razorpayLoading,
@@ -106,74 +110,166 @@ const VendorMembershipPurchase = () => {
     setMessage({ text: "", type: "" });
   };
 
-  const handleBuyNow = async (plan) => {
-    if (!plan) return;
-    if (!user.email) {
-      navigate("/");
+  // const handleBuyNow = async (plan) => {
+  //   if (!plan) return;
+  //   if (!user.email) {
+  //     navigate("/");
+  //   }
+  //   // setLoading(true);
+  //   setMessage({ text: "", type: "" });
+
+  //   try {
+
+  //     await initiatePayment({
+  //       createOrderApi: () =>
+  //         request.createPaymentOrder({
+  //           purpose: "membership",
+  //           referenceId: plan.id, // membership plan id
+  //           amount: plan.pricing[selectedDuration],
+  //         }),
+  //       verifyPaymentApi: (payload) =>
+  //         request.verifyRazorpayPayment({
+  //           ...payload,
+  //           purpose: "membership",
+  //           membershipType: plan.id,
+  //           planDuration: selectedDuration,
+  //           referenceId: plan.id,
+  //         }),
+
+  //       onSuccess: () => {
+  //         toast.success("Membership activated successfully!");
+  //         navigate("/membership-info");
+  //       },
+
+  //       onFailure: (error) => {
+  //         console.error("Payment failed:", error);
+  //         toast.error("Membership payment failed");
+  //       },
+  //       prefill: {
+  //         name: user?.firstName,
+  //         email: user?.email,
+  //         phone: user?.phone,
+  //       },
+  //     });
+  //   } catch (error) {
+  //     console.error("Purchase error:", error);
+
+  //     let errorMessage = "Failed to purchase membership";
+  //     if (
+  //       error.response &&
+  //       error.response.data &&
+  //       error.response.data.message
+  //     ) {
+  //       errorMessage = error.response.data.message;
+  //     }
+
+  //     setMessage({
+  //       text: errorMessage,
+  //       type: "error",
+  //     });
+  //   }
+  // };
+
+  // Features comparison
+
+  const handleBuyNow = (plan) => {
+    if (!user?.email) {
+      navigate("/login");
+      return;
     }
-    // setLoading(true);
-    setMessage({ text: "", type: "" });
+    setPlanToPurchase(plan);
+    setShowCouponModal(true);
+  };
+
+  const handleCouponSuccess = async (data) => {
+    // setShowCouponModal(false);
 
     try {
-      // const requestData = {
-      //   membershipType: plan.id,
-      //   paymentMode: "card", // Default, can be made dynamic
-      //   transactionId: `txn_${Date.now()}`, // This should come from your payment gateway
-      // };
+      setLoading(true);
 
-      // const response = await request.purchaseMembership(requestData);
+      if (data.finalAmount === 0) {
+        // Free membership activation
+        const response = await request.activateFreeMembership({
+          membershipType: planToPurchase.id,
+          duration: selectedDuration,
+          couponCode: data.code,
+        });
 
-      await initiatePayment({
-        createOrderApi: () =>
-          request.createPaymentOrder({
-            purpose: "membership",
-            referenceId: plan.id, // membership plan id
-            amount: plan.pricing[selectedDuration],
-          }),
-        verifyPaymentApi: (payload) =>
-          request.verifyRazorpayPayment({
-            ...payload,
-            purpose: "membership",
-            membershipType: plan.id,
-            planDuration: selectedDuration,
-            referenceId: plan.id,
-          }),
-
-        onSuccess: () => {
+        if (response.data.success) {
           toast.success("Membership activated successfully!");
+          setShowCouponModal(false);
           navigate("/membership-info");
-        },
-
-        onFailure: (error) => {
-          console.error("Payment failed:", error);
-          toast.error("Membership payment failed");
-        },
-        prefill: {
-          name: user?.firstName,
-          email: user?.email,
-          phone: user?.phone,
-        },
-      });
-    } catch (error) {
-      console.error("Purchase error:", error);
-
-      let errorMessage = "Failed to purchase membership";
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        errorMessage = error.response.data.message;
+        }
+        return;
       }
 
-      setMessage({
-        text: errorMessage,
-        type: "error",
-      });
+      // Paid flow with discounted amount
+      await initiatePaidPayment(data.finalAmount);
+    } catch (error) {
+      console.error("Purchase error:", error);
+      const errorMessage =
+        error.response?.data?.message || "Failed to process purchase";
+      toast.error(errorMessage);
+      setMessage({ text: errorMessage, type: "error" });
+    } finally {
+      setLoading(false);
+      // setPlanToPurchase(null);
     }
   };
 
-  // Features comparison
+  const handleContinueWithoutCoupon = async () => {
+    setShowCouponModal(false);
+
+    try {
+      setLoading(true);
+      await initiatePaidPayment(planToPurchase.pricing[selectedDuration]);
+    } catch (error) {
+      console.error("Purchase error:", error);
+      const errorMessage =
+        error.response?.data?.message || "Failed to process purchase";
+      toast.error(errorMessage);
+      setMessage({ text: errorMessage, type: "error" });
+    } finally {
+      setLoading(false);
+      setPlanToPurchase(null);
+    }
+  };
+
+  const initiatePaidPayment = async (amount) => {
+    await initiatePayment({
+      createOrderApi: () =>
+        request.createPaymentOrder({
+          purpose: "membership",
+          referenceId: planToPurchase.id,
+          amount: amount,
+        }),
+
+      verifyPaymentApi: (payload) =>
+        request.verifyRazorpayPayment({
+          ...payload,
+          purpose: "membership",
+          membershipType: planToPurchase.id,
+          planDuration: selectedDuration,
+          referenceId: planToPurchase.id,
+        }),
+
+      onSuccess: () => {
+        toast.success("Membership activated successfully!");
+        navigate("/membership-info");
+      },
+
+      onFailure: (error) => {
+        console.error("Payment failed:", error);
+        toast.error("Payment failed. Please try again.");
+      },
+
+      prefill: {
+        name: user?.firstName,
+        email: user?.email,
+        phone: user?.phone,
+      },
+    });
+  };
   const features = [
     {
       name: "Service Posts",
@@ -238,35 +334,6 @@ const VendorMembershipPurchase = () => {
   ];
 
   const plans = [
-    {
-      id: "none",
-      name: "Free",
-      description: "Perfect for growing your vendor business",
-      icon: <FaMedal className="h-6 w-6" />,
-      color: "text-gray-600",
-      borderColor: "border-gray-200",
-      bgColor: "bg-white",
-      popular: false,
-      pricing: {
-        Monthly: 0,
-        // Quarterly: 2499,
-        // Yearly: 7999,
-      },
-      features: [
-        "20% commission rate",
-        "Up to 3 service posts",
-        "Low priority listing in search",
-        "Verified badge",
-        "Payout (5-7 days)",
-        "Standard dispute handling",
-        "No monthly ad credits",
-        "No customer insights",
-        "Less access to premium leads",
-        "Email support",
-      ],
-      commission: "20%",
-      servicePosts: "3",
-    },
     {
       id: "premium",
       name: "Premium",
@@ -415,7 +482,8 @@ const VendorMembershipPurchase = () => {
           Vendor Subscription Plans
         </h2>
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        {/* <div className="grid grid-cols-1 gap-8 md:grid-cols-2"> */}
+        <div className="flex items-center justify-center">
           {plans.map((plan) => (
             <Card
               key={plan.id}
@@ -527,6 +595,19 @@ const VendorMembershipPurchase = () => {
           ))}
         </div>
       </div>
+
+      {showCouponModal && (
+        <CouponModal
+          plan={planToPurchase}
+          duration={selectedDuration}
+          onClose={() => {
+            setShowCouponModal(false);
+            setPlanToPurchase(null);
+          }}
+          onSuccess={handleCouponSuccess}
+          onContinueWithoutCoupon={handleContinueWithoutCoupon}
+        />
+      )}
     </div>
   );
 };
