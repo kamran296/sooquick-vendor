@@ -42,6 +42,7 @@ const OrdersDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [completingOrder, setCompletingOrder] = useState(false);
+  const [cancellingOrder, setCancellingOrder] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
     upcoming: 0,
@@ -167,6 +168,63 @@ const OrdersDashboard = () => {
     }
   };
 
+  const openCancelModal = (order) => {
+    setSelectedOrder(order);
+    setCancelMessage("");
+    setShowCancelModal(true);
+  };
+
+  const handleCancelOrder = async () => {
+    if (!selectedOrder) return;
+
+    if (!cancelMessage.trim()) {
+      toast.error("Cancellation message is required");
+      return;
+    }
+
+    try {
+      setCancellingOrder(true);
+
+      const response = await request.cancelOrder({
+        orderId: selectedOrder._id,
+        message: cancelMessage,
+      });
+
+      if (response.status === 200) {
+        toast.success("Order cancelled successfully!");
+
+        // Update orders locally
+        setOrdersData((prev) => {
+          const updatedOrder = {
+            ...selectedOrder,
+            status: "cancelled",
+            cancellationMessage: cancelMessage,
+          };
+
+          return {
+            ...prev,
+            allOrders: prev.allOrders.map((o) =>
+              o._id === selectedOrder._id ? updatedOrder : o,
+            ),
+            upcomingOrders: prev.upcomingOrders.filter(
+              (o) => o._id !== selectedOrder._id,
+            ),
+            ongoingOrders: prev.ongoingOrders.filter(
+              (o) => o._id !== selectedOrder._id,
+            ),
+            cancelledOrders: [...prev.cancelledOrders, updatedOrder],
+          };
+        });
+
+        closeCancelModal();
+      }
+    } catch (error) {
+      console.error("Cancel order error:", error);
+      toast.error(error.response?.data?.message || "Failed to cancel order");
+    } finally {
+      setCancellingOrder(false);
+    }
+  };
   const startOtpTimer = () => {
     clearOtpTimer(); // Clear any existing timer
     setOtpTimer(60); // 5 minutes in seconds
@@ -239,26 +297,6 @@ const OrdersDashboard = () => {
       toast.error("Please enter a valid 4-digit OTP");
     }
   };
-
-  // const openOtpModal = async (order) => {
-  //   setSelectedOrder(order);
-  //   setOtpOrderId(order._id);
-
-  //   if (order.status === "otp_requested") {
-  //     // If OTP was already requested, just open the modal
-  //     setShowOtpModal(true);
-  //     // Start timer if not already running
-  //     if (otpTimer === 0) {
-  //       startOtpTimer();
-  //     }
-  //   } else {
-  //     // For other statuses, initiate OTP process
-  //     const success = await initiateOrderCompletion(order._id);
-  //     if (success) {
-  //       setShowOtpModal(true);
-  //     }
-  //   }
-  // };
 
   const openOtpModal = async (order) => {
     // 🔐 HARD GUARD
@@ -718,6 +756,25 @@ const OrdersDashboard = () => {
                                 : "Complete"}
                             </button>
                           )}
+
+                          {/* cancellation of order */}
+
+                          {order.status !== "cancelled" &&
+                            order.status !== "refunded" &&
+                            order.status !== "completed" && (
+                              <button
+                                onClick={() => openCancelModal(order)}
+                                disabled={cancellingOrder}
+                                className={`flex items-center ${
+                                  cancellingOrder
+                                    ? "cursor-not-allowed text-gray-400"
+                                    : "text-red-600 hover:text-red-900"
+                                }`}
+                              >
+                                <FiXCircle className="mr-1 h-4 w-4" />
+                                Cancel
+                              </button>
+                            )}
                         </div>
                       </td>
                     </tr>
@@ -950,6 +1007,129 @@ const OrdersDashboard = () => {
                     )}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Cancel Modal */}
+        {showCancelModal && (
+          // <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+          //   <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+          //     <div className="mb-4 flex items-center justify-between">
+          //       <h3 className="text-lg font-semibold text-gray-900">
+          //         Cancel Order
+          //       </h3>
+          //       <button
+          //         onClick={closeCancelModal}
+          //         disabled={cancellingOrder}
+          //         className="text-gray-400 hover:text-gray-600"
+          //       >
+          //         <LuX className="h-5 w-5" />
+          //       </button>
+          //     </div>
+
+          //     <p className="mb-4 text-sm text-gray-600">
+          //       Please provide a reason for cancelling this order.
+          //     </p>
+
+          //     <textarea
+          //       value={cancelMessage}
+          //       onChange={(e) => setCancelMessage(e.target.value)}
+          //       rows="4"
+          //       placeholder="Enter cancellation reason..."
+          //       className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-red-500 focus:outline-none"
+          //     />
+
+          //     <div className="mt-6 flex justify-end space-x-3">
+          //       <button
+          //         onClick={closeCancelModal}
+          //         disabled={cancellingOrder}
+          //         className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          //       >
+          //         Close
+          //       </button>
+
+          //       <button
+          //         onClick={handleCancelOrder}
+          //         disabled={cancellingOrder || !cancelMessage.trim()}
+          //         className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+          //       >
+          //         {cancellingOrder ? (
+          //           <>
+          //             <div className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+          //             Cancelling...
+          //           </>
+          //         ) : (
+          //           "Confirm Cancel"
+          //         )}
+          //       </button>
+          //     </div>
+          //   </div>
+          // </div>
+
+          <div
+            className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-gray-300/30 p-4"
+            onClick={closeCancelModal}
+          >
+            <div
+              className="w-full max-w-md rounded-lg bg-white p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Cancel Order
+                </h3>
+                <button
+                  onClick={closeCancelModal}
+                  disabled={cancellingOrder}
+                  className="text-gray-400 transition-colors hover:text-gray-600"
+                >
+                  <LuX className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+                <p className="text-sm text-yellow-800">
+                  <strong>Note:</strong> Cancellation policy applies.
+                </p>
+              </div>
+
+              <div className="mb-6">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Reason for cancellation *
+                </label>
+                <textarea
+                  value={cancelMessage}
+                  onChange={(e) => setCancelMessage(e.target.value)}
+                  placeholder="Please provide the reason for cancellation..."
+                  rows={4}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={closeCancelModal}
+                  className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCancelOrder}
+                  disabled={cancellingOrder || !cancelMessage.trim()}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {cancellingOrder ? (
+                    <>
+                      <div className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                      Cancelling...
+                    </>
+                  ) : (
+                    "Confirm Cancel"
+                  )}
+                </button>
               </div>
             </div>
           </div>

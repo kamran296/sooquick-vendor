@@ -142,6 +142,12 @@ const deleteServiceImage = async (payload) => {
     data: payload,
   });
 };
+const toggleServiceStatus = async (serviceId) => {
+  return await instances.privateRequest.patch(
+    API.SERVICES.TOGGLE_STATUS(serviceId),
+    null,
+  );
+};
 
 // ------orders--------------
 const updateOrderStatus = (orderId, data) => {
@@ -173,6 +179,10 @@ const addAdditionalService = async (orderId, data) => {
     API.ORDER.ADD_ADDITONAL_SERVICE(orderId),
     data,
   );
+};
+
+const cancelOrder = async (payload) => {
+  return await instances.privateRequest.post(API.ORDER.CANCEL, payload);
 };
 
 // ----------------wallet------------------
@@ -224,6 +234,13 @@ const verifyRazorpayPayment = async (payload) => {
   );
 };
 
+const getCategories = async (params) => {
+  return await instances.privateRequest.get(API.CATEGORY.GET, params);
+};
+const getCategoryHierarchy = async (id) => {
+  return await instances.privateRequest.get(API.CATEGORY.GET_HIERARCHY(id));
+};
+
 const request = {
   signup,
   login,
@@ -261,12 +278,14 @@ const request = {
   getRejectedServices,
   getServiceDetails,
   deleteServiceImage,
+  toggleServiceStatus,
 
   getAllOrders,
   addAdditionalService,
   initiateOrderCompletion,
   resendOtp,
   verifyOrderOtp,
+  cancelOrder,
 
   getWallet,
   cashoutWallet,
@@ -279,6 +298,9 @@ const request = {
 
   createPaymentOrder,
   verifyRazorpayPayment,
+
+  getCategories,
+  getCategoryHierarchy,
 };
 
 export default request;

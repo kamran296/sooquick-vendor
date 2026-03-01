@@ -1,13 +1,19 @@
 import React, { useState } from "react";
 import { FaRupeeSign, FaHeart, FaTrash, FaCheck } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import EditServiceForm from "./EditServiceForm"; // Import the edit form component
+import EditServiceForm from "./EditServiceForm";
+import request from "../../axios/requests";
+import { setToggleStatus } from "../../redux/slices/serviceSlice";
+import { useDispatch } from "react-redux";
+import { toast } from "react-toastify";
 
 const ServiceCard = ({ service, onDelete, deleting }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false); // State for edit modal
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const commisionPercentage = (finalPrice, servicePrice) => {
     const percentage = ((finalPrice - servicePrice) / servicePrice) * 100;
@@ -45,6 +51,32 @@ const ServiceCard = ({ service, onDelete, deleting }) => {
     setShowEditModal(false);
   };
 
+  const handleToggleStatus = async (e) => {
+    e.stopPropagation();
+    if (isToggling) return;
+
+    setIsToggling(true);
+    try {
+      const res = await request.toggleServiceStatus(service._id);
+      if (res.data.success) {
+        toast.success(
+          res.data.message || "Service status updated successfully",
+        );
+
+        dispatch(
+          setToggleStatus({
+            serviceId: service._id,
+            isActive: !service.isActive,
+          }),
+        );
+      }
+    } catch (error) {
+      console.error("Failed to toggle service status:", error);
+      toast.error("Error toggling service status.");
+    } finally {
+      setIsToggling(false);
+    }
+  };
   return (
     <>
       <div className="group overflow-hidden rounded-lg bg-white shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-lg md:min-w-[300px]">
@@ -94,7 +126,7 @@ const ServiceCard = ({ service, onDelete, deleting }) => {
                   >
                     <path
                       fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                      d="M10 18a8 8 0 100-16 0 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
                       clipRule="evenodd"
                     />
                   </svg>
@@ -222,14 +254,10 @@ const ServiceCard = ({ service, onDelete, deleting }) => {
             </div>
           </div>
 
-          <p className="mb-3 line-clamp-2 text-sm text-gray-600">
-            {service.description}
-          </p>
-
           <div className="mb-3 flex items-center gap-2">
             <div className="flex items-center gap-1">
               <span className="text-sm font-medium text-gray-700">
-                {service.category}
+                {service.categoryPathNames[0]} - {service.categoryPathNames[1]}
               </span>
             </div>
             <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700">
@@ -288,31 +316,53 @@ const ServiceCard = ({ service, onDelete, deleting }) => {
           </div>
 
           {/* Actions */}
-          <div className="mt-6 flex space-x-4 border-t border-gray-200 pt-6">
-            {service.isApproved !== "requested" && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowEditModal(true);
-                }}
-                className="rounded-lg bg-[#0b8263] px-6 py-2 text-white transition-colors hover:bg-teal-700"
-              >
-                Edit Service
-              </button>
-            )}
+          <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-6">
+            <div className="flex space-x-4">
+              {service.isApproved !== "requested" && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowEditModal(true);
+                  }}
+                  className="rounded-lg bg-[#0b8263] px-6 py-2 text-white transition-colors hover:bg-teal-700"
+                >
+                  Edit Service
+                </button>
+              )}
 
-            {service.isApproved === "rejected" && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(service._id);
-                }}
-                disabled={deleting}
-                title="Delete Service"
-                className={`rounded-lg border border-red-200 p-2 text-red-600 transition ${deleting ? "cursor-not-allowed opacity-50" : "hover:bg-red-50"}`}
-              >
-                <FaTrash />
-              </button>
+              {service.isApproved === "rejected" && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(service._id);
+                  }}
+                  disabled={deleting}
+                  title="Delete Service"
+                  className={`rounded-lg border border-red-200 p-2 text-red-600 transition ${deleting ? "cursor-not-allowed opacity-50" : "hover:bg-red-50"}`}
+                >
+                  <FaTrash />
+                </button>
+              )}
+            </div>
+
+            {/* Toggle Switch - Only show if approved */}
+            {service.isApproved === "approved" && (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600">Active</span>
+                <button
+                  onClick={handleToggleStatus}
+                  disabled={isToggling}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:outline-none ${
+                    service.isActive ? "bg-teal-600" : "bg-gray-300"
+                  } ${isToggling ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      service.isActive ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
             )}
           </div>
         </div>

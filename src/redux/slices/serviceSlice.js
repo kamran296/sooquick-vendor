@@ -35,9 +35,19 @@ const serviceSlice = createSlice({
         state.serviceTabActive = tabFromUrl;
       }
     },
+    setToggleStatus: (state, action) => {
+      const { serviceId, isActive } = action.payload;
+      state.services = state.services.map((service) =>
+        service._id === serviceId ? { ...service, isActive } : service,
+      );
+    },
   },
 });
 
-export const { setServiceTab, setServices, setActiveTabFromUrl } =
-  serviceSlice.actions;
+export const {
+  setServiceTab,
+  setServices,
+  setActiveTabFromUrl,
+  setToggleStatus,
+} = serviceSlice.actions;
 export default serviceSlice.reducer;

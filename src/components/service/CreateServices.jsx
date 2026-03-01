@@ -10,6 +10,14 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { setSidebarTab } from "../../redux/slices/sidebarSlice";
 import { useNavigate } from "react-router-dom";
+import {
+  FiChevronRight,
+  FiFolder,
+  FiGrid,
+  FiList,
+  FiLoader,
+  FiPackage,
+} from "react-icons/fi";
 
 const FileUploadSection = ({ images, setImages, video, setVideo }) => {
   const imageInputRefs = [
@@ -217,12 +225,12 @@ const FileUploadSection = ({ images, setImages, video, setVideo }) => {
 
 const CreateService = () => {
   const [formData, setFormData] = useState({
-    serviceName: "",
+    // serviceName: "",
     mainCategory: "",
-    category: "",
     serviceType: "",
+    groupCategory: "",
+    category: "", // This will hold the final service category ID
     servicePrice: "",
-    // description: "",
     scopeOfWork: "",
     postalCodes: "",
     availability: "",
@@ -230,16 +238,35 @@ const CreateService = () => {
     workingEndTime: "",
     workingDays: [],
   });
+  const [categories, setCategories] = useState({
+    main: [],
+    sub: [],
+    group: [],
+    service: [],
+  });
+
+  const [selectedCategories, setSelectedCategories] = useState({
+    main: null,
+    sub: null,
+    group: null,
+    service: null,
+  });
+  const [categoryloading, setCategoryLoading] = useState({
+    main: false,
+    sub: false,
+    group: false,
+    service: false,
+  });
+  const [categoryPath, setCategoryPath] = useState([]);
 
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(setSidebarTab(1));
+    fetchMainCategories();
   }, []);
-
   // State for file uploads - using the 4 individual images approach
   const [images, setImages] = useState([null, null, null, null]);
   const [video, setVideo] = useState(null);
-
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({});
@@ -247,51 +274,293 @@ const CreateService = () => {
   const navigate = useNavigate();
   const user = useSelector((state) => state.user);
 
-  const handlePincodesChange = (pincodes) => {
-    setServiceAreas(pincodes);
-    // If you need to keep the postalCodes field for backward compatibility
-    setFormData({
-      ...formData,
-      postalCodes: pincodes.join(","),
+  const fetchMainCategories = async () => {
+    setCategoryLoading((prev) => ({ ...prev, main: true }));
+    try {
+      const response = await request.getCategories({
+        params: { type: "main" },
+      });
+      setCategories((prev) => ({ ...prev, main: response.data.data }));
+    } catch (error) {
+      console.error("Error fetching main categories:", error);
+    } finally {
+      setCategoryLoading((prev) => ({ ...prev, main: false }));
+    }
+  };
+  const fetchSubCategories = async (mainCategoryId) => {
+    if (!mainCategoryId) return;
+
+    setCategoryLoading((prev) => ({ ...prev, sub: true }));
+
+    try {
+      const response = await request.getCategories({
+        params: { type: "sub", parent: mainCategoryId },
+      });
+
+      setCategories((prev) => ({
+        ...prev,
+        sub: response.data?.data || [],
+      }));
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setCategoryLoading((prev) => ({ ...prev, sub: false }));
+    }
+  };
+  // Fetch group categories when sub category is selected
+  const fetchGroupCategories = async (subCategoryId) => {
+    if (!subCategoryId) return;
+
+    setCategoryLoading((prev) => ({ ...prev, group: true }));
+    try {
+      const response = await request.getCategories({
+        params: {
+          type: "group",
+          parent: subCategoryId,
+        },
+      });
+      setCategories((prev) => ({
+        ...prev,
+        group: response.data.data || [],
+      }));
+    } catch (error) {
+      console.error("Error fetching group categories:", error);
+    } finally {
+      setCategoryLoading((prev) => ({ ...prev, group: false }));
+    }
+  };
+
+  // Fetch service categories when group category is selected
+  const fetchServiceCategories = async (groupId) => {
+    if (!groupId) return;
+
+    setCategoryLoading((prev) => ({ ...prev, service: true }));
+    try {
+      const response = await request.getCategories({
+        params: {
+          type: "service",
+          parent: groupId,
+        },
+      });
+      setCategories((prev) => ({
+        ...prev,
+        service: response.data.data || response.data,
+      }));
+    } catch (error) {
+      console.error("Error fetching service categories:", error);
+    } finally {
+      setCategoryLoading((prev) => ({ ...prev, service: false }));
+    }
+  };
+  // Handle main category selection
+  const handleMainCategoryChange = async (e) => {
+    const categoryId = e.target.value;
+    const selectedCategory = categories.main.find((c) => c._id === categoryId);
+
+    setSelectedCategories({
+      main: selectedCategory,
+      sub: null,
+      group: null,
+      service: null,
     });
+
+    setFormData((prev) => ({
+      ...prev,
+      mainCategory: categoryId,
+      subCategory: "",
+      groupCategory: "",
+      category: "",
+    }));
+
+    // Reset dependent categories
+    setCategories((prev) => ({
+      ...prev,
+      sub: [],
+      group: [],
+      service: [],
+    }));
+
+    // Update category path
+    setCategoryPath(selectedCategory ? [selectedCategory] : []);
+
+    if (categoryId) {
+      await fetchSubCategories(categoryId);
+    }
+
+    // Clear error
+    if (errors.mainCategory) {
+      setErrors((prev) => ({ ...prev, mainCategory: "" }));
+    }
+  };
+
+  // Handle sub category selection
+  const handleSubCategoryChange = async (e) => {
+    const categoryId = e.target.value;
+    const selectedCategory = categories.sub.find((c) => c._id === categoryId);
+
+    setSelectedCategories((prev) => ({
+      ...prev,
+      sub: selectedCategory,
+      group: null,
+      service: null,
+    }));
+
+    setFormData((prev) => ({
+      ...prev,
+      subCategory: categoryId,
+      groupCategory: "",
+      category: "",
+    }));
+
+    // Reset dependent categories
+    setCategories((prev) => ({
+      ...prev,
+      group: [],
+      service: [],
+    }));
+
+    // Update category path
+    setCategoryPath((prev) => {
+      if (selectedCategory) {
+        return [...prev.filter((c) => c.type === "main"), selectedCategory];
+      }
+      return prev.filter((c) => c.type === "main");
+    });
+
+    if (categoryId) {
+      await fetchGroupCategories(categoryId);
+    }
+
+    // Clear error
+    if (errors.subCategory) {
+      setErrors((prev) => ({ ...prev, subCategory: "" }));
+    }
+  };
+
+  // Handle group category selection
+  const handleGroupCategoryChange = async (e) => {
+    const categoryId = e.target.value;
+    const selectedCategory = categories.group.find((c) => c._id === categoryId);
+
+    setSelectedCategories((prev) => ({
+      ...prev,
+      group: selectedCategory,
+      service: null,
+    }));
+
+    setFormData((prev) => ({
+      ...prev,
+      groupCategory: categoryId,
+      category: "",
+    }));
+
+    // Reset service categories
+    setCategories((prev) => ({
+      ...prev,
+      service: [],
+    }));
+
+    // Update category path
+    setCategoryPath((prev) => {
+      if (selectedCategory) {
+        return [
+          ...prev.filter((c) => c.type !== "group" && c.type !== "service"),
+          selectedCategory,
+        ];
+      }
+      return prev.filter((c) => c.type !== "group" && c.type !== "service");
+    });
+
+    if (categoryId) {
+      await fetchServiceCategories(categoryId);
+    }
+
+    // Clear error
+    if (errors.groupCategory) {
+      setErrors((prev) => ({ ...prev, groupCategory: "" }));
+    }
+  };
+
+  // Handle service category selection (final)
+  const handleServiceCategoryChange = (e) => {
+    const categoryId = e.target.value;
+    const selectedCategory = categories.service.find(
+      (c) => c._id === categoryId,
+    );
+
+    setSelectedCategories((prev) => ({
+      ...prev,
+      service: selectedCategory,
+    }));
+
+    setFormData((prev) => ({
+      ...prev,
+      category: categoryId,
+      serviceName: selectedCategory?.name || "", // Auto-fill service name from category
+    }));
+
+    // Update category path
+    setCategoryPath((prev) => {
+      if (selectedCategory) {
+        return [...prev.filter((c) => c.type !== "service"), selectedCategory];
+      }
+      return prev.filter((c) => c.type !== "service");
+    });
+
+    // Clear error
+    if (errors.category) {
+      setErrors((prev) => ({ ...prev, category: "" }));
+    }
   };
 
   const handleServiceAreasChange = (areas) => {
     setServiceAreas(areas);
   };
 
+  // const handleInputChange = (e) => {
+  //   const { name, value } = e.target;
+
+  //   // If mainCategory changes, reset category and serviceType
+  //   if (name === "mainCategory") {
+  //     setFormData({
+  //       ...formData,
+  //       mainCategory: value,
+  //       category: "",
+  //       serviceType: "",
+  //     });
+  //   }
+  //   // If category changes, reset serviceType
+  //   else if (name === "category") {
+  //     setFormData({
+  //       ...formData,
+  //       category: value,
+  //       serviceType: "",
+  //     });
+  //   } else {
+  //     setFormData({
+  //       ...formData,
+  //       [name]: value,
+  //     });
+  //   }
+
+  //   // Clear error when user starts typing
+  //   if (errors[name]) {
+  //     setErrors({
+  //       ...errors,
+  //       [name]: "",
+  //     });
+  //   }
+  // };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
 
-    // If mainCategory changes, reset category and serviceType
-    if (name === "mainCategory") {
-      setFormData({
-        ...formData,
-        mainCategory: value,
-        category: "",
-        serviceType: "",
-      });
-    }
-    // If category changes, reset serviceType
-    else if (name === "category") {
-      setFormData({
-        ...formData,
-        category: value,
-        serviceType: "",
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
-    }
-
-    // Clear error when user starts typing
     if (errors[name]) {
-      setErrors({
-        ...errors,
-        [name]: "",
-      });
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
@@ -299,13 +568,15 @@ const CreateService = () => {
     const newErrors = {};
 
     // UPDATED: Added new required fields
-    if (!formData.serviceName.trim())
-      newErrors.serviceName = "Service name is required";
     if (!formData.mainCategory)
-      newErrors.mainCategory = "Main category is required";
-    if (!formData.category) newErrors.category = "Category is required";
-    if (!formData.serviceType.trim())
-      newErrors.serviceType = "Service type is required";
+      newErrors.mainCategory = "Main category required";
+
+    if (!formData.category) newErrors.category = "Service category required";
+    // if (!formData.serviceName.trim())
+    //   newErrors.serviceName = "Service name is required";
+
+    // if (!formData.serviceType.trim())
+    //   newErrors.serviceType = "Service type is required";
     if (!formData.servicePrice || parseInt(formData.servicePrice) <= 0)
       newErrors.servicePrice = "Valid service price is required";
     // if (!formData.description.trim())
@@ -337,11 +608,12 @@ const CreateService = () => {
       const formDataToSend = new FormData();
 
       // Append all form data
-      Object.keys(formData).forEach((key) => {
-        if (key === "workingDays") return;
-        formDataToSend.append(key, formData[key]);
-      });
-
+      for (const key in formData) {
+        if (key === "workingDays") continue;
+        if (formData[key] !== "" && formData[key] !== null) {
+          formDataToSend.append(key, formData[key]);
+        }
+      }
       // Append service areas as JSON
       formDataToSend.append("serviceAreas", JSON.stringify(serviceAreas));
       formDataToSend.append(
@@ -380,10 +652,10 @@ const CreateService = () => {
         setFormData({
           serviceName: "",
           mainCategory: "",
+          subCategory: "",
+          groupCategory: "",
           category: "",
-          serviceType: "",
           servicePrice: "",
-          // description: "",
           scopeOfWork: "",
           postalCodes: "",
           availability: "",
@@ -394,6 +666,15 @@ const CreateService = () => {
 
         // Reset service areas
         setServiceAreas([]);
+
+        setSelectedCategories({
+          main: null,
+          sub: null,
+          group: null,
+          service: null,
+        });
+
+        setCategoryPath([]);
 
         // Reset file uploads
         setImages([null, null, null, null]);
@@ -419,6 +700,22 @@ const CreateService = () => {
         ? prev.workingDays.filter((d) => d !== day)
         : [...prev.workingDays, day],
     }));
+  };
+
+  // Get icon for category type
+  const getCategoryIcon = (type) => {
+    switch (type) {
+      case "main":
+        return <FiFolder className="text-[#0b8263]" />;
+      case "sub":
+        return <FiList className="text-[#0b8263]" />;
+      case "group":
+        return <FiGrid className="text-[#0b8263]" />;
+      case "service":
+        return <FiPackage className="text-[#0b8263]" />;
+      default:
+        return <MdCategory className="text-[#0b8263]" />;
+    }
   };
 
   if (user.kycVerified === "pending") {
@@ -497,101 +794,188 @@ const CreateService = () => {
         Create New Service
       </h2>
 
+      {/* Category Path Display */}
+      {categoryPath.length > 0 && (
+        <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <p className="mb-2 text-sm text-gray-600">Selected Category Path:</p>
+          <div className="flex flex-wrap items-center gap-2">
+            {categoryPath.map((cat, index) => (
+              <React.Fragment key={cat._id}>
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${cat.type === "main" ? "bg-purple-100 text-purple-800" : ""} ${cat.type === "sub" ? "bg-blue-100 text-blue-800" : ""} ${cat.type === "group" ? "bg-orange-100 text-orange-800" : ""} ${cat.type === "service" ? "bg-green-100 text-green-800" : ""} `}
+                >
+                  {getCategoryIcon(cat.type)}
+                  {cat.name}
+                </span>
+                {index < categoryPath.length - 1 && (
+                  <FiChevronRight className="text-gray-400" />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Other form fields remain the same as before */}
-
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Service Name
-          </label>
-          <input
-            type="text"
-            name="serviceName"
-            value={formData.serviceName}
-            onChange={handleInputChange}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
-          />
-          {errors.serviceName && (
-            <p className="text-xs text-red-500">{errors.serviceName}</p>
+          {/* <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Service Name
+            </label>
+            <input
+              type="text"
+              name="serviceName"
+              value={formData.serviceName}
+              onChange={handleInputChange}
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
+            />
+            {errors.serviceName && (
+              <p className="text-xs text-red-500">{errors.serviceName}</p>
+            )}
+          </div> */}
+
+          {/* Main Category */}
+          <div className="mb-4">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Main Category *
+            </label>
+            <div className="relative">
+              <select
+                value={formData.mainCategory}
+                onChange={handleMainCategoryChange}
+                className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2 transition outline-none focus:border-[#0b8263] focus:ring-2 focus:ring-[#0b8263]"
+              >
+                <option value="">Select Main Category</option>
+                {categories.main.map((cat) => (
+                  <option key={cat._id} value={cat._id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              {categoryloading.main && (
+                <FiLoader className="absolute top-3 right-3 animate-spin text-[#0b8263]" />
+              )}
+            </div>
+          </div>
+
+          {/* Sub Category */}
+          {formData.mainCategory && (
+            <div className="mb-4">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Sub Category *
+              </label>
+              <div className="relative">
+                <select
+                  value={formData.subCategory}
+                  onChange={handleSubCategoryChange}
+                  className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2 transition outline-none focus:border-[#0b8263] focus:ring-2 focus:ring-[#0b8263]"
+                  disabled={categoryloading.sub || categories.sub.length === 0}
+                >
+                  <option value="">Select Sub Category</option>
+                  {categories.sub.map((cat) => (
+                    <option key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+                {categoryloading.sub && (
+                  <FiLoader className="absolute top-3 right-3 animate-spin text-[#0b8263]" />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Group Category */}
+          {formData.subCategory && (
+            <div className="mb-4">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Group Category *
+              </label>
+              <div className="relative">
+                <select
+                  value={formData.groupCategory}
+                  onChange={handleGroupCategoryChange}
+                  className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2 transition outline-none focus:border-[#0b8263] focus:ring-2 focus:ring-[#0b8263]"
+                  disabled={
+                    categoryloading.main.group || categories.group.length === 0
+                  }
+                >
+                  <option value="">Select Group Category</option>
+                  {categories.group.map((cat) => (
+                    <option key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+                {categoryloading.main.group && (
+                  <FiLoader className="absolute top-3 right-3 animate-spin text-[#0b8263]" />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Service Category (Final) */}
+          {formData.groupCategory && (
+            <div className="mb-2">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Service Name * <span className="text-red-500">(Final)</span>
+              </label>
+              <div className="relative">
+                <select
+                  value={formData.category}
+                  onChange={handleServiceCategoryChange}
+                  className={`w-full appearance-none rounded-lg border bg-white px-4 py-2 transition outline-none focus:border-[#0b8263] focus:ring-2 focus:ring-[#0b8263] ${
+                    errors.category ? "border-red-500" : "border-gray-300"
+                  }`}
+                  disabled={
+                    categoryloading.service || categories.service.length === 0
+                  }
+                >
+                  <option value="">Select Service Category</option>
+                  {categories.service.map((cat) => (
+                    <option key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+                {categoryloading.service && (
+                  <FiLoader className="absolute top-3 right-3 animate-spin text-[#0b8263]" />
+                )}
+              </div>
+              {errors.category && (
+                <p className="mt-1 text-xs text-red-500">{errors.category}</p>
+              )}
+            </div>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Main Category *
-          </label>
-          <select
-            name="mainCategory"
-            value={formData.mainCategory}
-            onChange={handleInputChange}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
-          >
-            <option value="">Select Main Category</option>
-            {mainCategories.map((mainCat) => (
-              <option key={mainCat} value={mainCat}>
-                {mainCat}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Pricing Type
+            </label>
+            <select
+              name="pricingType"
+              value={formData.pricingType}
+              onChange={handleInputChange}
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263]"
+            >
+              <option value="Fixed">Fixed</option>
+              <option value="Per Square Feet">Per Square Feet</option>
+              <option value="Per Hour">Per Hour</option>
+              <option value="Per Session">Per Session</option>
+              <option value="Per Area">Per Area</option>
+              <option value="Per Unit">Per Unit</option>
+              <option value="Per Meter">Per Meter</option>
+              <option value="Per Room/BHK">Per Room/BHK</option>
+              <option value="Per Seat">Per Seat</option>
+              <option value="Per Point">Per Point</option>
+              <option value="Starting Price (Inspection Required)">
+                Starting Price (Inspection Required)
               </option>
-            ))}
-          </select>
-          {errors.mainCategory && (
-            <p className="text-xs text-red-500">{errors.mainCategory}</p>
-          )}
-        </div>
-
-        {/* UPDATED: Category (now sub-category) */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Category *
-          </label>
-          <select
-            name="category"
-            value={formData.category}
-            onChange={handleInputChange}
-            disabled={!formData.mainCategory}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-teal-500 disabled:bg-gray-100"
-          >
-            <option value="">Select Category</option>
-            {formData.mainCategory &&
-              subCategories[formData.mainCategory]?.map((subCat) => (
-                <option key={subCat} value={subCat}>
-                  {subCat}
-                </option>
-              ))}
-          </select>
-          {errors.category && (
-            <p className="text-xs text-red-500">{errors.category}</p>
-          )}
-        </div>
-        {/* NEW: Service Type */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Service Type *
-          </label>
-          <input
-            type="text"
-            name="serviceType"
-            value={formData.serviceType}
-            onChange={handleInputChange}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
-            placeholder="e.g., Fan installation/repair, Pipe leakage repair, 1BHK home cleaning"
-            list="serviceTypeSuggestions"
-          />
-          {/* Suggestions for service types */}
-          <datalist id="serviceTypeSuggestions">
-            {formData.category &&
-              serviceTypeExamples[formData.category]?.map((type, index) => (
-                <option key={index} value={type} />
-              ))}
-          </datalist>
-          {errors.serviceType && (
-            <p className="text-xs text-red-500">{errors.serviceType}</p>
-          )}
-          <p className="mt-1 text-xs text-gray-500">
-            Describe the specific service you offer
-          </p>
-        </div>
-
-        <div>
+            </select>
+          </div>
           <label className="block text-sm font-medium text-gray-700">
             Service Price (₹)
           </label>

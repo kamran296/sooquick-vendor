@@ -44,6 +44,7 @@ const API = {
     GET: (serviceId) => `/service/${serviceId}`,
     DELETE: (serviceId) => `/service/${serviceId}`,
     DELETE_IMAGE: "/service/delete-image",
+    TOGGLE_STATUS: (serviceId) => `/service/toggle/${serviceId}`,
   },
   ORDER: {
     GET_ALL: "/vendor/order/",
@@ -51,6 +52,7 @@ const API = {
     VERIFY_OTP: (id) => `/order/${id}/verify-otp `,
     RESEND_OTP: (id) => `/order/resend-otp/${id} `,
     ADD_ADDITONAL_SERVICE: (id) => `/order/additional-services/${id}`,
+    CANCEL: "/order/cancel-vendor",
   },
   SUPPORT: {
     GET_TICKETS: "/support",
@@ -61,6 +63,11 @@ const API = {
   PAYMENT: {
     createPaymentOrder: "/payment/create-order",
     verifyRazorpayPayment: "/payment/verify",
+  },
+  CATEGORY: {
+    GET: "/category",
+    CREATE: "/category",
+    GET_HIERARCHY: (id) => `/category/${id}`,
   },
 };
 

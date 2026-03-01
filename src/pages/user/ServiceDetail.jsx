@@ -185,6 +185,27 @@ const ServiceDetail = () => {
           </div>
         );
         break;
+      case "serviceAreas":
+        return (
+          <div className="font-mont rounded-lg bg-white p-6 shadow-sm">
+            {service.serviceAreas && service.serviceAreas.length > 0 ? (
+              <div className="flex gap-2">
+                {service.serviceAreas.map((area) => (
+                  <span
+                    key={area._id}
+                    className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800"
+                  >
+                    {area.areaName}, {area.city} - {area.pincode}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500">No reviews yet.</p>
+            )}
+          </div>
+        );
+        break;
+
       default:
         return null;
     }
@@ -401,23 +422,20 @@ const ServiceDetail = () => {
                     </span>
                   </div>
                   <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
-                    {service.category}
+                    {service.categoryPathNames[0]}
                   </span>
                   <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-800">
-                    {service.subCategory}
+                    {service.categoryPathNames[1]}
                   </span>
                 </div>
-
-                <p className="leading-relaxed text-gray-600">
-                  {service.description}
-                </p>
               </div>
 
               {/* Pricing */}
               <div className="rounded-lg bg-white p-6 shadow-sm">
                 <div className="mb-4 flex items-center gap-3">
                   <span className="text-3xl font-bold text-blue-600">
-                    ₹{service.finalPrice}
+                    ₹{service.finalPrice}{" "}
+                    <span className="text-[15px]">{service.pricingType}</span>
                   </span>
                   {service.originalPrice &&
                     service.originalPrice > service.finalPrice && (
@@ -518,17 +536,10 @@ const ServiceDetail = () => {
               {service.serviceAreas && service.serviceAreas.length > 0 && (
                 <div className="rounded-lg bg-white p-6 shadow-sm">
                   <h3 className="mb-3 font-semibold text-gray-900">
-                    Service Areas
+                    Scope of Work
                   </h3>
                   <div className="flex flex-wrap gap-2">
-                    {service.serviceAreas.map((area) => (
-                      <span
-                        key={area._id}
-                        className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800"
-                      >
-                        {area.areaName}, {area.city} - {area.pincode}
-                      </span>
-                    ))}
+                    {service.scopeOfWork}
                   </div>
                 </div>
               )}
@@ -568,6 +579,16 @@ const ServiceDetail = () => {
                   }`}
                 >
                   Reviews
+                </button>
+                <button
+                  onClick={() => setActiveTab("serviceAreas")}
+                  className={`border-b-2 px-1 py-4 text-sm font-medium ${
+                    activeTab === "serviceAreas"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                  }`}
+                >
+                  Service Areas
                 </button>
               </nav>
             </div>
