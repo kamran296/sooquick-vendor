@@ -12,6 +12,7 @@ import {
   FiSearch,
   FiUsers,
   FiArchive,
+  FiShoppingBag,
   FiX,
 } from "react-icons/fi";
 import { BiSupport } from "react-icons/bi";
@@ -34,7 +35,12 @@ const Support = () => {
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
   const [debouncedSearch, setDebouncedSearch] = useState("");
-
+  const [activeTab, setActiveTab] = useState("all");
+  const [showTicketForm, setShowTicketForm] = useState(false);
+  const [formData, setFormData] = useState({
+    subject: "",
+    message: "",
+  });
   // Filters
   const [filters, setFilters] = useState({
     status: "",
@@ -67,6 +73,12 @@ const Support = () => {
     if (filters.search) params.search = filters.search;
 
     return params;
+  };
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
   // Fetch tickets from API
@@ -175,14 +187,15 @@ const Support = () => {
       });
 
       if (response.data.success) {
-        await fetchTicketDetails(selectedTicket._id);
+        await fetchTickets();
+        // await fetchTicketDetails(selectedTicket._id);
         setNewMessage("");
         toast.success("Message sent successfully!");
 
         // Scroll to bottom
-        setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        }, 100);
+        // setTimeout(() => {
+        //   messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        // }, 100);
       } else {
         toast.error(response.data.message || "Failed to send message");
       }
@@ -191,6 +204,63 @@ const Support = () => {
       toast.error(error.response?.data?.error || "Failed to send message");
     } finally {
       setSendingMessage(false);
+    }
+  };
+  const handleSubmitTicket = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    // Validate form data
+    if (!formData.subject.trim() || !formData.message.trim()) {
+      toast.error("Please fill in all fields");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Make sure you're sending the correct data structure
+      const ticketData = {
+        subject: formData.subject.trim(),
+        message: formData.message.trim(),
+        // Add any other required fields your API expects
+        // type: "User", // Uncomment if your API requires this
+      };
+
+      const response = await request.createSupportTicket(ticketData);
+
+      if (response.data.success) {
+        // Add new ticket to list
+        const newTicket = response.data.ticket || response.data.data; // Adjust based on your API response structure
+
+        if (newTicket) {
+          setTickets((prevTickets) => [newTicket, ...prevTickets]);
+
+          // Reset form
+          setFormData({ subject: "", message: "" });
+          setShowTicketForm(false);
+
+          // Optionally select the newly created ticket
+          setSelectedTicket(newTicket);
+
+          toast.success("Support ticket created successfully!");
+
+          // Refresh the ticket list to ensure data consistency
+          fetchTickets(1);
+        } else {
+          throw new Error("Invalid response format");
+        }
+      } else {
+        throw new Error(response.data.message || "Failed to create ticket");
+      }
+    } catch (error) {
+      console.error("Failed to submit ticket:", error);
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to submit ticket. Please try again.",
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -212,24 +282,6 @@ const Support = () => {
       toast.error(error.response?.data?.error || "Failed to close ticket");
     } finally {
       setClosingTicket(false);
-    }
-  };
-
-  const handleAssignToMe = async () => {
-    if (!selectedTicket) return;
-
-    try {
-      const response = await request.assignTicket(selectedTicket._id);
-
-      if (response.data.success) {
-        await fetchTicketDetails(selectedTicket._id);
-        toast.success("Ticket assigned to you!");
-      } else {
-        toast.error(response.data.message || "Failed to assign ticket");
-      }
-    } catch (error) {
-      console.error("Failed to assign ticket:", error);
-      toast.error(error.response?.data?.error || "Failed to assign ticket");
     }
   };
 
@@ -374,11 +426,18 @@ const Support = () => {
                   </p>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-[#0b8263]">
-                  {pagination.totalTickets}
+              <div className="flex items-center justify-center gap-3 text-right">
+                <div className="flex gap-1 text-2xl font-bold text-[#0b8263]">
+                  <p className="text-sm">{pagination.totalTickets}</p>
+                  <div className="text-sm text-slate-500">Total Tickets</div>
                 </div>
-                <div className="text-sm text-slate-500">Total Tickets</div>
+                <button
+                  onClick={() => setShowTicketForm(true)}
+                  disabled={showTicketForm}
+                  className="rounded-2xl bg-[#0b8263] px-6 py-3 text-sm text-white hover:cursor-pointer"
+                >
+                  + Create Ticket
+                </button>
               </div>
             </div>
           </div>
@@ -779,6 +838,81 @@ const Support = () => {
           </div>
         </div>
       </div>
+      {showTicketForm && (
+        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+          <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-800">
+                Create New Support Ticket
+              </h3>
+              <button
+                onClick={() => setShowTicketForm(false)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              >
+                <FiX className="text-xl" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmitTicket} className="space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Subject <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleInputChange}
+                  placeholder="Brief description of your issue"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[#0b8263] focus:outline-none"
+                  required
+                  maxLength={100}
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Message <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  rows="6"
+                  placeholder="Please describe your issue in detail..."
+                  className="w-full resize-none rounded-lg border border-slate-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[#0b8263] focus:outline-none"
+                  required
+                  maxLength={500}
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  {formData.message.length}/500 characters
+                </p>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowTicketForm(false)}
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={
+                    loading ||
+                    !formData.subject.trim() ||
+                    !formData.message.trim()
+                  }
+                  className="flex items-center space-x-2 rounded-lg bg-[#0b8263] px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  <FiSend className="text-sm" />
+                  <span>{loading ? "Submitting..." : "Submit Ticket"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </UserLayout>
   );
 };

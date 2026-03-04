@@ -320,6 +320,15 @@ const UserSetting = () => {
               <p className="mt-1 text-sm text-gray-500">
                 Click on the profile picture to upload a new one
               </p>
+              <p
+                className="mt-1 text-sm text-gray-500 underline hover:cursor-pointer"
+                onClick={() => {
+                  navigator.clipboard.writeText(user.customVendorId);
+                  toast.success("Vendor ID copied to clipboard!");
+                }}
+              >
+                {user.customVendorId}
+              </p>
             </div>
           </div>
         </div>

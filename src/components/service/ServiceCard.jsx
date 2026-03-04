@@ -6,6 +6,8 @@ import request from "../../axios/requests";
 import { setToggleStatus } from "../../redux/slices/serviceSlice";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
+import { FiX } from "react-icons/fi";
+import { MdCategory } from "react-icons/md";
 
 const ServiceCard = ({ service, onDelete, deleting }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -373,24 +375,15 @@ const ServiceCard = ({ service, onDelete, deleting }) => {
         <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
           <div className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-white">
             <div className="sticky top-0 flex items-center justify-between border-b bg-white p-4">
-              <h2 className="text-xl font-bold">Edit Service</h2>
+              <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold text-gray-800">
+                <MdCategory className="text-[#0b8263]" />
+                Edit Service
+              </h2>
               <button
                 onClick={() => setShowEditModal(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <FiX />
               </button>
             </div>
             <div className="p-4">

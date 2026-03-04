@@ -226,6 +226,7 @@ const FileUploadSection = ({ images, setImages, video, setVideo }) => {
 const CreateService = () => {
   const [formData, setFormData] = useState({
     // serviceName: "",
+    subCategory: "",
     mainCategory: "",
     serviceType: "",
     groupCategory: "",
@@ -237,6 +238,9 @@ const CreateService = () => {
     workingStartTime: "",
     workingEndTime: "",
     workingDays: [],
+    warranty: false,
+    warrantyPeriod: "",
+    warrantyIncludes: "",
   });
   const [categories, setCategories] = useState({
     main: [],
@@ -571,16 +575,30 @@ const CreateService = () => {
     if (!formData.mainCategory)
       newErrors.mainCategory = "Main category required";
 
-    if (!formData.category) newErrors.category = "Service category required";
-    // if (!formData.serviceName.trim())
-    //   newErrors.serviceName = "Service name is required";
+    if (formData.mainCategory && !formData.groupCategory)
+      newErrors.groupCategory = "Group category required";
+    if (formData.mainCategory && !formData.subCategory)
+      newErrors.subCategory = "Sub category required";
+
+    if (formData.mainCategory && !formData.category)
+      newErrors.category = "Category required";
+
+    if (formData.warranty && !formData.warrantyPeriod) {
+      newErrors.warrantyPeriod =
+        "Warranty period required if warranty is provided";
+    }
+    if (formData.warranty && !formData.warrantyIncludes) {
+      newErrors.warrantyIncludes =
+        "Warranty inclusions required if warranty is provided";
+    }
+    if (formData.mainCategory && !formData.serviceName?.trim())
+      newErrors.serviceName = "Service name is required";
 
     // if (!formData.serviceType.trim())
     //   newErrors.serviceType = "Service type is required";
     if (!formData.servicePrice || parseInt(formData.servicePrice) <= 0)
       newErrors.servicePrice = "Valid service price is required";
-    // if (!formData.description.trim())
-    //   newErrors.description = "Description is required";
+
     if (!formData.scopeOfWork.trim())
       newErrors.scopeOfWork = "Scope of work is required";
     if (serviceAreas.length === 0) {
@@ -588,7 +606,7 @@ const CreateService = () => {
     }
     if (!formData.availability)
       newErrors.availability = "Availability is required";
-
+    console.log(newErrors, "erros");
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -662,6 +680,9 @@ const CreateService = () => {
           workingStartTime: "",
           workingEndTime: "",
           workingDays: [],
+          warranty: false,
+          warrantyPeriod: "",
+          warrantyIncludes: "",
         });
 
         // Reset service areas
@@ -819,22 +840,6 @@ const CreateService = () => {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Other form fields remain the same as before */}
         <div>
-          {/* <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Service Name
-            </label>
-            <input
-              type="text"
-              name="serviceName"
-              value={formData.serviceName}
-              onChange={handleInputChange}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
-            />
-            {errors.serviceName && (
-              <p className="text-xs text-red-500">{errors.serviceName}</p>
-            )}
-          </div> */}
-
           {/* Main Category */}
           <div className="mb-4">
             <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -855,6 +860,11 @@ const CreateService = () => {
               </select>
               {categoryloading.main && (
                 <FiLoader className="absolute top-3 right-3 animate-spin text-[#0b8263]" />
+              )}
+              {errors.mainCategory && (
+                <p className="mt-1 text-xs text-red-500">
+                  {errors.mainCategory}
+                </p>
               )}
             </div>
           </div>
@@ -882,6 +892,11 @@ const CreateService = () => {
                 {categoryloading.sub && (
                   <FiLoader className="absolute top-3 right-3 animate-spin text-[#0b8263]" />
                 )}
+                {errors.subCategory && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.subCategory}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -890,7 +905,7 @@ const CreateService = () => {
           {formData.subCategory && (
             <div className="mb-4">
               <label className="mb-1 block text-sm font-medium text-gray-700">
-                Group Category *
+                Service Type *
               </label>
               <div className="relative">
                 <select
@@ -910,6 +925,11 @@ const CreateService = () => {
                 </select>
                 {categoryloading.main.group && (
                   <FiLoader className="absolute top-3 right-3 animate-spin text-[#0b8263]" />
+                )}
+                {errors.groupCategory && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.groupCategory}
+                  </p>
                 )}
               </div>
             </div>
@@ -949,7 +969,7 @@ const CreateService = () => {
             </div>
           )}
         </div>
-
+        {/* pricing */}
         <div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -993,6 +1013,66 @@ const CreateService = () => {
           )}
         </div>
 
+        {/* warranty */}
+        <div className="flex items-center gap-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Warranty
+          </label>
+          <button
+            onClick={() => {
+              setFormData((prev) => ({ ...prev, warranty: !prev.warranty }));
+            }}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:outline-none ${
+              formData.warranty ? "bg-teal-600" : "bg-gray-300"
+            } `}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                formData.warranty ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+        <div>
+          {formData.warranty && (
+            <div className="mt-4 space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Warranty Period (e.g. 6 months, 1 year)
+                </label>
+                <input
+                  type="text"
+                  name="warrantyPeriod"
+                  value={formData.warrantyPeriod}
+                  onChange={handleInputChange}
+                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
+                />
+                {errors.warrantyPeriod && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.warrantyPeriod}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Warranty Includes (e.g. parts, labor, both)
+                </label>
+                <textarea
+                  name="warrantyIncludes"
+                  value={formData.warrantyIncludes}
+                  onChange={handleInputChange}
+                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
+                />
+                {errors.warrantyIncludes && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.warrantyIncludes}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+        {/* scope of work */}
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Scope of Work
@@ -1009,6 +1089,7 @@ const CreateService = () => {
           )}
         </div>
 
+        {/* pincodes */}
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Postal Codes (comma separated)

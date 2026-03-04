@@ -10,6 +10,7 @@ const initialState = {
     panNumber: "",
     gstNumber: "",
     aadhaarNumber: "",
+    officeAddress: "",
     documents: {
       panCard: null,
       gstCertificate: null,
@@ -17,6 +18,7 @@ const initialState = {
       cinCertificate: null,
       aadhaarCard: null,
       agreement: null,
+      addressProof: null,
       otherDocs: [],
     },
   },
@@ -64,6 +66,7 @@ export const submitKycInfo = createAsyncThunk(
           "documents.cancelledCheque",
           "documents.aadhaarCard",
           "documents.agreement",
+          "documents.addressProof",
         ],
         company: [
           "companyName",
@@ -74,6 +77,7 @@ export const submitKycInfo = createAsyncThunk(
           "documents.gstCertificate",
           "documents.cinCertificate",
           "documents.agreement",
+          "documents.addressProof",
         ],
       };
 
@@ -121,6 +125,7 @@ export const submitKycInfo = createAsyncThunk(
             "cancelledCheque",
             "aadhaarCard",
             "agreement",
+            "addressProof",
           ];
           if (!allowed.includes(docKey)) return;
         }
@@ -133,6 +138,7 @@ export const submitKycInfo = createAsyncThunk(
             "gstCertificate",
             "cinCertificate",
             "agreement",
+            "addressProof",
           ];
           if (!allowed.includes(docKey)) return;
         }

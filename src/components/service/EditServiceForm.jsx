@@ -3,7 +3,7 @@ import axios from "axios";
 import PincodeInput from "./Pincode";
 import request from "../../axios/requests";
 import { toast } from "react-toastify";
-import { FaTrash, FaPlus, FaMinus } from "react-icons/fa6";
+// import { FaTrash, FaPlus, FaMinus } from "react-icons/fa6";
 import {
   FiChevronRight,
   FiLoader,
@@ -11,15 +11,18 @@ import {
   FiList,
   FiGrid,
   FiPackage,
+  FiPlus,
 } from "react-icons/fi";
-import { MdCategory } from "react-icons/md";
+import { MdCategory, MdWarning, MdInfo, MdCheckCircle } from "react-icons/md";
+import { FaPlus, FaMinus, FaTrash, FaExclamationCircle } from "react-icons/fa";
 
 // const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
 //   const [formData, setFormData] = useState({
 //     serviceName: "",
 //     mainCategory: "",
-//     category: "",
-//     serviceType: "",
+//     subCategory: "",
+//     groupCategory: "",
+//     category: "", // final service category Id
 //     pricingType: "Fixed",
 //     servicePrice: "",
 //     availability: "",
@@ -34,6 +37,7 @@ import { MdCategory } from "react-icons/md";
 //   const [submitting, setSubmitting] = useState(false);
 //   const [error, setError] = useState("");
 //   const [success, setSuccess] = useState("");
+//   const [categoryPath, setCategoryPath] = useState([]);
 //   const MAX_IMAGES = 4;
 
 //   // Service areas management
@@ -50,45 +54,44 @@ import { MdCategory } from "react-icons/md";
 //   const [videoToRemove, setVideoToRemove] = useState(false);
 //   const [deletingImage, setDeletingImage] = useState(false);
 //   const [deletingVideo, setDeletingVideo] = useState(false);
-//   // Categories
-//   const mainCategories = [
-//     "Repair & Maintenance",
-//     "Cleaning & Hygiene Services",
-//     "Fitness & Grooming",
-//   ];
 
-//   const subCategories = {
-//     "Repair & Maintenance": [
-//       "Electrician",
-//       "Plumber",
-//       "Carpenter",
-//       "AC Repair",
-//       "Appliance Repair",
-//       "Painting",
-//       "Pest Control",
-//       "RO Service",
-//       "Computer Repair",
-//       "Internet Services",
-//     ],
-//     "Cleaning & Hygiene Services": [
-//       "Home Cleaning",
-//       "Sofa Cleaning",
-//       "Carpet Cleaning",
-//       "Bathroom Cleaning",
-//       "Kitchen Cleaning",
-//       "Office Cleaning",
-//       "Water Tank Cleaning",
-//     ],
-//     "Fitness & Grooming": ["Salon Services", "Mehendi Services"],
-//   };
+//   // Categories state
+//   const [categories, setCategories] = useState({
+//     main: [],
+//     sub: [],
+//     group: [],
+//     service: [],
+//   });
 
+//   const [categoryLoading, setCategoryLoading] = useState({
+//     main: false,
+//     sub: false,
+//     group: false,
+//     service: false,
+//   });
+
+//   const [selectedCategories, setSelectedCategories] = useState({
+//     main: null,
+//     sub: null,
+//     group: null,
+//     service: null,
+//   });
+
+//   // Pricing types
 //   const pricingTypes = [
 //     "Fixed",
 //     "Per Square Feet",
 //     "Per Hour",
 //     "Per Session",
-//     "Custom",
+//     "Per Area",
+//     "Per Unit",
+//     "Per Meter",
+//     "Per Room/BHK",
+//     "Per Seat",
+//     "Per Point",
+//     "Starting Price (Inspection Required)",
 //   ];
+
 //   const workingDaysOptions = [
 //     "Monday",
 //     "Tuesday",
@@ -99,18 +102,51 @@ import { MdCategory } from "react-icons/md";
 //     "Sunday",
 //   ];
 
-//   // Initialize form data
+//   // Fetch main categories on mount
 //   useEffect(() => {
-//     const initializeFormData = () => {
+//     fetchMainCategories();
+//   }, []);
+
+//   // Initialize form data when service is provided
+//   useEffect(() => {
+//     const initializeFormData = async () => {
 //       try {
 //         setLoading(true);
 
+//         if (!service?.category) return;
+
+//         // Fetch full category hierarchy
+//         const res = await request.getCategoryHierarchy(service.category);
+//         const hierarchy = res.data.data;
+//         console.log("Fetched category hierarchy:", hierarchy);
+//         // Extract categories from hierarchy
+//         const mainCat = hierarchy.ancestors?.find((c) => c.type === "main");
+//         const subCat = hierarchy.ancestors?.find((c) => c.type === "sub");
+//         const groupCat = hierarchy.ancestors?.find((c) => c.type === "group");
+//         // const serviceCat = hierarchy.category;
+//         const serviceCat = hierarchy._id;
+
+//         // Set selected categories
+//         setSelectedCategories({
+//           main: mainCat,
+//           sub: subCat,
+//           group: groupCat,
+//           service: serviceCat,
+//         });
+
+//         // Set category path
+//         setCategoryPath(
+//           [mainCat, subCat, groupCat, serviceCat].filter(Boolean),
+//         );
+
 //         // Set form data
-//         setFormData({
-//           serviceName: service.serviceName || "",
-//           mainCategory: service.mainCategory || "",
-//           category: service.category || "",
-//           serviceType: service.serviceType || "",
+//         setFormData((prev) => ({
+//           ...prev,
+//           serviceName: service.serviceName || serviceCat?.name || "",
+//           mainCategory: mainCat?._id || "",
+//           subCategory: subCat?._id || "",
+//           groupCategory: groupCat?._id || "",
+//           category: serviceCat || "",
 //           pricingType: service.pricingType || "Fixed",
 //           servicePrice: service.servicePrice || "",
 //           availability: service.availability || "",
@@ -119,7 +155,18 @@ import { MdCategory } from "react-icons/md";
 //           workingStartTime: service.workingStartTime || "",
 //           workingEndTime: service.workingEndTime || "",
 //           workingDays: service.workingDays || [],
-//         });
+//         }));
+
+//         // Pre-load dropdowns in sequence
+//         if (mainCat) {
+//           await fetchSubCategories(mainCat._id);
+//         }
+//         if (subCat) {
+//           await fetchGroupCategories(subCat._id);
+//         }
+//         if (groupCat) {
+//           await fetchServiceCategories(groupCat._id);
+//         }
 
 //         // Set existing media
 //         setExistingImages(service?.documents?.photos || []);
@@ -142,23 +189,247 @@ import { MdCategory } from "react-icons/md";
 //     }
 //   }, [service]);
 
-//   // Service Areas Management Functions
-//   // const handleAddNewServiceArea = (newArea) => {
-//   //   // Check if area already exists
-//   //   const exists = [...existingServiceAreas, ...newServiceAreas].some(
-//   //     (area) => area.pincode === newArea.pincode,
-//   //   );
+//   // Fetch functions
+//   const fetchMainCategories = async () => {
+//     try {
+//       setCategoryLoading((prev) => ({ ...prev, main: true }));
+//       const res = await request.getCategories({ params: { type: "main" } });
+//       setCategories((prev) => ({
+//         ...prev,
+//         main: res.data?.data || [],
+//       }));
+//     } catch (error) {
+//       console.error("Error fetching main categories:", error);
+//     } finally {
+//       setCategoryLoading((prev) => ({ ...prev, main: false }));
+//     }
+//   };
 
-//   //   if (!exists) {
-//   //     setNewServiceAreas((prev) => [...prev, newArea]);
-//   //   }
-//   // };
+//   const fetchSubCategories = async (parentId) => {
+//     if (!parentId) return;
+//     try {
+//       setCategoryLoading((prev) => ({ ...prev, sub: true }));
+//       const res = await request.getCategories({
+//         params: { type: "sub", parent: parentId },
+//       });
+//       setCategories((prev) => ({
+//         ...prev,
+//         sub: res.data?.data || [],
+//       }));
+//     } catch (error) {
+//       console.error("Error fetching sub categories:", error);
+//     } finally {
+//       setCategoryLoading((prev) => ({ ...prev, sub: false }));
+//     }
+//   };
+
+//   const fetchGroupCategories = async (parentId) => {
+//     if (!parentId) return;
+//     try {
+//       setCategoryLoading((prev) => ({ ...prev, group: true }));
+//       const res = await request.getCategories({
+//         params: { type: "group", parent: parentId },
+//       });
+//       setCategories((prev) => ({
+//         ...prev,
+//         group: res.data?.data || [],
+//       }));
+//     } catch (error) {
+//       console.error("Error fetching group categories:", error);
+//     } finally {
+//       setCategoryLoading((prev) => ({ ...prev, group: false }));
+//     }
+//   };
+
+//   const fetchServiceCategories = async (parentId) => {
+//     if (!parentId) return;
+//     try {
+//       setCategoryLoading((prev) => ({ ...prev, service: true }));
+//       const res = await request.getCategories({
+//         params: { type: "service", parent: parentId },
+//       });
+//       setCategories((prev) => ({
+//         ...prev,
+//         service: res.data?.data || [],
+//       }));
+//     } catch (error) {
+//       console.error("Error fetching service categories:", error);
+//     } finally {
+//       setCategoryLoading((prev) => ({ ...prev, service: false }));
+//     }
+//   };
+
+//   // Handle main category change
+//   const handleMainCategoryChange = async (e) => {
+//     const categoryId = e.target.value;
+//     const selectedCategory = categories.main.find((c) => c._id === categoryId);
+
+//     setSelectedCategories({
+//       main: selectedCategory,
+//       sub: null,
+//       group: null,
+//       service: null,
+//     });
+
+//     setFormData((prev) => ({
+//       ...prev,
+//       mainCategory: categoryId,
+//       subCategory: "",
+//       groupCategory: "",
+//       category: "",
+//       serviceName: "",
+//     }));
+
+//     // Reset dependent categories
+//     setCategories((prev) => ({
+//       ...prev,
+//       sub: [],
+//       group: [],
+//       service: [],
+//     }));
+
+//     // Update category path
+//     setCategoryPath(selectedCategory ? [selectedCategory] : []);
+
+//     if (categoryId) {
+//       await fetchSubCategories(categoryId);
+//     }
+//   };
+
+//   // Handle sub category change
+//   const handleSubCategoryChange = async (e) => {
+//     const categoryId = e.target.value;
+//     const selectedCategory = categories.sub.find((c) => c._id === categoryId);
+
+//     setSelectedCategories((prev) => ({
+//       ...prev,
+//       sub: selectedCategory,
+//       group: null,
+//       service: null,
+//     }));
+
+//     setFormData((prev) => ({
+//       ...prev,
+//       subCategory: categoryId,
+//       groupCategory: "",
+//       category: "",
+//       serviceName: "",
+//     }));
+
+//     // Reset dependent categories
+//     setCategories((prev) => ({
+//       ...prev,
+//       group: [],
+//       service: [],
+//     }));
+
+//     // Update category path
+//     setCategoryPath((prev) => {
+//       const main = prev.find((c) => c?.type === "main");
+//       if (selectedCategory) {
+//         return [main, selectedCategory].filter(Boolean);
+//       }
+//       return [main];
+//     });
+
+//     if (categoryId) {
+//       await fetchGroupCategories(categoryId);
+//     }
+//   };
+
+//   // Handle group category change
+//   const handleGroupCategoryChange = async (e) => {
+//     const categoryId = e.target.value;
+//     const selectedCategory = categories.group.find((c) => c._id === categoryId);
+
+//     setSelectedCategories((prev) => ({
+//       ...prev,
+//       group: selectedCategory,
+//       service: null,
+//     }));
+
+//     setFormData((prev) => ({
+//       ...prev,
+//       groupCategory: categoryId,
+//       category: "",
+//       serviceName: "",
+//     }));
+
+//     // Reset service categories
+//     setCategories((prev) => ({
+//       ...prev,
+//       service: [],
+//     }));
+
+//     // Update category path
+//     setCategoryPath((prev) => {
+//       const main = prev.find((c) => c?.type === "main");
+//       const sub = prev.find((c) => c?.type === "sub");
+//       if (selectedCategory) {
+//         return [main, sub, selectedCategory].filter(Boolean);
+//       }
+//       return [main, sub].filter(Boolean);
+//     });
+
+//     if (categoryId) {
+//       await fetchServiceCategories(categoryId);
+//     }
+//   };
+
+//   // Handle service category change (final)
+//   const handleServiceCategoryChange = (e) => {
+//     const categoryId = e.target.value;
+//     const selectedCategory = categories.service.find(
+//       (c) => c._id === categoryId,
+//     );
+
+//     setSelectedCategories((prev) => ({
+//       ...prev,
+//       service: selectedCategory,
+//     }));
+
+//     setFormData((prev) => ({
+//       ...prev,
+//       category: categoryId,
+//       serviceName: selectedCategory?.name || "",
+//     }));
+
+//     // Update category path
+//     setCategoryPath((prev) => {
+//       const main = prev.find((c) => c?.type === "main");
+//       const sub = prev.find((c) => c?.type === "sub");
+//       const group = prev.find((c) => c?.type === "group");
+//       if (selectedCategory) {
+//         return [main, sub, group, selectedCategory].filter(Boolean);
+//       }
+//       return [main, sub, group].filter(Boolean);
+//     });
+//   };
+
+//   // Handle input change for other fields
+//   const handleInputChange = (e) => {
+//     const { name, value } = e.target;
+//     setFormData((prev) => ({
+//       ...prev,
+//       [name]: value,
+//     }));
+//   };
+
+//   // Working days handler
+//   const handleWorkingDaysChange = (day) => {
+//     setFormData((prev) => ({
+//       ...prev,
+//       workingDays: prev.workingDays.includes(day)
+//         ? prev.workingDays.filter((d) => d !== day)
+//         : [...prev.workingDays, day],
+//     }));
+//   };
+
+//   // Service Areas Management
 //   const handleAddNewServiceArea = (areas) => {
 //     if (!Array.isArray(areas)) return;
-
 //     setNewServiceAreas((prev) => {
 //       const combined = [...prev, ...areas];
-
 //       // Deduplicate by pincode + areaName
 //       const unique = combined.filter(
 //         (area, index, self) =>
@@ -167,7 +438,6 @@ import { MdCategory } from "react-icons/md";
 //             (a) => a.pincode === area.pincode && a.areaName === area.areaName,
 //           ),
 //       );
-
 //       return unique;
 //     });
 //   };
@@ -192,40 +462,10 @@ import { MdCategory } from "react-icons/md";
 //     }
 //   };
 
-//   // Working Days
-//   const handleWorkingDaysChange = (day) => {
-//     setFormData((prev) => ({
-//       ...prev,
-//       workingDays: prev.workingDays.includes(day)
-//         ? prev.workingDays.filter((d) => d !== day)
-//         : [...prev.workingDays, day],
-//     }));
-//   };
-
-//   const handleInputChange = (e) => {
-//     const { name, value } = e.target;
-
-//     if (name === "mainCategory") {
-//       setFormData((prev) => ({
-//         ...prev,
-//         mainCategory: value,
-//         category: "",
-//       }));
-//     } else {
-//       setFormData((prev) => ({
-//         ...prev,
-//         [name]: value,
-//       }));
-//     }
-//   };
-
-//   // Media Handling
+//   // Image Management
 //   const handleAddImage = (e) => {
 //     const files = Array.from(e.target.files);
-//     const remaining =
-//       MAX_IMAGES -
-//       (existingImages.length - imagesToRemove.length) -
-//       newImages.length;
+//     const remaining = MAX_IMAGES - existingImages.length - newImages.length;
 
 //     if (files.length > remaining) {
 //       toast.error(`You can upload only ${remaining} more images`);
@@ -239,95 +479,26 @@ import { MdCategory } from "react-icons/md";
 //     setNewImages((prev) => prev.filter((_, i) => i !== index));
 //   };
 
-//   // const handleDeleteImage = (imagePath) => {
-//   //   setImagesToRemove((prev) => [...prev, imagePath]);
-//   //   setExistingImages((prev) => prev.filter((img) => img !== imagePath));
-//   //   toast.success("Image marked for deletion");
-//   // };
-
-//   const handleRestoreImage = (imagePath) => {
-//     const originalImage = service?.documents?.photos?.find(
-//       (img) => img === imagePath,
-//     );
-//     if (originalImage) {
-//       setImagesToRemove((prev) => prev.filter((img) => img !== imagePath));
-//       setExistingImages((prev) => [...prev, originalImage]);
-//     }
-//   };
-
-//   //   const handleDeleteVideo = () => {
-//   //     setVideoToRemove(true);
-//   //     setExistingVideo(null);
-//   //     toast.success("Video marked for deletion");
-//   //   };
-//   //  const handleDeleteImage = async (imagePath) => {
-//   //     // Check if image is from existing service documents
-//   //     const isExistingImage = service?.documents?.photos?.includes(imagePath);
-
-//   //     if (isExistingImage) {
-//   //       // Call API to delete from server
-//   //       setDeletingImage(true);
-//   //       try {
-//   //         const response = await request.deleteServiceImage({
-//   //           serviceId,
-//   //           imagePath,
-//   //           type: "photo"
-//   //         });
-
-//   //         // Remove from state only after successful API call
-//   //         setExistingImages(prev => prev.filter(img => img !== imagePath));
-
-//   //         // Show success message
-//   //         if (response.data && response.data.message) {
-//   //           toast.success("Image deleted successfully");
-//   //         }
-//   //       } catch (error) {
-//   //         console.error("Failed to delete image", error);
-//   //         toast.error("Failed to delete image");
-//   //         setError("Failed to delete image");
-//   //         // Don't remove from state if API call fails
-//   //       } finally {
-//   //         setDeletingImage(false);
-//   //       }
-//   //     } else {
-//   //       // If it's a new image (not yet uploaded), just remove from state
-//   //       setNewImages(prev => prev.filter(img =>
-//   //         !(img instanceof File && URL.createObjectURL(img) === imagePath)
-//   //       ));
-//   //     }
-//   //   };
-
 //   const handleDeleteImage = async (imagePath) => {
-//     // Check if image is from existing service documents
 //     const isExistingImage = service?.documents?.photos?.includes(imagePath);
 
 //     if (isExistingImage) {
-//       // Call API to delete from server
 //       setDeletingImage(true);
 //       try {
-//         const response = await request.deleteServiceImage({
+//         await request.deleteServiceImage({
 //           serviceId,
 //           imagePath,
 //           type: "photo",
 //         });
-
-//         // Remove from state only after successful API call
 //         setExistingImages((prev) => prev.filter((img) => img !== imagePath));
-
-//         // Show success message
-//         if (response.data && response.data.message) {
-//           toast.success("Image deleted successfully");
-//         }
+//         toast.success("Image deleted successfully");
 //       } catch (error) {
 //         console.error("Failed to delete image", error);
 //         toast.error("Failed to delete image");
-//         setError("Failed to delete image");
-//         // Don't remove from state if API call fails
 //       } finally {
 //         setDeletingImage(false);
 //       }
 //     } else {
-//       // If it's a new image (not yet uploaded), just remove from state
 //       setNewImages((prev) =>
 //         prev.filter(
 //           (img) =>
@@ -336,43 +507,30 @@ import { MdCategory } from "react-icons/md";
 //       );
 //     }
 //   };
+
+//   // Video Management
 //   const handleDeleteVideo = async () => {
-//     // Check if video is from existing service documents
 //     const isExistingVideo = service?.documents?.video?.includes(existingVideo);
 
 //     if (isExistingVideo && existingVideo) {
 //       setDeletingVideo(true);
 //       try {
-//         const response = await request.deleteServiceImage({
+//         await request.deleteServiceImage({
 //           serviceId,
 //           imagePath: existingVideo,
 //           type: "video",
 //         });
-
-//         // Remove from state only after successful API call
 //         setExistingVideo(null);
-
-//         // Show success message
-//         if (response.data && response.data.message) {
-//           toast.success("Video deleted successfully");
-//         }
+//         toast.success("Video deleted successfully");
 //       } catch (error) {
 //         console.error("Failed to delete video", error);
 //         toast.error("Failed to delete video");
-//         setError("Failed to delete video");
-//         // Don't remove from state if API call fails
 //       } finally {
 //         setDeletingVideo(false);
 //       }
 //     } else if (newVideo) {
-//       // If it's a new video, just remove from state
 //       setNewVideo(null);
 //     }
-//   };
-
-//   const handleRestoreVideo = () => {
-//     setVideoToRemove(false);
-//     setExistingVideo(service?.documents?.video?.[0] || null);
 //   };
 
 //   const handleSetNewVideo = (e) => {
@@ -391,6 +549,7 @@ import { MdCategory } from "react-icons/md";
 //     setSubmitting(true);
 //     setError("");
 //     setSuccess("");
+
 //     const cleanServiceAreas = [...existingServiceAreas, ...newServiceAreas]
 //       .flat()
 //       .filter(
@@ -404,19 +563,15 @@ import { MdCategory } from "react-icons/md";
 //       );
 
 //     try {
-//       // Prepare FormData
 //       const formPayload = new FormData();
 
 //       // Add form data
 //       const dataToSend = {
 //         ...formData,
 //         servicePrice: parseInt(formData.servicePrice),
-//         // Combine existing and new service areas, exclude removed ones
-//         // serviceAreas: [...existingServiceAreas, ...newServiceAreas],
 //         serviceAreas: cleanServiceAreas,
 //       };
 
-//       // Append all data fields
 //       Object.entries(dataToSend).forEach(([key, value]) => {
 //         if (Array.isArray(value)) {
 //           formPayload.append(key, JSON.stringify(value));
@@ -430,20 +585,12 @@ import { MdCategory } from "react-icons/md";
 //         formPayload.append("areasToRemove", JSON.stringify(areasToRemove));
 //       }
 
-//       // Append images to remove
-//       if (imagesToRemove.length > 0) {
-//         formPayload.append("imagesToRemove", JSON.stringify(imagesToRemove));
-//       }
-
-//       // Append video to remove flag
-//       if (videoToRemove) {
-//         formPayload.append("videoToRemove", "true");
-//       }
-
+//       // Append new images
 //       newImages.forEach((img) => {
 //         formPayload.append("images", img);
 //       });
 
+//       // Append new video
 //       if (newVideo) {
 //         formPayload.append("video", newVideo);
 //       }
@@ -455,22 +602,9 @@ import { MdCategory } from "react-icons/md";
 //         },
 //       });
 
-//       console.log("Update response:", response.data);
+//       toast.success("Service updated successfully!");
+//       setSuccess("Service updated successfully!");
 
-//       // Show success message
-//       if (response.data.service.isApproved === "pending") {
-//         toast.success(
-//           "Service updated successfully! Your changes require admin approval.",
-//         );
-//         setSuccess(
-//           "Service updated successfully! Your changes require admin approval.",
-//         );
-//       } else {
-//         toast.success("Service updated successfully!");
-//         setSuccess("Service updated successfully!");
-//       }
-
-//       // Call onSuccess callback if provided
 //       if (onSuccess) {
 //         onSuccess(response.data.service);
 //       }
@@ -485,13 +619,62 @@ import { MdCategory } from "react-icons/md";
 //     }
 //   };
 
+//   // Get icon for category type
+//   const getCategoryIcon = (type) => {
+//     switch (type) {
+//       case "main":
+//         return <FiFolder className="text-[#0b8263]" />;
+//       case "sub":
+//         return <FiList className="text-[#0b8263]" />;
+//       case "group":
+//         return <FiGrid className="text-[#0b8263]" />;
+//       case "service":
+//         return <FiPackage className="text-[#0b8263]" />;
+//       default:
+//         return <MdCategory className="text-[#0b8263]" />;
+//     }
+//   };
+
 //   if (loading) {
-//     return <div className="py-8 text-center">Loading service data...</div>;
+//     return (
+//       <div className="flex items-center justify-center py-12">
+//         <FiLoader className="animate-spin text-[#0b8263]" size={32} />
+//         <span className="ml-3 text-gray-600">Loading service data...</span>
+//       </div>
+//     );
 //   }
 
 //   return (
 //     <div className="font-mont mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-md">
-//       <h2 className="mb-6 text-2xl font-bold text-gray-800">Edit Service</h2>
+//       <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold text-gray-800">
+//         <MdCategory className="text-[#0b8263]" />
+//         Edit Service
+//       </h2>
+
+//       {/* Category Path Display */}
+//       {categoryPath.length > 0 && (
+//         <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+//           <p className="mb-2 text-sm text-gray-600">Current Category Path:</p>
+//           <div className="flex flex-wrap items-center gap-2">
+//             {categoryPath.map(
+//               (cat, index) =>
+//                 cat && (
+//                   <React.Fragment key={cat._id}>
+//                     <span
+//                       className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${cat.type === "main" ? "bg-purple-100 text-purple-800" : ""} ${cat.type === "sub" ? "bg-blue-100 text-blue-800" : ""} ${cat.type === "group" ? "bg-orange-100 text-orange-800" : ""} ${cat.type === "service" ? "bg-green-100 text-green-800" : ""} `}
+//                     >
+//                       {getCategoryIcon(cat.type)}
+//                       {cat.name}
+//                     </span>
+//                     {index < categoryPath.length - 1 && (
+//                       <FiChevronRight className="text-gray-400" />
+//                     )}
+//                   </React.Fragment>
+//                 ),
+//             )}
+//           </div>
+//         </div>
+//       )}
 
 //       {error && (
 //         <div className="mb-4 rounded-md bg-red-100 p-3 text-red-700">
@@ -537,87 +720,106 @@ import { MdCategory } from "react-icons/md";
 //       )}
 
 //       <form onSubmit={handleSubmit}>
-//         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-//           {/* Service Name */}
-//           <div className="col-span-2">
-//             <label className="mb-1 block text-sm font-medium text-gray-700">
-//               Service Name *
-//             </label>
-//             <input
-//               type="text"
-//               name="serviceName"
-//               value={formData.serviceName}
-//               onChange={handleInputChange}
-//               className="w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
-//               required
-//             />
-//           </div>
-
+//         <div className="grid w-full grid-cols-1 gap-6 px-2 md:grid-cols-2">
 //           {/* Main Category */}
-//           <div className="col-span-2 md:col-span-1">
+//           <div>
 //             <label className="mb-1 block text-sm font-medium text-gray-700">
 //               Main Category *
 //             </label>
 //             <select
-//               name="mainCategory"
 //               value={formData.mainCategory}
-//               onChange={handleInputChange}
-//               className="w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
+//               onChange={handleMainCategoryChange}
+//               className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263]"
 //               required
 //             >
 //               <option value="">Select Main Category</option>
-//               {mainCategories.map((mainCat) => (
-//                 <option key={mainCat} value={mainCat}>
-//                   {mainCat}
+//               {categories.main.map((cat) => (
+//                 <option key={cat._id} value={cat._id}>
+//                   {cat.name}
 //                 </option>
 //               ))}
 //             </select>
+//             {categoryLoading.main && (
+//               <FiLoader className="mt-1 animate-spin text-[#0b8263]" />
+//             )}
 //           </div>
 
-//           {/* Category */}
-//           <div className="col-span-2 md:col-span-1">
+//           {/* Sub Category */}
+//           <div>
 //             <label className="mb-1 block text-sm font-medium text-gray-700">
-//               Category *
+//               Sub Category *
 //             </label>
 //             <select
-//               name="category"
-//               value={formData.category}
-//               onChange={handleInputChange}
-//               disabled={!formData.mainCategory}
-//               className="w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500 disabled:bg-gray-100"
+//               value={formData.subCategory}
+//               onChange={handleSubCategoryChange}
+//               disabled={!formData.mainCategory || categories.sub.length === 0}
+//               className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263] disabled:bg-gray-100"
 //               required
 //             >
-//               <option value="">Select Category</option>
-//               {formData.mainCategory &&
-//                 subCategories[formData.mainCategory]?.map((subCat) => (
-//                   <option key={subCat} value={subCat}>
-//                     {subCat}
-//                   </option>
-//                 ))}
+//               <option value="">Select Sub Category</option>
+//               {categories.sub.map((cat) => (
+//                 <option key={cat._id} value={cat._id}>
+//                   {cat.name}
+//                 </option>
+//               ))}
 //             </select>
+//             {categoryLoading.sub && (
+//               <FiLoader className="mt-1 animate-spin text-[#0b8263]" />
+//             )}
 //           </div>
 
-//           {/* Service Type */}
-//           <div className="col-span-2 md:col-span-1">
+//           {/* Group Category */}
+//           <div>
 //             <label className="mb-1 block text-sm font-medium text-gray-700">
 //               Service Type *
 //             </label>
-//             <input
-//               type="text"
-//               name="serviceType"
-//               value={formData.serviceType}
-//               onChange={handleInputChange}
-//               className="w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
-//               placeholder="e.g., Fan installation/repair, Pipe leakage repair, 1BHK home cleaning"
+//             <select
+//               value={formData.groupCategory}
+//               onChange={handleGroupCategoryChange}
+//               disabled={!formData.subCategory || categories.group.length === 0}
+//               className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263] disabled:bg-gray-100"
 //               required
-//             />
-//             <p className="mt-1 text-xs text-gray-500">
-//               Describe the specific service you offer
-//             </p>
+//             >
+//               <option value="">Select Service Type</option>
+//               {categories.group.map((cat) => (
+//                 <option key={cat._id} value={cat._id}>
+//                   {cat.name}
+//                 </option>
+//               ))}
+//             </select>
+//             {categoryLoading.group && (
+//               <FiLoader className="mt-1 animate-spin text-[#0b8263]" />
+//             )}
+//           </div>
+
+//           {/* Service Category (Final) */}
+//           <div>
+//             <label className="mb-1 block text-sm font-medium text-gray-700">
+//               Service Name * <span className="text-red-500">(Final)</span>
+//             </label>
+//             <select
+//               value={formData.category}
+//               onChange={handleServiceCategoryChange}
+//               disabled={
+//                 !formData.groupCategory || categories.service.length === 0
+//               }
+//               className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263] disabled:bg-gray-100"
+//               required
+//             >
+//               <option value="">Select Service</option>
+//               {categories.service.map((cat) => (
+//                 <option key={cat._id} value={cat._id}>
+//                   {cat.name}
+//                 </option>
+//               ))}
+//             </select>
+//             {categoryLoading.service && (
+//               <FiLoader className="mt-1 animate-spin text-[#0b8263]" />
+//             )}
 //           </div>
 
 //           {/* Pricing Type */}
-//           <div className="col-span-2 md:col-span-1">
+//           <div>
 //             <label className="mb-1 block text-sm font-medium text-gray-700">
 //               Pricing Type
 //             </label>
@@ -625,7 +827,7 @@ import { MdCategory } from "react-icons/md";
 //               name="pricingType"
 //               value={formData.pricingType}
 //               onChange={handleInputChange}
-//               className="w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
+//               className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263]"
 //             >
 //               {pricingTypes.map((type) => (
 //                 <option key={type} value={type}>
@@ -636,18 +838,18 @@ import { MdCategory } from "react-icons/md";
 //           </div>
 
 //           {/* Service Price */}
-//           <div className="col-span-2 md:col-span-1">
+//           <div>
 //             <label className="mb-1 block text-sm font-medium text-gray-700">
 //               Service Price (₹) *
 //             </label>
 //             <input
-//               type="text"
+//               type="number"
 //               name="servicePrice"
 //               value={formData.servicePrice}
 //               onChange={handleInputChange}
-//               // min="0"
-//               // step="0.01"
-//               className="w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
+//               min="0"
+//               step="10"
+//               className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263]"
 //               required
 //             />
 //           </div>
@@ -661,7 +863,7 @@ import { MdCategory } from "react-icons/md";
 //               name="availability"
 //               value={formData.availability}
 //               onChange={handleInputChange}
-//               className="w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
+//               className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263]"
 //               required
 //             >
 //               <option value="">Select Availability</option>
@@ -691,8 +893,8 @@ import { MdCategory } from "react-icons/md";
 //                     onClick={() => handleWorkingDaysChange(day)}
 //                     className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
 //                       formData.workingDays.includes(day)
-//                         ? "border border-blue-300 bg-blue-100 text-blue-800"
-//                         : "border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200"
+//                         ? "bg-[#0b8263] text-white"
+//                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
 //                     }`}
 //                   >
 //                     {day.substring(0, 3)}
@@ -712,7 +914,7 @@ import { MdCategory } from "react-icons/md";
 //                   name="workingStartTime"
 //                   value={formData.workingStartTime}
 //                   onChange={handleInputChange}
-//                   className="w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
+//                   className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263]"
 //                 />
 //               </div>
 //               <div>
@@ -724,7 +926,7 @@ import { MdCategory } from "react-icons/md";
 //                   name="workingEndTime"
 //                   value={formData.workingEndTime}
 //                   onChange={handleInputChange}
-//                   className="w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
+//                   className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263]"
 //                 />
 //               </div>
 //             </div>
@@ -846,7 +1048,7 @@ import { MdCategory } from "react-icons/md";
 //               value={formData.scopeOfWork}
 //               onChange={handleInputChange}
 //               rows="3"
-//               className="w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
+//               className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263]"
 //               placeholder="What exactly will you do? Include deliverables, timeline, etc."
 //             />
 //           </div>
@@ -870,15 +1072,10 @@ import { MdCategory } from "react-icons/md";
 //                     type="button"
 //                     onClick={() => handleDeleteImage(img)}
 //                     disabled={deletingImage}
-//                     className="absolute top-1 right-1 rounded-full bg-red-600 px-2 py-1 text-xs text-white disabled:opacity-50"
+//                     className="absolute top-1 right-1 rounded-full bg-red-600 p-1 text-xs text-white disabled:opacity-50"
 //                   >
 //                     <FaTrash className="text-sm" />
 //                   </button>
-//                   {deletingImage && (
-//                     <div className="bg-opacity-50 absolute inset-0 flex items-center justify-center rounded-md bg-black">
-//                       <div className="text-white">Deleting...</div>
-//                     </div>
-//                   )}
 //                 </div>
 //               ))}
 
@@ -904,11 +1101,8 @@ import { MdCategory } from "react-icons/md";
 //               ))}
 
 //               {/* Upload slot */}
-//               {existingImages.length -
-//                 imagesToRemove.length +
-//                 newImages.length <
-//                 MAX_IMAGES && (
-//                 <label className="flex h-32 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 text-gray-400 hover:border-teal-500 hover:text-teal-500">
+//               {existingImages.length + newImages.length < MAX_IMAGES && (
+//                 <label className="flex h-32 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 text-gray-400 hover:border-[#0b8263] hover:text-[#0b8263]">
 //                   <FaPlus className="text-2xl" />
 //                   <span className="mt-1 text-xs">Add Image</span>
 //                   <input
@@ -921,13 +1115,6 @@ import { MdCategory } from "react-icons/md";
 //                 </label>
 //               )}
 //             </div>
-
-//             {/* Image Summary */}
-//             <div className="mt-3 text-sm text-gray-600">
-//               {existingImages.length - imagesToRemove.length} existing image(s),{" "}
-//               {newImages.length} new image(s), {imagesToRemove.length} image(s)
-//               to remove
-//             </div>
 //           </div>
 
 //           {/* Video Management */}
@@ -937,29 +1124,10 @@ import { MdCategory } from "react-icons/md";
 //             </h3>
 
 //             {/* Existing video */}
-//             {/* {existingVideo && !videoToRemove && (
-//               <div className="mb-4">
-//                 <div className="relative w-full max-w-md">
-//                   <video
-//                     src={existingVideo}
-//                     controls
-//                     className="w-full rounded-md"
-//                   />
-//                   <button
-//                     type="button"
-//                     onClick={handleDeleteVideo}
-//                     className="absolute top-2 right-2 rounded-full bg-red-600 p-2 text-white"
-//                   >
-//                     <FaTrash className="text-sm" />
-//                   </button>
-//                 </div>
-//               </div>
-//             )} */}
-//             {/* Existing video */}
 //             {existingVideo && (
 //               <div className="relative w-full max-w-md">
 //                 <video
-//                   src={existingVideo}
+//                   src={`${import.meta.env.VITE_API_URL}${existingVideo}`}
 //                   controls
 //                   className="w-full rounded-md"
 //                 />
@@ -971,32 +1139,6 @@ import { MdCategory } from "react-icons/md";
 //                 >
 //                   <FaTrash className="text-sm" />
 //                 </button>
-//                 {deletingVideo && (
-//                   <div className="bg-opacity-50 absolute inset-0 flex items-center justify-center rounded-md bg-black">
-//                     <div className="text-white">Deleting...</div>
-//                   </div>
-//                 )}
-//               </div>
-//             )}
-
-//             {/* Video to remove indicator */}
-//             {videoToRemove && (
-//               <div className="mb-4 rounded-md bg-red-50 p-3">
-//                 <div className="flex items-center justify-between">
-//                   <div className="flex items-center gap-2">
-//                     <FaTrash className="text-red-600" />
-//                     <span className="text-sm text-red-800">
-//                       Video marked for deletion
-//                     </span>
-//                   </div>
-//                   <button
-//                     type="button"
-//                     onClick={handleRestoreVideo}
-//                     className="text-sm text-blue-600 hover:text-blue-800"
-//                   >
-//                     Undo
-//                   </button>
-//                 </div>
 //               </div>
 //             )}
 
@@ -1021,27 +1163,11 @@ import { MdCategory } from "react-icons/md";
 //             )}
 
 //             {/* Upload new video */}
-//             {!existingVideo && !newVideo && !videoToRemove && (
+//             {!existingVideo && !newVideo && (
 //               <div className="mb-4">
-//                 <label className="flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 p-6 text-gray-400 hover:border-teal-500 hover:text-teal-500">
+//                 <label className="flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 p-6 text-gray-400 hover:border-[#0b8263] hover:text-[#0b8263]">
 //                   <FaPlus className="text-2xl" />
 //                   <span className="mt-2">Add Video</span>
-//                   <input
-//                     type="file"
-//                     accept="video/*"
-//                     hidden
-//                     onChange={handleSetNewVideo}
-//                   />
-//                 </label>
-//               </div>
-//             )}
-
-//             {/* Upload new video (when existing is marked for removal) */}
-//             {videoToRemove && !newVideo && (
-//               <div className="mb-4">
-//                 <label className="flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 p-6 text-gray-400 hover:border-teal-500 hover:text-teal-500">
-//                   <FaPlus className="text-2xl" />
-//                   <span className="mt-2">Add New Video</span>
 //                   <input
 //                     type="file"
 //                     accept="video/*"
@@ -1064,10 +1190,17 @@ import { MdCategory } from "react-icons/md";
 //             </button>
 //             <button
 //               type="submit"
-//               disabled={submitting}
-//               className="rounded-md bg-[#0b8263] px-4 py-2 text-white hover:bg-teal-700 disabled:opacity-50"
+//               disabled={submitting || !formData.category}
+//               className="rounded-md bg-[#0b8263] px-4 py-2 text-white hover:bg-[#096d52] disabled:opacity-50"
 //             >
-//               {submitting ? "Updating..." : "Update Service"}
+//               {submitting ? (
+//                 <span className="flex items-center gap-2">
+//                   <FiLoader className="animate-spin" />
+//                   Updating...
+//                 </span>
+//               ) : (
+//                 "Update Service"
+//               )}
 //             </button>
 //           </div>
 //         </div>
@@ -1076,15 +1209,13 @@ import { MdCategory } from "react-icons/md";
 //   );
 // };
 
-// export default EditServiceForm;
-
 const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
   const [formData, setFormData] = useState({
     serviceName: "",
     mainCategory: "",
     subCategory: "",
     groupCategory: "",
-    category: "", // final service category Id
+    category: "",
     pricingType: "Fixed",
     servicePrice: "",
     availability: "",
@@ -1093,8 +1224,13 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
     workingStartTime: "",
     workingEndTime: "",
     workingDays: [],
+    warranty: false,
+    warrantyPeriod: "",
+    warrantyIncludes: "",
   });
 
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -1164,6 +1300,9 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
     "Sunday",
   ];
 
+  // Availability options
+  const availabilityOptions = ["Weekdays", "Weekends", "Anytime", "On Request"];
+
   // Fetch main categories on mount
   useEffect(() => {
     fetchMainCategories();
@@ -1177,18 +1316,14 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
 
         if (!service?.category) return;
 
-        // Fetch full category hierarchy
         const res = await request.getCategoryHierarchy(service.category);
         const hierarchy = res.data.data;
-        console.log("Fetched category hierarchy:", hierarchy);
-        // Extract categories from hierarchy
+
         const mainCat = hierarchy.ancestors?.find((c) => c.type === "main");
         const subCat = hierarchy.ancestors?.find((c) => c.type === "sub");
         const groupCat = hierarchy.ancestors?.find((c) => c.type === "group");
-        // const serviceCat = hierarchy.category;
         const serviceCat = hierarchy._id;
 
-        // Set selected categories
         setSelectedCategories({
           main: mainCat,
           sub: subCat,
@@ -1196,12 +1331,10 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
           service: serviceCat,
         });
 
-        // Set category path
         setCategoryPath(
           [mainCat, subCat, groupCat, serviceCat].filter(Boolean),
         );
 
-        // Set form data
         setFormData((prev) => ({
           ...prev,
           serviceName: service.serviceName || serviceCat?.name || "",
@@ -1217,9 +1350,11 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
           workingStartTime: service.workingStartTime || "",
           workingEndTime: service.workingEndTime || "",
           workingDays: service.workingDays || [],
+          warranty: service.warranty || false,
+          warrantyPeriod: service.warrantyPeriod || "",
+          warrantyIncludes: service.warrantyIncludes || "",
         }));
 
-        // Pre-load dropdowns in sequence
         if (mainCat) {
           await fetchSubCategories(mainCat._id);
         }
@@ -1230,11 +1365,8 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
           await fetchServiceCategories(groupCat._id);
         }
 
-        // Set existing media
         setExistingImages(service?.documents?.photos || []);
         setExistingVideo(service?.documents?.video?.[0] || null);
-
-        // Initialize service areas
         setExistingServiceAreas(service?.serviceAreas || []);
         setNewServiceAreas([]);
         setAreasToRemove([]);
@@ -1250,6 +1382,7 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
       initializeFormData();
     }
   }, [service]);
+  console.log(formData, "formdata");
 
   // Fetch functions
   const fetchMainCategories = async () => {
@@ -1321,6 +1454,153 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
     }
   };
 
+  // Validation function
+  const validateField = (name, value) => {
+    switch (name) {
+      case "mainCategory":
+        return !value ? "Main category is required" : "";
+
+      case "subCategory":
+        return formData.mainCategory && !value
+          ? "Sub category is required"
+          : "";
+
+      case "groupCategory":
+        return formData.subCategory && !value
+          ? "Group category is required"
+          : "";
+
+      case "category":
+        return formData.groupCategory && !value
+          ? "Service category is required"
+          : "";
+
+      case "serviceName":
+        return !value?.trim() ? "Service name is required" : "";
+
+      case "servicePrice":
+        if (!value) return "Service price is required";
+        if (parseFloat(value) <= 0) return "Price must be greater than 0";
+        return "";
+
+      case "availability":
+        return !value ? "Availability is required" : "";
+
+      case "serviceAreas":
+        return existingServiceAreas.length === 0 && newServiceAreas.length === 0
+          ? "At least one service area is required"
+          : "";
+
+      case "scopeOfWork":
+        return !value?.trim() ? "Scope of work is required" : "";
+
+      case "workingStartTime":
+        return formData.workingEndTime && !value
+          ? "Start time is required"
+          : "";
+
+      case "workingEndTime":
+        if (formData.workingStartTime && !value) return "End time is required";
+        if (
+          formData.workingStartTime &&
+          value &&
+          value <= formData.workingStartTime
+        ) {
+          return "End time must be after start time";
+        }
+        return "";
+
+      case "warrantyPeriod":
+        return formData.warranty && !value?.trim()
+          ? "Warranty period is required when warranty is enabled"
+          : "";
+
+      case "warrantyIncludes":
+        return formData.warranty && !value?.trim()
+          ? "Warranty inclusions are required when warranty is enabled"
+          : "";
+
+      default:
+        return "";
+    }
+  };
+
+  // Handle blur event
+  const handleBlur = (fieldName) => {
+    setTouched((prev) => ({ ...prev, [fieldName]: true }));
+    const error = validateField(fieldName, formData[fieldName]);
+    setErrors((prev) => ({ ...prev, [fieldName]: error }));
+  };
+
+  // Validate entire form
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Required fields validation
+    const requiredFields = [
+      "mainCategory",
+      "subCategory",
+      "groupCategory",
+      "category",
+      "serviceName",
+      "servicePrice",
+      "availability",
+      "scopeOfWork",
+    ];
+
+    requiredFields.forEach((field) => {
+      const error = validateField(field, formData[field]);
+      if (error) newErrors[field] = error;
+    });
+
+    // Service areas validation
+    if (existingServiceAreas.length === 0 && newServiceAreas.length === 0) {
+      newErrors.serviceAreas = "At least one service area is required";
+    }
+
+    // Working hours validation
+    if (formData.workingStartTime && formData.workingEndTime) {
+      if (formData.workingEndTime <= formData.workingStartTime) {
+        newErrors.workingEndTime = "End time must be after start time";
+      }
+    }
+
+    // Warranty validation
+    if (formData.warranty) {
+      if (!formData.warrantyPeriod?.trim()) {
+        newErrors.warrantyPeriod = "Warranty period is required";
+      }
+      if (!formData.warrantyIncludes?.trim()) {
+        newErrors.warrantyIncludes = "Warranty inclusions are required";
+      }
+    }
+
+    setErrors(newErrors);
+    setTouched(
+      Object.keys(newErrors).reduce(
+        (acc, key) => ({ ...acc, [key]: true }),
+        {},
+      ),
+    );
+
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Handle input change
+  const handleInputChange = (e) => {
+    const { name, value, type } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]:
+        type === "number" ? (value === "" ? "" : parseFloat(value)) : value,
+    }));
+
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
   // Handle main category change
   const handleMainCategoryChange = async (e) => {
     const categoryId = e.target.value;
@@ -1342,7 +1622,6 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
       serviceName: "",
     }));
 
-    // Reset dependent categories
     setCategories((prev) => ({
       ...prev,
       sub: [],
@@ -1350,12 +1629,21 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
       service: [],
     }));
 
-    // Update category path
     setCategoryPath(selectedCategory ? [selectedCategory] : []);
 
     if (categoryId) {
       await fetchSubCategories(categoryId);
     }
+
+    // Clear related errors
+    setErrors((prev) => ({
+      ...prev,
+      mainCategory: "",
+      subCategory: "",
+      groupCategory: "",
+      category: "",
+      serviceName: "",
+    }));
   };
 
   // Handle sub category change
@@ -1378,14 +1666,12 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
       serviceName: "",
     }));
 
-    // Reset dependent categories
     setCategories((prev) => ({
       ...prev,
       group: [],
       service: [],
     }));
 
-    // Update category path
     setCategoryPath((prev) => {
       const main = prev.find((c) => c?.type === "main");
       if (selectedCategory) {
@@ -1397,6 +1683,15 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
     if (categoryId) {
       await fetchGroupCategories(categoryId);
     }
+
+    // Clear related errors
+    setErrors((prev) => ({
+      ...prev,
+      subCategory: "",
+      groupCategory: "",
+      category: "",
+      serviceName: "",
+    }));
   };
 
   // Handle group category change
@@ -1417,13 +1712,11 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
       serviceName: "",
     }));
 
-    // Reset service categories
     setCategories((prev) => ({
       ...prev,
       service: [],
     }));
 
-    // Update category path
     setCategoryPath((prev) => {
       const main = prev.find((c) => c?.type === "main");
       const sub = prev.find((c) => c?.type === "sub");
@@ -1436,9 +1729,17 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
     if (categoryId) {
       await fetchServiceCategories(categoryId);
     }
+
+    // Clear related errors
+    setErrors((prev) => ({
+      ...prev,
+      groupCategory: "",
+      category: "",
+      serviceName: "",
+    }));
   };
 
-  // Handle service category change (final)
+  // Handle service category change
   const handleServiceCategoryChange = (e) => {
     const categoryId = e.target.value;
     const selectedCategory = categories.service.find(
@@ -1456,7 +1757,6 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
       serviceName: selectedCategory?.name || "",
     }));
 
-    // Update category path
     setCategoryPath((prev) => {
       const main = prev.find((c) => c?.type === "main");
       const sub = prev.find((c) => c?.type === "sub");
@@ -1466,16 +1766,15 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
       }
       return [main, sub, group].filter(Boolean);
     });
-  };
 
-  // Handle input change for other fields
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
+    // Clear related errors
+    setErrors((prev) => ({
       ...prev,
-      [name]: value,
+      category: "",
+      serviceName: "",
     }));
   };
+  console.log(errors, "error");
 
   // Working days handler
   const handleWorkingDaysChange = (day) => {
@@ -1492,7 +1791,6 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
     if (!Array.isArray(areas)) return;
     setNewServiceAreas((prev) => {
       const combined = [...prev, ...areas];
-      // Deduplicate by pincode + areaName
       const unique = combined.filter(
         (area, index, self) =>
           index ===
@@ -1502,6 +1800,11 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
       );
       return unique;
     });
+
+    // Clear service areas error
+    if (errors.serviceAreas) {
+      setErrors((prev) => ({ ...prev, serviceAreas: "" }));
+    }
   };
 
   const handleRemoveExistingServiceArea = (areaId) => {
@@ -1608,6 +1911,17 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
   // Form Submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      // Scroll to first error
+      const firstError = document.querySelector(".error-border");
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      toast.error("Please fix the errors in the form");
+      return;
+    }
+
     setSubmitting(true);
     setError("");
     setSuccess("");
@@ -1627,10 +1941,9 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
     try {
       const formPayload = new FormData();
 
-      // Add form data
       const dataToSend = {
         ...formData,
-        servicePrice: parseInt(formData.servicePrice),
+        servicePrice: parseFloat(formData.servicePrice),
         serviceAreas: cleanServiceAreas,
       };
 
@@ -1642,22 +1955,18 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
         }
       });
 
-      // Append areas to remove
       if (areasToRemove.length > 0) {
         formPayload.append("areasToRemove", JSON.stringify(areasToRemove));
       }
 
-      // Append new images
       newImages.forEach((img) => {
         formPayload.append("images", img);
       });
 
-      // Append new video
       if (newVideo) {
         formPayload.append("video", newVideo);
       }
 
-      // Make API call
       const response = await request.updateService(serviceId, formPayload, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -1697,6 +2006,17 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
     }
   };
 
+  // Error component
+  const ErrorMessage = ({ field }) => {
+    if (!errors[field] || !touched[field]) return null;
+    return (
+      <p className="mt-1 flex items-center gap-1 text-xs text-red-500">
+        <FaExclamationCircle className="text-xs" />
+        {errors[field]}
+      </p>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -1708,11 +2028,6 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
 
   return (
     <div className="font-mont mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-md">
-      <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold text-gray-800">
-        <MdCategory className="text-[#0b8263]" />
-        Edit Service
-      </h2>
-
       {/* Category Path Display */}
       {categoryPath.length > 0 && (
         <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -1723,7 +2038,21 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
                 cat && (
                   <React.Fragment key={cat._id}>
                     <span
-                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${cat.type === "main" ? "bg-purple-100 text-purple-800" : ""} ${cat.type === "sub" ? "bg-blue-100 text-blue-800" : ""} ${cat.type === "group" ? "bg-orange-100 text-orange-800" : ""} ${cat.type === "service" ? "bg-green-100 text-green-800" : ""} `}
+                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${
+                        cat.type === "main"
+                          ? "bg-purple-100 text-purple-800"
+                          : ""
+                      } ${
+                        cat.type === "sub" ? "bg-blue-100 text-blue-800" : ""
+                      } ${
+                        cat.type === "group"
+                          ? "bg-orange-100 text-orange-800"
+                          : ""
+                      } ${
+                        cat.type === "service"
+                          ? "bg-green-100 text-green-800"
+                          : ""
+                      }`}
                     >
                       {getCategoryIcon(cat.type)}
                       {cat.name}
@@ -1738,35 +2067,26 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
         </div>
       )}
 
+      {/* Status Messages */}
       {error && (
-        <div className="mb-4 rounded-md bg-red-100 p-3 text-red-700">
-          {error}
+        <div className="mb-4 flex items-center gap-2 rounded-md bg-red-50 p-3 text-red-700">
+          <MdWarning className="text-lg" />
+          <span>{error}</span>
         </div>
       )}
 
       {success && (
-        <div className="mb-4 rounded-md bg-green-100 p-3 text-green-700">
-          {success}
+        <div className="mb-4 flex items-center gap-2 rounded-md bg-green-50 p-3 text-green-700">
+          <MdCheckCircle className="text-lg" />
+          <span>{success}</span>
         </div>
       )}
 
-      {/* Show rejection reason if editing a rejected service */}
+      {/* Rejection Reason */}
       {service?.isApproved === "rejected" && service?.rejectionMessage && (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
           <div className="flex items-start gap-3">
-            <svg
-              className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.698-.833-2.464 0L4.232 16.5c-.77.833.192 2.5 1.732 2.5z"
-              />
-            </svg>
+            <MdWarning className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500" />
             <div>
               <h3 className="font-semibold text-red-800">
                 Service Was Rejected
@@ -1781,18 +2101,23 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <div className="grid w-full grid-cols-1 gap-6 px-2 md:grid-cols-2">
+      <form onSubmit={handleSubmit} noValidate>
+        {/* <div className="grid w-full grid-cols-1 md:grid-cols-2"> */}
+        <div className="flex w-full flex-col gap-4 md:grid md:grid-cols-2">
           {/* Main Category */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Main Category *
+            <label className="mb-1 text-sm font-medium text-gray-700">
+              Main Category <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.mainCategory}
               onChange={handleMainCategoryChange}
-              className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263]"
-              required
+              onBlur={() => handleBlur("mainCategory")}
+              className={`w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263] ${
+                errors.mainCategory && touched.mainCategory
+                  ? "error-border border-red-500"
+                  : "border-gray-300"
+              }`}
             >
               <option value="">Select Main Category</option>
               {categories.main.map((cat) => (
@@ -1804,19 +2129,23 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
             {categoryLoading.main && (
               <FiLoader className="mt-1 animate-spin text-[#0b8263]" />
             )}
+            <ErrorMessage field="mainCategory" />
           </div>
-
           {/* Sub Category */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Sub Category *
+            <label className="mb-1 text-sm font-medium text-gray-700">
+              Sub Category <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.subCategory}
               onChange={handleSubCategoryChange}
+              onBlur={() => handleBlur("subCategory")}
               disabled={!formData.mainCategory || categories.sub.length === 0}
-              className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263] disabled:bg-gray-100"
-              required
+              className={`w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263] disabled:bg-gray-100 ${
+                errors.subCategory && touched.subCategory
+                  ? "error-border border-red-500"
+                  : "border-gray-300"
+              }`}
             >
               <option value="">Select Sub Category</option>
               {categories.sub.map((cat) => (
@@ -1828,19 +2157,23 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
             {categoryLoading.sub && (
               <FiLoader className="mt-1 animate-spin text-[#0b8263]" />
             )}
+            <ErrorMessage field="subCategory" />
           </div>
-
           {/* Group Category */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              Service Type *
+              Service Type <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.groupCategory}
               onChange={handleGroupCategoryChange}
+              onBlur={() => handleBlur("groupCategory")}
               disabled={!formData.subCategory || categories.group.length === 0}
-              className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263] disabled:bg-gray-100"
-              required
+              className={`w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263] disabled:bg-gray-100 ${
+                errors.groupCategory && touched.groupCategory
+                  ? "error-border border-red-500"
+                  : "border-gray-300"
+              }`}
             >
               <option value="">Select Service Type</option>
               {categories.group.map((cat) => (
@@ -1852,21 +2185,25 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
             {categoryLoading.group && (
               <FiLoader className="mt-1 animate-spin text-[#0b8263]" />
             )}
+            <ErrorMessage field="groupCategory" />
           </div>
-
           {/* Service Category (Final) */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              Service Name * <span className="text-red-500">(Final)</span>
+              Service Category <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.category}
               onChange={handleServiceCategoryChange}
+              onBlur={() => handleBlur("category")}
               disabled={
                 !formData.groupCategory || categories.service.length === 0
               }
-              className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263] disabled:bg-gray-100"
-              required
+              className={`w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263] disabled:bg-gray-100 ${
+                errors.category && touched.category
+                  ? "error-border border-red-500"
+                  : "border-gray-300"
+              }`}
             >
               <option value="">Select Service</option>
               {categories.service.map((cat) => (
@@ -1878,8 +2215,28 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
             {categoryLoading.service && (
               <FiLoader className="mt-1 animate-spin text-[#0b8263]" />
             )}
+            <ErrorMessage field="category" />
           </div>
-
+          {/* Service Name */}
+          <div className="md:col-span-2">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Service Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="serviceName"
+              value={formData.serviceName}
+              onChange={handleInputChange}
+              onBlur={() => handleBlur("serviceName")}
+              placeholder="Enter service name"
+              className={`w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263] ${
+                errors.serviceName && touched.serviceName
+                  ? "error-border border-red-500"
+                  : "border-gray-300"
+              }`}
+            />
+            <ErrorMessage field="serviceName" />
+          </div>
           {/* Pricing Type */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -1889,7 +2246,7 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
               name="pricingType"
               value={formData.pricingType}
               onChange={handleInputChange}
-              className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263]"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263]"
             >
               {pricingTypes.map((type) => (
                 <option key={type} value={type}>
@@ -1898,47 +2255,58 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
               ))}
             </select>
           </div>
-
           {/* Service Price */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              Service Price (₹) *
+              Service Price (₹) <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
               name="servicePrice"
               value={formData.servicePrice}
               onChange={handleInputChange}
+              onBlur={() => handleBlur("servicePrice")}
               min="0"
               step="10"
-              className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263]"
-              required
+              placeholder="Enter price"
+              className={`w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263] ${
+                errors.servicePrice && touched.servicePrice
+                  ? "error-border border-red-500"
+                  : "border-gray-300"
+              }`}
             />
+            <ErrorMessage field="servicePrice" />
           </div>
-
           {/* Availability */}
-          <div>
+          <div className="md:col-span-2">
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              Availability *
+              Availability <span className="text-red-500">*</span>
             </label>
             <select
               name="availability"
               value={formData.availability}
               onChange={handleInputChange}
-              className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263]"
-              required
+              onBlur={() => handleBlur("availability")}
+              className={`w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263] ${
+                errors.availability && touched.availability
+                  ? "error-border border-red-500"
+                  : "border-gray-300"
+              }`}
             >
               <option value="">Select Availability</option>
-              <option value="Weekdays">Weekdays</option>
-              <option value="Weekends">Weekends</option>
-              <option value="Anytime">Anytime</option>
-              <option value="On Request">On Request</option>
+              {availabilityOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
             </select>
+            <ErrorMessage field="availability" />
           </div>
 
           {/* Working Hours Section */}
           <div className="col-span-2 border-t border-gray-200 pt-6">
-            <h3 className="mb-4 text-lg font-medium text-gray-900">
+            <h3 className="mb-4 flex items-center gap-2 text-lg font-medium text-gray-900">
+              <MdInfo className="text-[#0b8263]" />
               Working Hours
             </h3>
 
@@ -1976,8 +2344,14 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
                   name="workingStartTime"
                   value={formData.workingStartTime}
                   onChange={handleInputChange}
-                  className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263]"
+                  onBlur={() => handleBlur("workingStartTime")}
+                  className={`w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263] ${
+                    errors.workingStartTime && touched.workingStartTime
+                      ? "error-border border-red-500"
+                      : "border-gray-300"
+                  }`}
                 />
+                <ErrorMessage field="workingStartTime" />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -1988,17 +2362,33 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
                   name="workingEndTime"
                   value={formData.workingEndTime}
                   onChange={handleInputChange}
-                  className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263]"
+                  onBlur={() => handleBlur("workingEndTime")}
+                  className={`w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263] ${
+                    errors.workingEndTime && touched.workingEndTime
+                      ? "error-border border-red-500"
+                      : "border-gray-300"
+                  }`}
                 />
+                <ErrorMessage field="workingEndTime" />
               </div>
             </div>
           </div>
-
           {/* Service Areas Management */}
           <div className="col-span-2 border-t border-gray-200 pt-6">
-            <h3 className="mb-4 text-lg font-medium text-gray-900">
-              Service Areas
+            <h3 className="mb-4 flex items-center gap-2 text-lg font-medium text-gray-900">
+              <MdInfo className="text-[#0b8263]" />
+              Service Areas <span className="text-red-500">*</span>
             </h3>
+
+            {/* Error message for service areas */}
+            {errors.serviceAreas && touched.serviceAreas && (
+              <div className="mb-4 rounded-md bg-red-50 p-3">
+                <p className="flex items-center gap-1 text-sm text-red-600">
+                  <FaExclamationCircle />
+                  {errors.serviceAreas}
+                </p>
+              </div>
+            )}
 
             {/* Existing Service Areas */}
             <div className="mb-6">
@@ -2014,7 +2404,7 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
                   existingServiceAreas.map((area) => (
                     <div
                       key={area._id}
-                      className="flex items-center justify-between rounded-md border bg-gray-50 p-3"
+                      className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 p-3"
                     >
                       <div>
                         <p className="font-medium">{area.areaName}</p>
@@ -2061,7 +2451,7 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
                   newServiceAreas.map((area, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between rounded-md border bg-green-50 p-3"
+                      className="flex items-center justify-between rounded-md border border-green-200 bg-green-50 p-3"
                     >
                       <div>
                         <p className="font-medium">{area.areaName}</p>
@@ -2082,7 +2472,7 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
               </div>
             </div>
 
-            {/* Pincode Input for adding new areas */}
+            {/* Pincode Input */}
             <div className="mb-4">
               <PincodeInput
                 onServiceAreasChange={handleAddNewServiceArea}
@@ -2099,32 +2489,114 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
               </p>
             </div>
           </div>
-
           {/* Scope of Work */}
           <div className="col-span-2">
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              Scope of Work
+              Scope of Work <span className="text-red-500">*</span>
             </label>
             <textarea
               name="scopeOfWork"
               value={formData.scopeOfWork}
               onChange={handleInputChange}
-              rows="3"
-              className="w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263]"
+              onBlur={() => handleBlur("scopeOfWork")}
+              rows="4"
               placeholder="What exactly will you do? Include deliverables, timeline, etc."
+              className={`w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263] ${
+                errors.scopeOfWork && touched.scopeOfWork
+                  ? "error-border border-red-500"
+                  : "border-gray-300"
+              }`}
             />
+            <ErrorMessage field="scopeOfWork" />
           </div>
 
+          {/* Warranty Toggle */}
+          <div className="col-span-2 border-t border-gray-200 pt-6">
+            <div className="flex items-center gap-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Warranty:
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    warranty: !prev.warranty,
+                  }));
+                  if (!formData.warranty) {
+                    // Clear warranty errors when enabling
+                    setErrors((prev) => ({
+                      ...prev,
+                      warrantyPeriod: "",
+                      warrantyIncludes: "",
+                    }));
+                  }
+                }}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:outline-none ${
+                  formData.warranty ? "bg-teal-600" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    formData.warranty ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+          {/* Warranty Details */}
+          {formData.warranty && (
+            <div className="col-span-2 space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Warranty Period <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="warrantyPeriod"
+                  value={formData.warrantyPeriod}
+                  onChange={handleInputChange}
+                  onBlur={() => handleBlur("warrantyPeriod")}
+                  placeholder="e.g., 6 months, 1 year"
+                  className={`mt-1 w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500 ${
+                    errors.warrantyPeriod && touched.warrantyPeriod
+                      ? "error-border border-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
+                <ErrorMessage field="warrantyPeriod" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Warranty Includes <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="warrantyIncludes"
+                  value={formData.warrantyIncludes}
+                  onChange={handleInputChange}
+                  onBlur={() => handleBlur("warrantyIncludes")}
+                  placeholder="e.g., parts, labor, both"
+                  rows="3"
+                  className={`mt-1 w-full rounded-md border px-3 py-2 focus:border-teal-500 focus:ring-teal-500 ${
+                    errors.warrantyIncludes && touched.warrantyIncludes
+                      ? "error-border border-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
+                <ErrorMessage field="warrantyIncludes" />
+              </div>
+            </div>
+          )}
           {/* Images Management */}
           <div className="col-span-2 border-t border-gray-200 pt-6">
             <h3 className="mb-4 text-lg font-medium text-gray-900">
-              Service Images (Max 4)
+              Service Images (Max {MAX_IMAGES})
             </h3>
 
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               {/* Existing images */}
               {existingImages.map((img, index) => (
-                <div key={index} className="relative">
+                <div key={index} className="group relative">
                   <img
                     src={`${import.meta.env.VITE_API_URL}${img}`}
                     className="h-32 w-full rounded-md object-cover"
@@ -2134,16 +2606,17 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
                     type="button"
                     onClick={() => handleDeleteImage(img)}
                     disabled={deletingImage}
-                    className="absolute top-1 right-1 rounded-full bg-red-600 p-1 text-xs text-white disabled:opacity-50"
+                    className="absolute top-1 right-1 rounded-full bg-red-600 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100 disabled:opacity-50"
+                    title="Delete image"
                   >
-                    <FaTrash className="text-sm" />
+                    <FaTrash className="text-xs" />
                   </button>
                 </div>
               ))}
 
               {/* New image previews */}
               {newImages.map((file, index) => (
-                <div key={index} className="relative">
+                <div key={index} className="group relative">
                   <img
                     src={URL.createObjectURL(file)}
                     className="h-32 w-full rounded-md object-cover"
@@ -2152,9 +2625,10 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
                   <button
                     type="button"
                     onClick={() => removeNewImage(index)}
-                    className="absolute top-1 right-1 rounded-full bg-red-600 p-1 text-xs text-white"
+                    className="absolute top-1 right-1 rounded-full bg-red-600 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                    title="Remove image"
                   >
-                    <FaTrash className="text-sm" />
+                    <FaTrash className="text-xs" />
                   </button>
                   <div className="absolute bottom-1 left-1 rounded-full bg-green-600 px-2 py-0.5 text-xs text-white">
                     New
@@ -2164,8 +2638,8 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
 
               {/* Upload slot */}
               {existingImages.length + newImages.length < MAX_IMAGES && (
-                <label className="flex h-32 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 text-gray-400 hover:border-[#0b8263] hover:text-[#0b8263]">
-                  <FaPlus className="text-2xl" />
+                <label className="flex h-32 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 text-gray-400 transition-colors hover:border-[#0b8263] hover:text-[#0b8263]">
+                  <FiPlus className="text-2xl" />
                   <span className="mt-1 text-xs">Add Image</span>
                   <input
                     type="file"
@@ -2178,7 +2652,6 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
               )}
             </div>
           </div>
-
           {/* Video Management */}
           <div className="col-span-2 border-t border-gray-200 pt-6">
             <h3 className="mb-4 text-lg font-medium text-gray-900">
@@ -2187,7 +2660,7 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
 
             {/* Existing video */}
             {existingVideo && (
-              <div className="relative w-full max-w-md">
+              <div className="group relative w-full max-w-md">
                 <video
                   src={`${import.meta.env.VITE_API_URL}${existingVideo}`}
                   controls
@@ -2197,7 +2670,8 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
                   type="button"
                   onClick={handleDeleteVideo}
                   disabled={deletingVideo}
-                  className="absolute top-2 right-2 rounded-full bg-red-600 p-2 text-white disabled:opacity-50"
+                  className="absolute top-2 right-2 rounded-full bg-red-600 p-2 text-white opacity-0 transition-opacity group-hover:opacity-100 disabled:opacity-50"
+                  title="Delete video"
                 >
                   <FaTrash className="text-sm" />
                 </button>
@@ -2207,7 +2681,7 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
             {/* New video preview */}
             {newVideo && (
               <div className="mb-4">
-                <div className="relative w-full max-w-md">
+                <div className="group relative w-full max-w-md">
                   <video
                     src={URL.createObjectURL(newVideo)}
                     controls
@@ -2216,7 +2690,8 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
                   <button
                     type="button"
                     onClick={removeNewVideo}
-                    className="absolute top-2 right-2 rounded-full bg-red-600 p-2 text-white"
+                    className="absolute top-2 right-2 rounded-full bg-red-600 p-2 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                    title="Remove video"
                   >
                     <FaTrash className="text-sm" />
                   </button>
@@ -2227,8 +2702,8 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
             {/* Upload new video */}
             {!existingVideo && !newVideo && (
               <div className="mb-4">
-                <label className="flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 p-6 text-gray-400 hover:border-[#0b8263] hover:text-[#0b8263]">
-                  <FaPlus className="text-2xl" />
+                <label className="flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 p-6 text-gray-400 transition-colors hover:border-[#0b8263] hover:text-[#0b8263]">
+                  <FiPlus className="text-2xl" />
                   <span className="mt-2">Add Video</span>
                   <input
                     type="file"
@@ -2240,26 +2715,39 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
               </div>
             )}
           </div>
-
+          {/* Error Summary */}
+          {Object.keys(errors).length > 0 && (
+            <div className="col-span-2 rounded-md bg-red-50 p-4">
+              <h4 className="mb-2 flex items-center gap-1 font-medium text-red-800">
+                <MdWarning className="text-lg" />
+                Please fix the following errors:
+              </h4>
+              <ul className="list-inside list-disc space-y-1 text-sm text-red-600">
+                {Object.values(errors).map((error, index) => (
+                  <li key={index}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           {/* Buttons */}
           <div className="col-span-2 mt-8 flex justify-end space-x-3 border-t border-gray-200 pt-6">
             <button
               type="button"
               onClick={onCancel}
-              className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
+              className="rounded-md border border-gray-300 px-6 py-2 text-gray-700 transition-colors hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting || !formData.category}
-              className="rounded-md bg-[#0b8263] px-4 py-2 text-white hover:bg-[#096d52] disabled:opacity-50"
+              className="flex items-center gap-2 rounded-md bg-[#0b8263] px-6 py-2 text-white transition-colors hover:bg-[#096d52] disabled:opacity-50"
             >
               {submitting ? (
-                <span className="flex items-center gap-2">
+                <>
                   <FiLoader className="animate-spin" />
                   Updating...
-                </span>
+                </>
               ) : (
                 "Update Service"
               )}

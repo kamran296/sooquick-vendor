@@ -144,7 +144,7 @@ const DataDisplay = ({ label, value, type = "text" }) => {
             View Document
           </a>
         ) : (
-          value
+          <span className="text-xs md:text-sm">{value}</span>
         )}
       </dd>
     </div>
@@ -231,7 +231,7 @@ const FileInput = ({
   };
   return (
     <div className="mb-6">
-      <label className="mb-2 block text-sm font-medium text-gray-700">
+      <label className="mb-2 block text-xs font-medium text-gray-700">
         {label} {required && <span className="text-red-500">*</span>}
         {isAgreement && (
           <span className="ml-2 text-xs text-gray-500">
@@ -397,7 +397,7 @@ const FileInput = ({
               )}
 
               <div className="flex flex-col">
-                <span className="max-w-xs truncate text-sm font-medium text-gray-900">
+                <span className="max-w-xs truncate text-xs font-medium text-gray-900">
                   {fileName.slice(0, 4) || "Uploaded file"}
                 </span>
                 {isFileObject && (
@@ -415,19 +415,6 @@ const FileInput = ({
                 onClick={() => onRemoveFile(documentType, file)}
                 disabled={isDeleting || disabled}
               >
-                {/* <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg> */}
                 {isDeleting ? (
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-red-500 border-t-transparent"></div>
                 ) : (
@@ -493,7 +480,7 @@ const FileInput = ({
             </div>
 
             <div>
-              <p className="text-sm font-medium text-gray-700">
+              <p className="text-xs font-medium text-gray-700">
                 {isAgreement && downloadState.hasDownloaded
                   ? "Upload signed agreement"
                   : disabled
@@ -506,16 +493,6 @@ const FileInput = ({
                   : accept === "*"
                     ? "Any file type"
                     : `Formats: ${accept}`}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-700">
-                {disabled
-                  ? "Document uploaded"
-                  : `Click to upload ${label.toLowerCase()}`}
-              </p>
-              <p className="mt-1 text-xs text-gray-500">
-                {accept === "*" ? "Any file type" : `Formats: ${accept}`}
               </p>
             </div>
 
@@ -552,6 +529,16 @@ const IndividualForm = ({ formData, onChange, errors, disabled }) => {
           error = "Enter valid PAN (e.g., ABCDE1234F)";
         }
         break;
+      case "officeAddress":
+        if (value && value.trim().length < 10) {
+          error = "Enter valid Office Address (minimum 10 characters)";
+        }
+        break;
+      case "gstNumber":
+        if (value && !validateGST(value)) {
+          error = "Enter valid GST number";
+        }
+        break;
       default:
         break;
     }
@@ -561,48 +548,93 @@ const IndividualForm = ({ formData, onChange, errors, disabled }) => {
 
   return (
     <div className="font-mont space-y-6">
-      <div>
-        <label className="mb-2 block text-sm font-medium text-gray-700">
-          Aadhaar Number <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          name="aadhaarNumber"
-          value={formData.aadhaarNumber || ""}
-          onChange={(e) => {
-            const value = e.target.value.replace(/\D/g, "").slice(0, 12);
-            onChange(e.target.name, value);
-          }}
-          className={`w-full rounded-lg border px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:outline-none ${errors.aadhaarNumber ? "border-red-500" : "border-gray-300"}`}
-          placeholder="Enter 12-digit Aadhaar number"
-          disabled={disabled}
-          required
-        />
-        {errors.aadhaarNumber && (
-          <p className="mt-1 text-sm text-red-600">{errors.aadhaarNumber}</p>
-        )}
-      </div>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            Aadhaar Number <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="aadhaarNumber"
+            value={formData.aadhaarNumber || ""}
+            onChange={(e) => {
+              const value = e.target.value.replace(/\D/g, "").slice(0, 12);
+              onChange(e.target.name, value);
+            }}
+            className={`w-full rounded-lg border px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:outline-none ${errors.aadhaarNumber ? "border-red-500" : "border-gray-300"}`}
+            placeholder="Enter 12-digit Aadhaar number"
+            disabled={disabled}
+            required
+          />
+          {errors.aadhaarNumber && (
+            <p className="mt-1 text-sm text-red-600">{errors.aadhaarNumber}</p>
+          )}
+        </div>
 
-      <div>
-        <label className="mb-2 block text-sm font-medium text-gray-700">
-          PAN Number <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          name="panNumber"
-          value={formData.panNumber || ""}
-          onChange={(e) => {
-            const value = e.target.value.toUpperCase();
-            onChange(e.target.name, value);
-          }}
-          className={`w-full rounded-lg border px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:outline-none ${errors.panNumber ? "border-red-500" : "border-gray-300"}`}
-          placeholder="ABCDE1234F"
-          disabled={disabled}
-          required
-        />
-        {errors.panNumber && (
-          <p className="mt-1 text-sm text-red-600">{errors.panNumber}</p>
-        )}
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            PAN Number <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="panNumber"
+            value={formData.panNumber || ""}
+            onChange={(e) => {
+              const value = e.target.value.toUpperCase();
+              onChange(e.target.name, value);
+            }}
+            className={`w-full rounded-lg border px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:outline-none ${errors.panNumber ? "border-red-500" : "border-gray-300"}`}
+            placeholder="ABCDE1234F"
+            disabled={disabled}
+            required
+          />
+          {errors.panNumber && (
+            <p className="mt-1 text-sm text-red-600">{errors.panNumber}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            Office Address <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="officeAddress"
+            value={formData.officeAddress || ""}
+            onChange={(e) => {
+              const value = e.target.value.toUpperCase();
+              onChange(e.target.name, value);
+            }}
+            className={`w-full rounded-lg border px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:outline-none ${errors.officeAddress ? "border-red-500" : "border-gray-300"}`}
+            placeholder="123 Main St, City, State, ZIP"
+            disabled={disabled}
+            required
+          />
+          {errors.officeAddress && (
+            <p className="mt-1 text-sm text-red-600">{errors.officeAddress}</p>
+          )}
+        </div>
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            GST Number
+          </label>
+          <input
+            type="text"
+            name="gstNumber"
+            value={formData.gstNumber || ""}
+            onChange={(e) => {
+              const value = e.target.value.toUpperCase();
+              onChange(e.target.name, value);
+            }}
+            className={`w-full rounded-lg border px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:outline-none ${errors.gstNumber ? "border-red-500" : "border-gray-300"}`}
+            placeholder="22ABCDE1234F1Z5"
+            disabled={disabled}
+            required
+          />
+          {errors.gstNumber && (
+            <p className="mt-1 text-sm text-red-600">{errors.gstNumber}</p>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -725,6 +757,27 @@ const CompanyForm = ({ formData, onChange, errors, disabled }) => {
             <p className="mt-1 text-sm text-red-600">{errors.gstNumber}</p>
           )}
         </div>
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            Office Address <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="officeAddress"
+            value={formData.officeAddress || ""}
+            onChange={(e) => {
+              const value = e.target.value.toUpperCase();
+              onChange(e.target.name, value);
+            }}
+            className={`w-full rounded-lg border px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:outline-none ${errors.officeAddress ? "border-red-500" : "border-gray-300"}`}
+            placeholder="123 Main St, City, State, ZIP"
+            disabled={disabled}
+            required
+          />
+          {errors.officeAddress && (
+            <p className="mt-1 text-sm text-red-600">{errors.officeAddress}</p>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -750,6 +803,7 @@ const KycForm = () => {
     panNumber: "",
     gstNumber: "",
     aadhaarNumber: "",
+    officeAddress: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -785,51 +839,6 @@ const KycForm = () => {
 
     // Update Redux
     dispatch(updateKycData({ [name]: value }));
-  };
-
-  const handleBlur = (name) => {
-    setTouched((prev) => ({
-      ...prev,
-      [name]: true,
-    }));
-
-    // Validate field on blur
-    let error = "";
-    const value = formData[name];
-
-    if (formData.businessType === "individual") {
-      if (name === "aadhaarNumber") {
-        if (!value) error = "Aadhaar number is required";
-        else if (!validateAadhaar(value))
-          error = "Enter valid 12-digit Aadhaar";
-      } else if (name === "panNumber") {
-        if (!value) error = "PAN number is required";
-        else if (!validatePAN(value)) error = "Enter valid PAN";
-      }
-    } else {
-      if (name === "companyName" && !value) {
-        error = "Company name is required";
-      } else if (name === "panNumber") {
-        if (!value) error = "PAN number is required";
-        else if (!validatePAN(value)) error = "Enter valid PAN";
-      } else if (name === "gstNumber") {
-        if (!value) error = "GST number is required";
-        else if (!validateGST(value)) error = "Enter valid GST number";
-      } else if (
-        name === "landlineNumber" &&
-        value &&
-        !/^[0-9+\-\s]{6,15}$/.test(value)
-      ) {
-        error = "Enter valid landline number";
-      }
-    }
-
-    if (error) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: error,
-      }));
-    }
   };
 
   const handleBusinessTypeChange = (type) => {
@@ -896,6 +905,12 @@ const KycForm = () => {
         newErrors.panNumber = "PAN number is required";
       } else if (!validatePAN(formData.panNumber)) {
         newErrors.panNumber = "Enter valid PAN number";
+      } else if (
+        !formData.officeAddress?.trim() ||
+        formData.officeAddress.trim().length < 10
+      ) {
+        newErrors.officeAddress =
+          "Enter valid Office Address (minimum 10 characters)";
       }
     } else {
       if (!formData.companyName?.trim()) {
@@ -912,6 +927,12 @@ const KycForm = () => {
         newErrors.gstNumber = "GST number is required";
       } else if (!validateGST(formData.gstNumber)) {
         newErrors.gstNumber = "Enter valid GST number";
+      } else if (
+        !formData.officeAddress?.trim() ||
+        formData.officeAddress.trim().length < 10
+      ) {
+        newErrors.officeAddress =
+          "Enter valid Office Address (minimum 10 characters)";
       }
     }
 
@@ -1012,10 +1033,6 @@ const KycForm = () => {
                         label="Landline Number"
                         value={formData.landlineNumber}
                       />
-                      <DataDisplay
-                        label="GST Number"
-                        value={formData.gstNumber}
-                      />
                     </>
                   )}
                   {formData.businessType === "individual" && (
@@ -1025,6 +1042,11 @@ const KycForm = () => {
                     />
                   )}
                   <DataDisplay label="PAN Number" value={formData.panNumber} />
+                  <DataDisplay
+                    label="Office Address"
+                    value={formData.officeAddress}
+                  />
+                  <DataDisplay label="GST Number" value={formData.gstNumber} />
                 </dl>
               </div>
 
@@ -1046,6 +1068,11 @@ const KycForm = () => {
                   <DataDisplay
                     label="Agreement"
                     value={kycData.documents?.agreement}
+                    type="file"
+                  />
+                  <DataDisplay
+                    label="Address Proof"
+                    value={kycData.documents?.addressProof}
                     type="file"
                   />
                   {formData.businessType === "company" && (
@@ -1316,6 +1343,22 @@ const KycForm = () => {
                       handleRemoveFile(
                         "cancelledCheque",
                         kycData.documents?.cancelledCheque,
+                      )
+                    }
+                    required
+                    disabled={kycStatus === "requested"}
+                  />
+                  <FileInput
+                    label="Address Proof (lightbill, rental agreement, etc..)"
+                    documentType="addressProof"
+                    accept="image/*,.pdf"
+                    file={kycData.documents?.addressProof}
+                    onFileUpload={handleFileUpload}
+                    // onRemoveFile={handleRemoveFile}
+                    onRemoveFile={() =>
+                      handleRemoveFile(
+                        "addressProof",
+                        kycData.documents?.addressProof,
                       )
                     }
                     required
