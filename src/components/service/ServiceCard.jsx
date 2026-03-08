@@ -332,7 +332,7 @@ const ServiceCard = ({ service, onDelete, deleting }) => {
                 </button>
               )}
 
-              {service.isApproved === "rejected" && (
+              {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -344,13 +344,13 @@ const ServiceCard = ({ service, onDelete, deleting }) => {
                 >
                   <FaTrash />
                 </button>
-              )}
+              }
             </div>
 
             {/* Toggle Switch - Only show if approved */}
             {service.isApproved === "approved" && (
               <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-600">Active</span>
+                {/* <span className="text-sm text-gray-600">Active</span> */}
                 <button
                   onClick={handleToggleStatus}
                   disabled={isToggling}
