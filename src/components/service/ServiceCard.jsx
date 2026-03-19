@@ -8,15 +8,20 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { FiX } from "react-icons/fi";
 import { MdCategory } from "react-icons/md";
+import { useCategories } from "../../hooks/useCategories";
+import { useServiceImage } from "../../hooks/useServiceImage";
 
 const ServiceCard = ({ service, onDelete, deleting }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
+  const [showRejectionTooltip, setShowRejectionTooltip] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const { categories } = useCategories();
+  const imageSrc = useServiceImage(service, categories, currentImageIndex);
   const commisionPercentage = (finalPrice, servicePrice) => {
     const percentage = ((finalPrice - servicePrice) / servicePrice) * 100;
     return percentage;
@@ -87,8 +92,9 @@ const ServiceCard = ({ service, onDelete, deleting }) => {
             <>
               <img
                 src={
-                  `${import.meta.env.VITE_API_URL}${service.documents.photos[currentImageIndex]}` ||
-                  "/placeholder.svg"
+                  service.documents?.photos?.length > 0
+                    ? `${import.meta.env.VITE_API_URL}${service.documents.photos[currentImageIndex]}`
+                    : imageSrc
                 }
                 alt={service.serviceName}
                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -245,9 +251,30 @@ const ServiceCard = ({ service, onDelete, deleting }) => {
                   Approved
                 </div>
               ) : service.isApproved === "rejected" ? (
-                <div className="rounded-full bg-red-200 px-3 py-[2px] text-center text-sm text-red-400">
-                  Rejected
-                </div>
+                <>
+                  <div className="relative">
+                    <button
+                      onMouseEnter={() => setShowRejectionTooltip(true)}
+                      onMouseLeave={() => setShowRejectionTooltip(false)}
+                      className="cursor-pointer rounded-full bg-red-200 px-3 py-[2px] text-center text-sm text-red-400 transition-colors hover:bg-red-300"
+                    >
+                      Rejected
+                    </button>
+
+                    {/* Rejection Tooltip */}
+                    {showRejectionTooltip && service.rejectionMessage && (
+                      <div className="absolute top-full right-0 z-10 mt-2 max-w-64 rounded-lg border border-red-100 bg-red-200 p-3 shadow-2xl">
+                        <p className="mb-1 text-xs font-medium text-red-500">
+                          Rejection Reason:
+                        </p>
+                        <p className="text-sm text-red-700">
+                          {service.rejectionMessage}
+                        </p>
+                        <div className="absolute -top-1 right-4 h-2 w-2 rotate-45 border-t border-l border-gray-200 bg-white"></div>
+                      </div>
+                    )}
+                  </div>
+                </>
               ) : (
                 <div className="rounded-full bg-yellow-200 px-3 py-[2px] text-center text-sm text-yellow-400">
                   Pending
@@ -284,36 +311,6 @@ const ServiceCard = ({ service, onDelete, deleting }) => {
                 )}
                 %
               </span>
-
-              {/* Add rejection message badge if service is rejected */}
-              {service.isApproved === "rejected" &&
-                service.rejectionMessage && (
-                  <div className="mt-3">
-                    <div className="flex items-start gap-2 rounded-md bg-red-50 p-3">
-                      <svg
-                        className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.698-.833-2.464 0L4.232 16.5c-.77.833.192 2.5 1.732 2.5z"
-                        />
-                      </svg>
-                      <div>
-                        <p className="text-sm font-medium text-red-800">
-                          Rejection Reason:
-                        </p>
-                        <p className="mt-1 line-clamp-2 text-xs text-red-700">
-                          {service.rejectionMessage}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
             </div>
           </div>
 
@@ -332,7 +329,7 @@ const ServiceCard = ({ service, onDelete, deleting }) => {
                 </button>
               )}
 
-              {
+              {service.isApproved === "rejected" && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -344,7 +341,7 @@ const ServiceCard = ({ service, onDelete, deleting }) => {
                 >
                   <FaTrash />
                 </button>
-              }
+              )}
             </div>
 
             {/* Toggle Switch - Only show if approved */}

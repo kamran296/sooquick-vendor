@@ -103,74 +103,11 @@ const VendorMembershipPurchase = () => {
     razorpayLoaded,
   } = useRazorpayPayment();
 
-  console.log(user, "uer");
   const handleSelectPlan = (planId, duration) => {
     setSelectedPlan(planId);
     setSelectedDuration(duration);
     setMessage({ text: "", type: "" });
   };
-
-  // const handleBuyNow = async (plan) => {
-  //   if (!plan) return;
-  //   if (!user.email) {
-  //     navigate("/");
-  //   }
-  //   // setLoading(true);
-  //   setMessage({ text: "", type: "" });
-
-  //   try {
-
-  //     await initiatePayment({
-  //       createOrderApi: () =>
-  //         request.createPaymentOrder({
-  //           purpose: "membership",
-  //           referenceId: plan.id, // membership plan id
-  //           amount: plan.pricing[selectedDuration],
-  //         }),
-  //       verifyPaymentApi: (payload) =>
-  //         request.verifyRazorpayPayment({
-  //           ...payload,
-  //           purpose: "membership",
-  //           membershipType: plan.id,
-  //           planDuration: selectedDuration,
-  //           referenceId: plan.id,
-  //         }),
-
-  //       onSuccess: () => {
-  //         toast.success("Membership activated successfully!");
-  //         navigate("/membership-info");
-  //       },
-
-  //       onFailure: (error) => {
-  //         console.error("Payment failed:", error);
-  //         toast.error("Membership payment failed");
-  //       },
-  //       prefill: {
-  //         name: user?.firstName,
-  //         email: user?.email,
-  //         phone: user?.phone,
-  //       },
-  //     });
-  //   } catch (error) {
-  //     console.error("Purchase error:", error);
-
-  //     let errorMessage = "Failed to purchase membership";
-  //     if (
-  //       error.response &&
-  //       error.response.data &&
-  //       error.response.data.message
-  //     ) {
-  //       errorMessage = error.response.data.message;
-  //     }
-
-  //     setMessage({
-  //       text: errorMessage,
-  //       type: "error",
-  //     });
-  //   }
-  // };
-
-  // Features comparison
 
   const handleBuyNow = (plan) => {
     if (!user?.email) {
@@ -273,26 +210,26 @@ const VendorMembershipPurchase = () => {
   const features = [
     {
       name: "Service Posts",
-      freeVendor: "Max 3",
+      freeVendor: "Max 5",
       paidVendor: "Unlimited",
       icon: <FaBullhorn className="text-blue-500" />,
     },
-    {
-      name: "Commission",
-      freeVendor: "20%",
-      paidVendor: "15% (tiered)",
-      icon: <FaPercent className="text-blue-500" />,
-    },
+    // {
+    //   name: "Commission",
+    //   freeVendor: "20%",
+    //   paidVendor: "15% (tiered)",
+    //   icon: <FaPercent className="text-blue-500" />,
+    // },
     {
       name: "Search Visibility",
       freeVendor: "Low",
-      paidVendor: "Priority / Featured",
+      paidVendor: "Featured",
       icon: <FaStar className="text-blue-500" />,
     },
     {
       name: "Badge",
       freeVendor: "None",
-      paidVendor: "Verified / Premium",
+      paidVendor: "Premium",
       icon: <FaMedal className="text-blue-500" />,
     },
     {
@@ -307,28 +244,28 @@ const VendorMembershipPurchase = () => {
       paidVendor: "Priority",
       icon: <FaShieldAlt className="text-blue-500" />,
     },
-    {
-      name: "Ad Credits",
-      freeVendor: "None",
-      paidVendor: "₹500–₹2000 free/month",
-      icon: <FaCreditCard className="text-blue-500" />,
-    },
-    {
-      name: "Customer Insights",
-      freeVendor: "None",
-      paidVendor: "Basic to Advanced",
-      icon: <FaChartLine className="text-blue-500" />,
-    },
-    {
-      name: "Leads Access",
-      freeVendor: "General",
-      paidVendor: "Guaranteed / Corporate / HNI",
-      icon: <FaUsers className="text-blue-500" />,
-    },
+    // {
+    //   name: "Ad Credits",
+    //   freeVendor: "None",
+    //   paidVendor: "₹500–₹2000 free/month",
+    //   icon: <FaCreditCard className="text-blue-500" />,
+    // },
+    // {
+    //   name: "Customer Insights",
+    //   freeVendor: "None",
+    //   paidVendor: "Basic to Advanced",
+    //   icon: <FaChartLine className="text-blue-500" />,
+    // },
+    // {
+    //   name: "Leads Access",
+    //   freeVendor: "General",
+    //   paidVendor: "Guaranteed / Corporate / HNI",
+    //   icon: <FaUsers className="text-blue-500" />,
+    // },
     {
       name: "Support",
       freeVendor: "Email only",
-      paidVendor: "Dedicated Manager (Platinum)",
+      paidVendor: "Priority",
       icon: <FaHeadset className="text-blue-500" />,
     },
   ];
@@ -349,18 +286,18 @@ const VendorMembershipPurchase = () => {
         Yearly: 9999,
       },
       features: [
-        "15% commission rate",
+        // "15% commission rate",
         "Unlimited service posts",
         "Featured in search results",
         "Premium badge",
         "Fast payout (2-3 days)",
         "Highest priority dispute handling",
-        "₹500-2000 monthly ad credits",
+        // "₹500-2000 monthly ad credits",
         "Advanced customer insights",
         "Access to corporate/HNI leads",
         "Priority phone support",
       ],
-      commission: "15%",
+      // commission: "15%",
       servicePosts: "Unlimited",
     },
     // {

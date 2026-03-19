@@ -1,17 +1,18 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, memo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  getKycInfo,
-  submitKycInfo,
-  updateKycData,
-  updateDocument,
-  removeDocument,
-  updateBusinessType,
-  deleteDocument,
-} from "../../redux/slices/kycSlice";
+// import {
+//   getKycInfo,
+//   submitKycInfo,
+//   updateKycData,
+//   updateDocument,
+//   removeDocument,
+//   updateBusinessType,
+//   deleteDocument,
+// } from "../../redux/slices/kycSlice";
 import { FaTrash } from "react-icons/fa";
 import request from "../../axios/requests";
 import { toast } from "react-toastify";
+import { useKycForm } from "../../hooks/useKycForm";
 
 // Validation utilities
 const validateAadhaar = (aadhaar) => {
@@ -152,138 +153,227 @@ const DataDisplay = ({ label, value, type = "text" }) => {
 };
 
 // File Input Component (Improved)
-const FileInput = ({
-  label,
-  documentType,
-  accept,
-  file,
-  onFileUpload,
-  onRemoveFile,
-  required = false,
-  disabled = false,
-  isDeleting = false,
-  isAgreement = false, // NEW: Flag for agreement type
-  onDownloadAgreement, // NEW: Callback to download from backend
-}) => {
-  const inputRef = useRef(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [downloadState, setDownloadState] = useState({
-    isLoading: false,
-    hasDownloaded: false,
-    error: null,
-  });
-  const handleDivClick = () => {
-    if (!disabled) {
-      inputRef.current?.click();
-    }
-  };
+const FileInput = memo(
+  ({
+    label,
+    // documentType,
+    type,
+    accept,
+    file,
+    onFileUpload,
+    onRemoveFile,
+    required = false,
+    disabled = false,
+    isDeleting = false,
+    isAgreement = false, // NEW: Flag for agreement type
+    onDownloadAgreement, // NEW: Callback to download from backend
+  }) => {
+    const inputRef = useRef(null);
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const [downloadState, setDownloadState] = useState({
+      isLoading: false,
+      hasDownloaded: false,
+      error: null,
+    });
+    const handleDivClick = () => {
+      if (!disabled) {
+        inputRef.current?.click();
+      }
+    };
 
-  const extractFileName = (path) => {
-    if (!path) return "";
-    const justName = path.split("/").pop();
-    return justName.replace(/^\d+-/, "");
-  };
+    const extractFileName = (path) => {
+      if (!path) return "";
+      const justName = path.split("/").pop();
+      return justName.replace(/^\d+-/, "");
+    };
 
-  const isFileObject =
-    file &&
-    typeof file === "object" &&
-    (file instanceof File || (file.name && file.size));
-  const fileName = isFileObject
-    ? file.name
-    : typeof file === "string"
-      ? extractFileName(file)
-      : "";
+    const isFileObject =
+      file &&
+      typeof file === "object" &&
+      (file instanceof File || (file.name && file.size));
+    const fileName = isFileObject
+      ? file.name
+      : typeof file === "string"
+        ? extractFileName(file)
+        : "";
 
-  useEffect(() => {
-    if (isFileObject) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-      return () => URL.revokeObjectURL(url);
-    } else if (typeof file === "string") {
-      setPreviewUrl(`${import.meta.env.VITE_API_URL}${file}`);
-    } else {
-      setPreviewUrl(null);
-    }
-  }, [file, isFileObject]);
+    useEffect(() => {
+      if (isFileObject) {
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+        return () => URL.revokeObjectURL(url);
+      } else if (typeof file === "string") {
+        setPreviewUrl(`${import.meta.env.VITE_API_URL}${file}`);
+      } else {
+        setPreviewUrl(null);
+      }
+    }, [file, isFileObject]);
 
-  const isImage = fileName && /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileName);
-  const isPDF = fileName && /\.pdf$/i.test(fileName);
+    const isImage =
+      fileName && /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileName);
+    const isPDF = fileName && /\.pdf$/i.test(fileName);
 
-  const handleDownloadAgreement = async () => {
-    if (!onDownloadAgreement) return;
+    const handleDownloadAgreement = async () => {
+      if (!onDownloadAgreement) return;
 
-    setDownloadState((prev) => ({ ...prev, isLoading: true, error: null }));
+      setDownloadState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-    try {
-      await onDownloadAgreement();
-      setDownloadState((prev) => ({
-        ...prev,
-        isLoading: false,
-        hasDownloaded: true,
-      }));
-    } catch (error) {
-      setDownloadState((prev) => ({
-        ...prev,
-        isLoading: false,
-        error: "Failed to download agreement. Please try again.",
-      }));
-    }
-  };
-  return (
-    <div className="mb-6">
-      <label className="mb-2 block text-xs font-medium text-gray-700">
-        {label} {required && <span className="text-red-500">*</span>}
-        {isAgreement && (
-          <span className="ml-2 text-xs text-gray-500">
-            (Download, sign, and re-upload)
-          </span>
-        )}
-      </label>
+      try {
+        await onDownloadAgreement();
+        setDownloadState((prev) => ({
+          ...prev,
+          isLoading: false,
+          hasDownloaded: true,
+        }));
+      } catch (error) {
+        setDownloadState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: "Failed to download agreement. Please try again.",
+        }));
+      }
+    };
+    return (
+      <div className="mb-6">
+        <label className="mb-2 block text-xs font-medium text-gray-700">
+          {label} {required && <span className="text-red-500">*</span>}
+          {isAgreement && (
+            <span className="ml-2 text-xs text-gray-500">
+              (Download, sign, and re-upload)
+            </span>
+          )}
+        </label>
 
-      {/* NEW: Agreement download section - shown when no file uploaded */}
-      {isAgreement && !file && (
-        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
-          {/* Step 1: Download */}
-          <div className="flex items-start gap-3">
-            <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100">
-              <span className="text-sm font-semibold text-blue-600">1</span>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-blue-800">
-                    Download Agreement Document
-                  </p>
-                  <p className="mt-1 text-xs text-blue-700">
-                    Click below to download the agreement. Read carefully, sign,
-                    then upload the signed copy.
-                  </p>
+        {/* NEW: Agreement download section - shown when no file uploaded */}
+        {isAgreement && !file && (
+          <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+            {/* Step 1: Download */}
+            <div className="flex items-start gap-3">
+              <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100">
+                <span className="text-sm font-semibold text-blue-600">1</span>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-800">
+                      Download Agreement Document
+                    </p>
+                    <p className="mt-1 text-xs text-blue-700">
+                      Click below to download the agreement. Read carefully,
+                      sign, then upload the signed copy.
+                    </p>
+                  </div>
+
+                  {downloadState.error && (
+                    <p className="text-xs text-red-600">
+                      {downloadState.error}
+                    </p>
+                  )}
                 </div>
 
-                {downloadState.error && (
-                  <p className="text-xs text-red-600">{downloadState.error}</p>
-                )}
+                <button
+                  type="button"
+                  onClick={handleDownloadAgreement}
+                  disabled={disabled || downloadState.isLoading}
+                  className={`mt-2 flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    downloadState.isLoading
+                      ? "cursor-not-allowed bg-blue-400 text-white"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
+                  }`}
+                >
+                  {downloadState.isLoading ? (
+                    <>
+                      <div className="h-3 w-3 animate-spin rounded-full border border-white border-t-transparent"></div>
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                      Download Agreement PDF
+                    </>
+                  )}
+                </button>
               </div>
+            </div>
 
-              <button
-                type="button"
-                onClick={handleDownloadAgreement}
-                disabled={disabled || downloadState.isLoading}
-                className={`mt-2 flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                  downloadState.isLoading
-                    ? "cursor-not-allowed bg-blue-400 text-white"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-                }`}
-              >
-                {downloadState.isLoading ? (
-                  <>
-                    <div className="h-3 w-3 animate-spin rounded-full border border-white border-t-transparent"></div>
-                    Downloading...
-                  </>
-                ) : (
-                  <>
+            {/* Step 2: Upload - shown after successful download */}
+            {downloadState.hasDownloaded && (
+              <div className="mt-3 flex items-start gap-3 border-t border-blue-100 pt-3">
+                <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-green-100">
+                  <span className="text-sm font-semibold text-green-600">
+                    2
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-green-800">
+                        Upload Signed Agreement
+                      </p>
+                      <p className="mt-1 text-xs text-green-700">
+                        Now upload the signed agreement using the upload area
+                        below.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleDownloadAgreement}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      Download again?
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {file ? (
+          <div className="relative rounded-lg border bg-gray-50 p-4 transition-all hover:bg-gray-100">
+            {/* Signed badge for agreement */}
+            {isAgreement && (
+              <div className="absolute -top-2 left-4">
+                <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
+                  ✓ Signed Agreement Uploaded
+                </span>
+              </div>
+            )}
+            {/* Show loading overlay when deleting */}
+            {isDeleting && (
+              <div className="bg-opacity-50 absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-black">
+                <div className="flex items-center gap-2 text-white">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                  <span className="text-sm">Deleting...</span>
+                </div>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                {isImage && previewUrl ? (
+                  <div className="h-16 w-16 overflow-hidden rounded-md border">
+                    <img
+                      src={previewUrl}
+                      alt="Preview"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                ) : isPDF ? (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-md bg-red-100">
                     <svg
-                      className="h-4 w-4"
+                      className="h-8 w-8 text-red-600"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -292,158 +382,98 @@ const FileInput = ({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                       />
                     </svg>
-                    Download Agreement PDF
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Step 2: Upload - shown after successful download */}
-          {downloadState.hasDownloaded && (
-            <div className="mt-3 flex items-start gap-3 border-t border-blue-100 pt-3">
-              <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-green-100">
-                <span className="text-sm font-semibold text-green-600">2</span>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-green-800">
-                      Upload Signed Agreement
-                    </p>
-                    <p className="mt-1 text-xs text-green-700">
-                      Now upload the signed agreement using the upload area
-                      below.
-                    </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleDownloadAgreement}
-                    className="text-xs text-blue-600 hover:text-blue-800"
-                  >
-                    Download again?
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {file ? (
-        <div className="relative rounded-lg border bg-gray-50 p-4 transition-all hover:bg-gray-100">
-          {/* Signed badge for agreement */}
-          {isAgreement && (
-            <div className="absolute -top-2 left-4">
-              <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
-                ✓ Signed Agreement Uploaded
-              </span>
-            </div>
-          )}
-          {/* Show loading overlay when deleting */}
-          {isDeleting && (
-            <div className="bg-opacity-50 absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-black">
-              <div className="flex items-center gap-2 text-white">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                <span className="text-sm">Deleting...</span>
-              </div>
-            </div>
-          )}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              {isImage && previewUrl ? (
-                <div className="h-16 w-16 overflow-hidden rounded-md border">
-                  <img
-                    src={previewUrl}
-                    alt="Preview"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              ) : isPDF ? (
-                <div className="flex h-16 w-16 items-center justify-center rounded-md bg-red-100">
-                  <svg
-                    className="h-8 w-8 text-red-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                </div>
-              ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-md bg-gray-200">
-                  <svg
-                    className="h-8 w-8 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                </div>
-              )}
-
-              <div className="flex flex-col">
-                <span className="max-w-xs truncate text-xs font-medium text-gray-900">
-                  {fileName.slice(0, 4) || "Uploaded file"}
-                </span>
-                {isFileObject && (
-                  <span className="text-xs text-gray-500">
-                    Size: {Math.round(file.size / 1024)} KB
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {!disabled && (
-              <button
-                type="button"
-                className="rounded-full p-2 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700"
-                onClick={() => onRemoveFile(documentType, file)}
-                disabled={isDeleting || disabled}
-              >
-                {isDeleting ? (
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-red-500 border-t-transparent"></div>
                 ) : (
-                  <FaTrash className="h-5 w-5" />
+                  <div className="flex h-16 w-16 items-center justify-center rounded-md bg-gray-200">
+                    <svg
+                      className="h-8 w-8 text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                  </div>
                 )}
-              </button>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div
-          className={`cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-6 text-center transition-all ${disabled ? "cursor-not-allowed opacity-50" : "hover:border-teal-400 hover:bg-teal-50"}`}
-          onClick={handleDivClick}
-        >
-          <input
-            type="file"
-            ref={inputRef}
-            accept={accept}
-            onChange={(e) => onFileUpload(e, documentType)}
-            className="hidden"
-            disabled={disabled}
-          />
 
-          {/* Contextual message for agreement */}
-          {isAgreement && downloadState.hasDownloaded && (
-            <div className="mb-4 flex items-center justify-center gap-2 rounded-md bg-teal-50 p-2">
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-100">
+                <div className="flex flex-col">
+                  <span className="max-w-xs truncate text-xs font-medium text-gray-900">
+                    {/* {fileName.slice(0, 4) || "Uploaded file"} */}
+                  </span>
+                  {isFileObject && (
+                    <span className="text-xs text-gray-500">
+                      Size: {Math.round(file.size / 1024)} KB
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {!disabled && (
+                <button
+                  type="button"
+                  className="rounded-full p-2 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700"
+                  onClick={() => onRemoveFile(type, file)}
+                  disabled={isDeleting || disabled}
+                >
+                  {isDeleting ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-red-500 border-t-transparent"></div>
+                  ) : (
+                    <FaTrash className="h-5 w-5" />
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div
+            className={`cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-6 text-center transition-all ${disabled ? "cursor-not-allowed opacity-50" : "hover:border-teal-400 hover:bg-teal-50"}`}
+            onClick={handleDivClick}
+          >
+            <input
+              type="file"
+              ref={inputRef}
+              accept={accept}
+              onChange={(e) => onFileUpload(e, type)}
+              className="hidden"
+              disabled={disabled}
+            />
+
+            {/* Contextual message for agreement */}
+            {isAgreement && downloadState.hasDownloaded && (
+              <div className="mb-4 flex items-center justify-center gap-2 rounded-md bg-teal-50 p-2">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-100">
+                  <svg
+                    className="h-3 w-3 text-teal-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <p className="text-sm text-teal-800">
+                  Now upload your signed agreement
+                </p>
+              </div>
+            )}
+
+            <div className="flex flex-col items-center justify-center space-y-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-teal-100">
                 <svg
-                  className="h-3 w-3 text-teal-600"
+                  className="h-6 w-6 text-teal-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -452,69 +482,48 @@ const FileInput = ({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                   />
                 </svg>
               </div>
-              <p className="text-sm text-teal-800">
-                Now upload your signed agreement
-              </p>
-            </div>
-          )}
 
-          <div className="flex flex-col items-center justify-center space-y-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-teal-100">
-              <svg
-                className="h-6 w-6 text-teal-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
-              </svg>
-            </div>
+              <div>
+                <p className="text-xs font-medium text-gray-700">
+                  {isAgreement && downloadState.hasDownloaded
+                    ? "Upload signed agreement"
+                    : disabled
+                      ? "Document uploaded"
+                      : `Click to upload ${label.toLowerCase()}`}
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  {isAgreement
+                    ? "Signed PDF, JPG, or PNG"
+                    : accept === "*"
+                      ? "Any file type"
+                      : `Formats: ${accept}`}
+                </p>
+              </div>
 
-            <div>
-              <p className="text-xs font-medium text-gray-700">
-                {isAgreement && downloadState.hasDownloaded
-                  ? "Upload signed agreement"
-                  : disabled
-                    ? "Document uploaded"
-                    : `Click to upload ${label.toLowerCase()}`}
-              </p>
-              <p className="mt-1 text-xs text-gray-500">
-                {isAgreement
-                  ? "Signed PDF, JPG, or PNG"
-                  : accept === "*"
-                    ? "Any file type"
-                    : `Formats: ${accept}`}
-              </p>
+              {!disabled && (
+                <button
+                  type="button"
+                  className="rounded-md bg-teal-600 px-3 py-1.5 text-xs text-white transition-colors hover:bg-teal-700"
+                >
+                  {isAgreement && downloadState.hasDownloaded
+                    ? "Upload Signed Copy"
+                    : "Browse Files"}
+                </button>
+              )}
             </div>
-
-            {!disabled && (
-              <button
-                type="button"
-                className="rounded-md bg-teal-600 px-3 py-1.5 text-xs text-white transition-colors hover:bg-teal-700"
-              >
-                {isAgreement && downloadState.hasDownloaded
-                  ? "Upload Signed Copy"
-                  : "Browse Files"}
-              </button>
-            )}
           </div>
-        </div>
-      )}
-    </div>
-  );
-};
+        )}
+      </div>
+    );
+  },
+);
 
 // Form Components
-const IndividualForm = ({ formData, onChange, errors, disabled }) => {
+const IndividualForm = memo(({ formData, onChange, errors, disabled }) => {
   const validateField = (name, value) => {
     let error = "";
 
@@ -534,11 +543,11 @@ const IndividualForm = ({ formData, onChange, errors, disabled }) => {
           error = "Enter valid Office Address (minimum 10 characters)";
         }
         break;
-      case "gstNumber":
-        if (value && !validateGST(value)) {
-          error = "Enter valid GST number";
-        }
-        break;
+      // case "gstNumber":
+      //   if (value && !validateGST(value)) {
+      //     error = "Enter valid GST number";
+      //   }
+      //   break;
       default:
         break;
     }
@@ -629,7 +638,6 @@ const IndividualForm = ({ formData, onChange, errors, disabled }) => {
             className={`w-full rounded-lg border px-4 py-3 focus:ring-2 focus:ring-teal-500 focus:outline-none ${errors.gstNumber ? "border-red-500" : "border-gray-300"}`}
             placeholder="22ABCDE1234F1Z5"
             disabled={disabled}
-            required
           />
           {errors.gstNumber && (
             <p className="mt-1 text-sm text-red-600">{errors.gstNumber}</p>
@@ -638,9 +646,9 @@ const IndividualForm = ({ formData, onChange, errors, disabled }) => {
       </div>
     </div>
   );
-};
+});
 
-const CompanyForm = ({ formData, onChange, errors, disabled }) => {
+const CompanyForm = memo(({ formData, onChange, errors, disabled }) => {
   const validateField = (name, value) => {
     let error = "";
 
@@ -781,344 +789,805 @@ const CompanyForm = ({ formData, onChange, errors, disabled }) => {
       </div>
     </div>
   );
-};
+});
 
 // Main KYC Component
-const KycForm = () => {
-  const dispatch = useDispatch();
-  const {
-    kycData,
-    loading,
-    error,
-    success,
-    kycStatus,
-    deleteLoading,
-    // deletingDoc,
-  } = useSelector((state) => state.kyc);
+// const KycForm = () => {
+//   const dispatch = useDispatch();
+//   const {
+//     kycData,
+//     loading,
+//     error,
+//     success,
+//     kycStatus,
+//     deleteLoading,
+//     // deletingDoc,
+//   } = useSelector((state) => state.kyc);
+//   const initializedRef = useRef(false);
+//   const [formData, setFormData] = useState({
+//     businessType: "company",
+//     companyName: "",
+//     landlineNumber: "",
+//     panNumber: "",
+//     gstNumber: "",
+//     aadhaarNumber: "",
+//     officeAddress: "",
+//     documents: {
+//       panCard: null,
+//       cancelledCheque: null,
+//       aadhaarCard: null,
+//       gstCertificate: null,
+//       cinCertificate: null,
+//       agreement: null,
+//       addressProof: null,
+//     },
+//   });
 
-  const [formData, setFormData] = useState({
-    businessType: "company",
-    companyName: "",
-    landlineNumber: "",
-    panNumber: "",
-    gstNumber: "",
-    aadhaarNumber: "",
-    officeAddress: "",
-  });
+//   const [initialData, setInitialData] = useState(null);
+//   const [isDirty, setIsDirty] = useState(false);
+//   const [errors, setErrors] = useState({});
+//   const [touched, setTouched] = useState({});
+//   const [deletingDoc, setDeletingDoc] = useState(null);
 
-  const [errors, setErrors] = useState({});
-  const [touched, setTouched] = useState({});
-  const [deletingDoc, setDeletingDoc] = useState(null);
+//   useEffect(() => {
+//     dispatch(getKycInfo());
+//   }, [dispatch]);
 
-  useEffect(() => {
-    dispatch(getKycInfo());
-  }, [dispatch]);
+//   useEffect(() => {
+//     if (kycData) {
+//       const merged = {
+//         ...formData,
+//         ...kycData,
+//       };
 
-  useEffect(() => {
-    if (kycData) {
-      setFormData((prev) => ({
-        ...prev,
-        ...kycData,
-      }));
-    }
-  }, [kycData]);
+//       setFormData(merged);
+//       setInitialData(merged);
 
-  const handleInputChange = (name, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+//       initializedRef.current = true;
+//     }
+//   }, [kycData]);
+//   console.log(formData, "formData");
+//   console.log(kycData, "kycData");
+//   // useEffect for deep comparison of data to compare if any changes
+//   useEffect(() => {
+//     if (!initialData) return;
 
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
-    }
+//     const changed = Object.keys(formData).some(
+//       (key) => formData[key] !== initialData[key],
+//     );
 
-    // Update Redux
-    dispatch(updateKycData({ [name]: value }));
-  };
+//     setIsDirty(changed);
+//   }, [formData, initialData]);
+//   console.log(isDirty, "343434");
+//   const handleInputChange = (name, value) => {
+//     setFormData((prev) => ({
+//       ...prev,
+//       [name]: value,
+//     }));
 
-  const handleBusinessTypeChange = (type) => {
-    setFormData((prev) => ({
-      ...prev,
-      businessType: type,
-      ...(type === "individual" && { gstNumber: "", companyName: "" }),
-    }));
+//     // Clear error when user starts typing
+//     if (errors[name]) {
+//       setErrors((prev) => ({
+//         ...prev,
+//         [name]: "",
+//       }));
+//     }
 
-    // Update Redux
-    dispatch(updateBusinessType(type));
-    dispatch(updateKycData({ businessType: type }));
-  };
+//     // Update Redux
+//     // dispatch(updateKycData({ [name]: value }));
+//   };
 
-  const handleFileUpload = (e, documentType) => {
-    const file = e.target.files[0];
-    if (file) {
-      dispatch(updateDocument({ documentType, file }));
-    }
-  };
+//   const handleBusinessTypeChange = (type) => {
+//     setFormData((prev) => ({
+//       ...prev,
+//       businessType: type,
+//       ...(type === "individual" && { gstNumber: "", companyName: "" }),
+//     }));
 
-  const handleRemoveFile = async (documentType, file) => {
-    // Set deleting state for this specific document
-    setDeletingDoc(documentType);
+//     // // Update Redux
+//     // dispatch(updateBusinessType(type));
+//     // dispatch(updateKycData({ businessType: type }));
+//   };
 
-    try {
-      // Check if it's a server-stored document (string path)
-      if (file && typeof file === "string") {
-        // Call API to delete from server
-        await request.deleteKycFile({
-          documentType,
-          documentPath: file,
-        });
+//   const handleFileUpload = (e, documentType) => {
+//     const file = e.target.files[0];
+//     if (file) {
+//       // dispatch(updateDocument({ documentType, file }));
+//       setFormData((prev) => ({
+//         ...prev,
+//         documents: {
+//           ...prev.documents,
+//           [documentType]: file,
+//         },
+//       }));
+//     }
+//   };
 
-        // Dispatch to remove from Redux after successful API call
-        dispatch(removeDocument({ documentType }));
-        toast.success("Document deleted successfully");
+//   const handleRemoveFile = async (documentType, file) => {
+//     // Set deleting state for this specific document
+//     setDeletingDoc(documentType);
 
-        // Refresh KYC data to get updated state
-        dispatch(getKycInfo());
-      } else {
-        // It's a local file, just remove from state
-        dispatch(removeDocument({ documentType }));
-      }
-    } catch (error) {
-      console.error("Failed to delete document:", error);
-      toast.error("Failed to delete document");
-    } finally {
-      // Clear deleting state
-      setDeletingDoc(null);
-    }
-  };
-  const validateForm = () => {
-    const newErrors = {};
+//     try {
+//       // Check if it's a server-stored document (string path)
+//       if (file && typeof file === "string") {
+//         // Call API to delete from server
+//         await request.deleteKycFile({
+//           documentType,
+//           documentPath: file,
+//         });
 
-    if (formData.businessType === "individual") {
-      if (!formData.aadhaarNumber) {
-        newErrors.aadhaarNumber = "Aadhaar number is required";
-      } else if (!validateAadhaar(formData.aadhaarNumber)) {
-        newErrors.aadhaarNumber = "Enter valid 12-digit Aadhaar number";
-      }
+//         // Dispatch to remove from Redux after successful API call
+//         dispatch(removeDocument({ documentType }));
+//         toast.success("Document deleted successfully");
 
-      if (!formData.panNumber) {
-        newErrors.panNumber = "PAN number is required";
-      } else if (!validatePAN(formData.panNumber)) {
-        newErrors.panNumber = "Enter valid PAN number";
-      } else if (
-        !formData.officeAddress?.trim() ||
-        formData.officeAddress.trim().length < 10
-      ) {
-        newErrors.officeAddress =
-          "Enter valid Office Address (minimum 10 characters)";
-      }
-    } else {
-      if (!formData.companyName?.trim()) {
-        newErrors.companyName = "Company name is required";
-      }
+//         // Refresh KYC data to get updated state
+//         dispatch(getKycInfo());
+//       } else {
+//         // It's a local file, just remove from state
+//         dispatch(removeDocument({ documentType }));
+//       }
+//     } catch (error) {
+//       console.error("Failed to delete document:", error);
+//       toast.error("Failed to delete document");
+//     } finally {
+//       // Clear deleting state
+//       setDeletingDoc(null);
+//     }
+//   };
+//   const validateForm = () => {
+//     const newErrors = {};
 
-      if (!formData.panNumber) {
-        newErrors.panNumber = "PAN number is required";
-      } else if (!validatePAN(formData.panNumber)) {
-        newErrors.panNumber = "Enter valid PAN number";
-      }
+//     if (formData.businessType === "individual") {
+//       if (!formData.aadhaarNumber) {
+//         newErrors.aadhaarNumber = "Aadhaar number is required";
+//       } else if (!validateAadhaar(formData.aadhaarNumber)) {
+//         newErrors.aadhaarNumber = "Enter valid 12-digit Aadhaar number";
+//       }
 
-      if (!formData.gstNumber) {
-        newErrors.gstNumber = "GST number is required";
-      } else if (!validateGST(formData.gstNumber)) {
-        newErrors.gstNumber = "Enter valid GST number";
-      } else if (
-        !formData.officeAddress?.trim() ||
-        formData.officeAddress.trim().length < 10
-      ) {
-        newErrors.officeAddress =
-          "Enter valid Office Address (minimum 10 characters)";
-      }
-    }
+//       if (!formData.panNumber) {
+//         newErrors.panNumber = "PAN number is required";
+//       } else if (!validatePAN(formData.panNumber)) {
+//         newErrors.panNumber = "Enter valid PAN number";
+//       } else if (
+//         !formData.officeAddress?.trim() ||
+//         formData.officeAddress.trim().length < 10
+//       ) {
+//         newErrors.officeAddress =
+//           "Enter valid Office Address (minimum 10 characters)";
+//       }
+//     } else {
+//       if (!formData.companyName?.trim()) {
+//         newErrors.companyName = "Company name is required";
+//       }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+//       if (!formData.panNumber) {
+//         newErrors.panNumber = "PAN number is required";
+//       } else if (!validatePAN(formData.panNumber)) {
+//         newErrors.panNumber = "Enter valid PAN number";
+//       }
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+//       if (!formData.gstNumber) {
+//         newErrors.gstNumber = "GST number is required";
+//       } else if (!validateGST(formData.gstNumber)) {
+//         newErrors.gstNumber = "Enter valid GST number";
+//       } else if (
+//         !formData.officeAddress?.trim() ||
+//         formData.officeAddress.trim().length < 10
+//       ) {
+//         newErrors.officeAddress =
+//           "Enter valid Office Address (minimum 10 characters)";
+//       }
+//     }
 
-    if (validateForm()) {
-      dispatch(submitKycInfo());
-    }
-  };
+//     setErrors(newErrors);
+//     return Object.keys(newErrors).length === 0;
+//   };
 
-  const handleDownloadAgreement = async () => {
-    try {
-      const response = await request.getAgreement();
+//   const handleSubmit = (e) => {
+//     e.preventDefault();
 
-      const blob = new Blob([response.data], {
-        type: "application/pdf",
-      });
+//     if (validateForm()) {
+//       dispatch(submitKycInfo(formData));
+//     }
+//   };
 
-      const url = window.URL.createObjectURL(blob);
+//   const handleDownloadAgreement = async () => {
+//     try {
+//       const response = await request.getAgreement();
 
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "Terms-and-Agreement.pdf";
+//       const blob = new Blob([response.data], {
+//         type: "application/pdf",
+//       });
 
-      document.body.appendChild(link);
-      link.click();
+//       const url = window.URL.createObjectURL(blob);
 
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+//       const link = document.createElement("a");
+//       link.href = url;
+//       link.download = "Terms-and-Agreement.pdf";
 
-      toast.success("Agreement downloaded successfully");
-    } catch (error) {
-      console.error("Failed to download agreement:", error);
-      toast.error("Failed to download agreement. Please try again.");
-    }
-  };
-  // If KYC is not pending, show data display
-  if (kycStatus && kycStatus !== "pending" && kycStatus !== "rejected") {
-    return (
-      <div className="font-mont min-h-screen bg-gray-50 px-4 py-8">
-        <div className="mx-auto max-w-4xl">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">
-              KYC Verification
-            </h1>
-            <p className="mt-2 text-gray-600">
-              View your KYC verification details
-            </p>
-          </div>
+//       document.body.appendChild(link);
+//       link.click();
 
-          <StatusCard status={kycStatus} />
+//       document.body.removeChild(link);
+//       window.URL.revokeObjectURL(url);
 
-          {kycStatus === "rejected" && kycData?.kycRejectionMessage && (
-            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
-              <p className="font-medium text-red-800">Reason for rejection</p>
-              <p className="mt-1 text-sm text-red-700">
-                {kycData.kycRejectionMessage}
-              </p>
+//       toast.success("Agreement downloaded successfully");
+//     } catch (error) {
+//       console.error("Failed to download agreement:", error);
+//       toast.error("Failed to download agreement. Please try again.");
+//     }
+//   };
+//   // If KYC is not pending, show data display
+//   // if (kycStatus &&
+//   //   kycStatus !== "pending"
+//   //   && kycStatus !== "rejected") {
+//   //   return (
+//   //     <div className="font-mont min-h-screen bg-gray-50 px-4 py-8">
+//   //       <div className="mx-auto max-w-4xl">
+//   //         <div className="mb-8">
+//   //           <h1 className="text-3xl font-bold text-gray-900">
+//   //             KYC Verification
+//   //           </h1>
+//   //           <p className="mt-2 text-gray-600">
+//   //             View your KYC verification details
+//   //           </p>
+//   //         </div>
+
+//   //         <StatusCard status={kycStatus} />
+
+//   //         {kycStatus === "rejected" && kycData?.kycRejectionMessage && (
+//   //           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
+//   //             <p className="font-medium text-red-800">Reason for rejection</p>
+//   //             <p className="mt-1 text-sm text-red-700">
+//   //               {kycData.kycRejectionMessage}
+//   //             </p>
+//   //           </div>
+//   //         )}
+
+//   //         <div className="mb-8 rounded-xl bg-white p-6 shadow-lg">
+//   //           <div className="mb-6 border-b pb-4">
+//   //             <h2 className="text-xl font-semibold text-gray-800">
+//   //               Business Information
+//   //             </h2>
+//   //             <p className="mt-1 text-sm text-gray-500">
+//   //               Your business details and documents
+//   //             </p>
+//   //           </div>
+
+//   //           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+//   //             <div>
+//   //               <h3 className="mb-4 text-lg font-medium text-gray-700">
+//   //                 Profile Details
+//   //               </h3>
+//   //               <dl className="space-y-4">
+//   //                 <DataDisplay
+//   //                   label="Business Type"
+//   //                   value={
+//   //                     formData.businessType === "company"
+//   //                       ? "Company"
+//   //                       : "Individual"
+//   //                   }
+//   //                 />
+//   //                 {formData.businessType === "company" && (
+//   //                   <>
+//   //                     <DataDisplay
+//   //                       label="Company Name"
+//   //                       value={formData.companyName}
+//   //                     />
+//   //                     <DataDisplay
+//   //                       label="Landline Number"
+//   //                       value={formData.landlineNumber}
+//   //                     />
+//   //                   </>
+//   //                 )}
+//   //                 {formData.businessType === "individual" && (
+//   //                   <DataDisplay
+//   //                     label="Aadhaar Number"
+//   //                     value={formData.aadhaarNumber}
+//   //                   />
+//   //                 )}
+//   //                 <DataDisplay label="PAN Number" value={formData.panNumber} />
+//   //                 <DataDisplay
+//   //                   label="Office Address"
+//   //                   value={formData.officeAddress}
+//   //                 />
+//   //                 <DataDisplay label="GST Number" value={formData.gstNumber} />
+//   //               </dl>
+//   //             </div>
+
+//   //             <div>
+//   //               <h3 className="mb-4 text-lg font-medium text-gray-700">
+//   //                 Documents
+//   //               </h3>
+//   //               <dl className="space-y-4">
+//   //                 <DataDisplay
+//   //                   label="PAN Card"
+//   //                   value={kycData.documents?.panCard}
+//   //                   type="file"
+//   //                 />
+//   //                 <DataDisplay
+//   //                   label="Cancelled Cheque"
+//   //                   value={kycData.documents?.cancelledCheque}
+//   //                   type="file"
+//   //                 />
+//   //                 <DataDisplay
+//   //                   label="Agreement"
+//   //                   value={kycData.documents?.agreement}
+//   //                   type="file"
+//   //                 />
+//   //                 <DataDisplay
+//   //                   label="Address Proof"
+//   //                   value={kycData.documents?.addressProof}
+//   //                   type="file"
+//   //                 />
+//   //                 {formData.businessType === "company" && (
+//   //                   <>
+//   //                     <DataDisplay
+//   //                       label="GST Certificate"
+//   //                       value={kycData.documents?.gstCertificate}
+//   //                       type="file"
+//   //                     />
+//   //                     <DataDisplay
+//   //                       label="CIN Certificate"
+//   //                       value={kycData.documents?.cinCertificate}
+//   //                       type="file"
+//   //                     />
+//   //                   </>
+//   //                 )}
+//   //                 {formData.businessType === "individual" && (
+//   //                   <DataDisplay
+//   //                     label="Aadhaar Card"
+//   //                     value={kycData.documents?.aadhaarCard}
+//   //                     type="file"
+//   //                   />
+//   //                 )}
+//   //               </dl>
+//   //             </div>
+//   //           </div>
+
+//   //           {kycStatus === "rejected" && (
+//   //             <div className="mt-8 border-t pt-6">
+//   //               <button
+//   //                 onClick={() => dispatch(getKycInfo())}
+//   //                 className="rounded-lg bg-teal-600 px-6 py-3 font-medium text-white transition-colors hover:bg-teal-700"
+//   //               >
+//   //                 Update and Resubmit KYC
+//   //               </button>
+//   //             </div>
+//   //           )}
+//   //         </div>
+//   //       </div>
+//   //     </div>
+//   //   );
+//   // }
+
+//   return (
+//     <div className="font-mont min-h-screen bg-gray-50 px-4 py-8">
+//       <div className="mx-auto max-w-6xl">
+//         <div className="mb-8">
+//           <h1 className="text-3xl font-bold text-gray-900">
+//             Complete KYC Verification
+//           </h1>
+//           <p className="mt-2 text-gray-600">
+//             Verify your identity to access all features
+//           </p>
+//         </div>
+
+//         <StatusCard status={kycStatus} />
+
+//         <div className="rounded-xl bg-white p-6 shadow-lg">
+//           {success && (
+//             <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4">
+//               <div className="flex items-center gap-3">
+//                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+//                   <svg
+//                     className="h-5 w-5 text-green-600"
+//                     fill="none"
+//                     stroke="currentColor"
+//                     viewBox="0 0 24 24"
+//                   >
+//                     <path
+//                       strokeLinecap="round"
+//                       strokeLinejoin="round"
+//                       strokeWidth={2}
+//                       d="M5 13l4 4L19 7"
+//                     />
+//                   </svg>
+//                 </div>
+//                 <div>
+//                   <p className="font-medium text-green-800">
+//                     KYC submitted successfully!
+//                   </p>
+//                   <p className="text-sm text-green-700">
+//                     Your documents are under review.
+//                   </p>
+//                 </div>
+//               </div>
+//             </div>
+//           )}
+
+//           {error && (
+//             <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
+//               <p className="text-red-700">{error}</p>
+//             </div>
+//           )}
+
+//           <form onSubmit={handleSubmit}>
+//             <div className="mb-8">
+//               <label className="mb-4 block text-sm font-medium text-gray-700">
+//                 Select Business Type <span className="text-red-500">*</span>
+//               </label>
+//               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+//                 <button
+//                   type="button"
+//                   onClick={() => handleBusinessTypeChange("company")}
+//                   className={`rounded-xl border-2 p-5 text-left transition-all ${formData.businessType === "company" ? "border-teal-500 bg-teal-50" : "border-gray-200 hover:border-gray-300"}`}
+//                   //disabled={kycStatus === "requested"}
+//                 >
+//                   <div className="flex items-center gap-3">
+//                     <div
+//                       className={`flex h-5 w-5 items-center justify-center rounded-full border ${formData.businessType === "company" ? "border-teal-500 bg-teal-500" : "border-gray-300"}`}
+//                     >
+//                       {formData.businessType === "company" && (
+//                         <div className="h-2 w-2 rounded-full bg-white"></div>
+//                       )}
+//                     </div>
+//                     <div>
+//                       <h3 className="font-semibold text-gray-900">Company</h3>
+//                       <p className="mt-1 text-sm text-gray-500">
+//                         GST and business documents required
+//                       </p>
+//                     </div>
+//                   </div>
+//                 </button>
+//                 <button
+//                   type="button"
+//                   onClick={() => handleBusinessTypeChange("individual")}
+//                   className={`rounded-xl border-2 p-5 text-left transition-all ${formData.businessType === "individual" ? "border-teal-500 bg-teal-50" : "border-gray-200 hover:border-gray-300"}`}
+//                   //disabled={kycStatus === "requested"}
+//                 >
+//                   <div className="flex items-center gap-3">
+//                     <div
+//                       className={`flex h-5 w-5 items-center justify-center rounded-full border ${formData.businessType === "individual" ? "border-teal-500 bg-teal-500" : "border-gray-300"}`}
+//                     >
+//                       {formData.businessType === "individual" && (
+//                         <div className="h-2 w-2 rounded-full bg-white"></div>
+//                       )}
+//                     </div>
+//                     <div>
+//                       <h3 className="font-semibold text-gray-900">
+//                         Individual
+//                       </h3>
+//                       <p className="mt-1 text-sm text-gray-500">
+//                         PAN and cancelled cheque only
+//                       </p>
+//                     </div>
+//                   </div>
+//                 </button>
+//               </div>
+//             </div>
+
+//             <div className="mb-8">
+//               <h3 className="mb-6 text-lg font-semibold text-gray-800">
+//                 {formData.businessType === "company"
+//                   ? "Company Details"
+//                   : "Personal Details"}
+//               </h3>
+
+//               {formData.businessType === "company" ? (
+//                 <CompanyForm
+//                   formData={formData}
+//                   onChange={handleInputChange}
+//                   errors={errors}
+//                   //disabled={kycStatus === "requested"}
+//                 />
+//               ) : (
+//                 <IndividualForm
+//                   formData={formData}
+//                   onChange={handleInputChange}
+//                   errors={errors}
+//                   //disabled={kycStatus === "requested"}
+//                 />
+//               )}
+//             </div>
+
+//             <div className="mb-8">
+//               <div className="mb-6 border-b pb-4">
+//                 <h3 className="text-lg font-semibold text-gray-800">
+//                   Required Documents
+//                 </h3>
+//                 <p className="mt-1 text-sm text-gray-500">
+//                   Upload clear photos or scanned copies
+//                 </p>
+//               </div>
+
+//               <div className="flex flex-col gap-5 md:flex-row">
+//                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+//                   <FileInput
+//                     label="PAN Card"
+//                     documentType="panCard"
+//                     accept="image/*,.pdf"
+//                     // file={kycData.documents?.panCard}
+//                     file={formData.documents?.panCard}
+//                     onFileUpload={handleFileUpload}
+//                     // onRemoveFile={handleRemoveFile}
+//                     onRemoveFile={() =>
+//                       // handleRemoveFile("panCard", kycData.documents?.panCard)
+//                       handleRemoveFile("panCard", formData.documents?.panCard)
+//                     }
+//                     required
+//                     //disabled={kycStatus === "requested"}
+//                   />
+
+//                   {formData.businessType === "individual" && (
+//                     <FileInput
+//                       label="Aadhaar Card"
+//                       documentType="aadhaarCard"
+//                       accept="image/*,.pdf"
+//                       // file={kycData.documents?.aadhaarCard}
+//                       file={formData.documents?.aadhaarCard}
+//                       onFileUpload={handleFileUpload}
+//                       // onRemoveFile={handleRemoveFile}
+//                       // onRemoveFile={() => handleRemoveFile("aadhaarCard")}
+//                       onRemoveFile={() =>
+//                         // handleRemoveFile(
+//                         //   "aadhaarCard",
+//                         //   kycData.documents?.aadhaarCard,
+//                         // )
+//                         handleRemoveFile(
+//                           "aadhaarCard",
+//                           formData.documents?.aadhaarCard,
+//                         )
+//                       }
+//                       required
+//                       //disabled={kycStatus === "requested"}
+//                     />
+//                   )}
+
+//                   {formData.businessType === "company" && (
+//                     <>
+//                       <FileInput
+//                         label="GST Certificate"
+//                         documentType="gstCertificate"
+//                         accept="image/*,.pdf"
+//                         // file={kycData.documents?.gstCertificate}
+//                         file={formData.documents?.gstCertificate}
+//                         onFileUpload={handleFileUpload}
+//                         // onRemoveFile={handleRemoveFile}
+//                         // onRemoveFile={() => handleRemoveFile("gstCertificate")}
+//                         onRemoveFile={() =>
+//                           // handleRemoveFile(
+//                           //   "gstCertificate",
+//                           //   kycData.documents?.gstCertificate,
+//                           // )
+//                           handleRemoveFile(
+//                             "gstCertificate",
+//                             formData.documents?.gstCertificate,
+//                           )
+//                         }
+//                         required
+//                         //disabled={kycStatus === "requested"}
+//                       />
+//                       <FileInput
+//                         label="CIN Certificate"
+//                         documentType="cinCertificate"
+//                         accept="image/*,.pdf"
+//                         // file={kycData.documents?.cinCertificate}
+//                         file={formData.documents?.cinCertificate}
+//                         onFileUpload={handleFileUpload}
+//                         // onRemoveFile={handleRemoveFile}
+//                         // onRemoveFile={() => handleRemoveFile("cinCertificate")}
+//                         onRemoveFile={() =>
+//                           // handleRemoveFile(
+//                           //   "cinCertificate",
+//                           //   kycData.documents?.cinCertificate,
+//                           // )
+//                           handleRemoveFile(
+//                             "cinCertificate",
+//                             formData.documents?.cinCertificate,
+//                           )
+//                         }
+//                         required
+//                         //disabled={kycStatus === "requested"}
+//                       />
+//                     </>
+//                   )}
+
+//                   <FileInput
+//                     label="Cancelled Cheque / Bank Statement"
+//                     documentType="cancelledCheque"
+//                     accept="image/*,.pdf"
+//                     file={kycData.documents?.cancelledCheque}
+//                     onFileUpload={handleFileUpload}
+//                     // onRemoveFile={handleRemoveFile}
+//                     // onRemoveFile={() => handleRemoveFile("cancelledCheque")}
+//                     onRemoveFile={() =>
+//                       handleRemoveFile(
+//                         "cancelledCheque",
+//                         kycData.documents?.cancelledCheque,
+//                       )
+//                     }
+//                     required
+//                     //disabled={kycStatus === "requested"}
+//                   />
+//                   <FileInput
+//                     label="Address Proof (lightbill, rental agreement, etc..)"
+//                     documentType="addressProof"
+//                     accept="image/*,.pdf"
+//                     file={kycData.documents?.addressProof}
+//                     onFileUpload={handleFileUpload}
+//                     // onRemoveFile={handleRemoveFile}
+//                     onRemoveFile={() =>
+//                       handleRemoveFile(
+//                         "addressProof",
+//                         kycData.documents?.addressProof,
+//                       )
+//                     }
+//                     required
+//                     //disabled={kycStatus === "requested"}
+//                   />
+//                 </div>
+
+//                 <FileInput
+//                   label="Terms & Agreement"
+//                   documentType="agreement"
+//                   accept=".pdf,.jpg,.jpeg,.png"
+//                   file={kycData.documents?.agreement}
+//                   onFileUpload={handleFileUpload}
+//                   onRemoveFile={() =>
+//                     handleRemoveFile("agreement", kycData.documents?.agreement)
+//                   }
+//                   required={true}
+//                   //disabled={kycStatus === "requested"}
+//                   isAgreement={true}
+//                   onDownloadAgreement={handleDownloadAgreement} // Pass the download function
+//                 />
+//               </div>
+//             </div>
+
+//             {/* {kycStatus !== "requested" && ( */}
+//             <div className="border-t pt-6">
+//               <button
+//                 type="submit"
+//                 // disabled={loading || kycStatus === "requested"}
+//                 disabled={loading || !isDirty}
+//                 className={`w-full rounded-lg px-4 py-3 font-medium text-white transition-colors ${loading || !isDirty ? "cursor-not-allowed bg-gray-400" : "bg-teal-600 hover:bg-teal-700"}`}
+//               >
+//                 {loading ? (
+//                   <div className="flex items-center justify-center gap-2">
+//                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+//                     Submitting...
+//                   </div>
+//                 ) : (
+//                   // "Submit KYC Verification"
+//                   <span>
+//                     {isDirty
+//                       ? "Update KYC Information"
+//                       : "Submit KYC Verification"}
+//                   </span>
+//                 )}
+//               </button>
+//               <p className="mt-3 text-center text-xs text-gray-500">
+//                 By submitting, you agree to our terms and confirm the
+//                 information is accurate
+//               </p>
+//             </div>
+//             {/* )} */}
+//           </form>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// demo2
+// Memoized components to prevent unnecessary re-renders
+const BusinessTypeSelector = memo(({ businessType, onTypeChange }) => (
+  <div className="mb-8">
+    <label className="mb-4 block text-sm font-medium text-gray-700">
+      Select Business Type <span className="text-red-500">*</span>
+    </label>
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {["company", "individual"].map((type) => (
+        <button
+          key={type}
+          type="button"
+          onClick={() => onTypeChange(type)}
+          className={`rounded-xl border-2 p-5 text-left transition-all ${
+            businessType === type
+              ? "border-teal-500 bg-teal-50"
+              : "border-gray-200 hover:border-gray-300"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={`flex h-5 w-5 items-center justify-center rounded-full border ${
+                businessType === type
+                  ? "border-teal-500 bg-teal-500"
+                  : "border-gray-300"
+              }`}
+            >
+              {businessType === type && (
+                <div className="h-2 w-2 rounded-full bg-white" />
+              )}
             </div>
-          )}
-
-          <div className="mb-8 rounded-xl bg-white p-6 shadow-lg">
-            <div className="mb-6 border-b pb-4">
-              <h2 className="text-xl font-semibold text-gray-800">
-                Business Information
-              </h2>
+            <div>
+              <h3 className="font-semibold text-gray-900">
+                {type === "company" ? "Company" : "Individual"}
+              </h3>
               <p className="mt-1 text-sm text-gray-500">
-                Your business details and documents
+                {type === "company"
+                  ? "GST and business documents required"
+                  : "PAN and cancelled cheque only"}
               </p>
             </div>
-
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-              <div>
-                <h3 className="mb-4 text-lg font-medium text-gray-700">
-                  Profile Details
-                </h3>
-                <dl className="space-y-4">
-                  <DataDisplay
-                    label="Business Type"
-                    value={
-                      formData.businessType === "company"
-                        ? "Company"
-                        : "Individual"
-                    }
-                  />
-                  {formData.businessType === "company" && (
-                    <>
-                      <DataDisplay
-                        label="Company Name"
-                        value={formData.companyName}
-                      />
-                      <DataDisplay
-                        label="Landline Number"
-                        value={formData.landlineNumber}
-                      />
-                    </>
-                  )}
-                  {formData.businessType === "individual" && (
-                    <DataDisplay
-                      label="Aadhaar Number"
-                      value={formData.aadhaarNumber}
-                    />
-                  )}
-                  <DataDisplay label="PAN Number" value={formData.panNumber} />
-                  <DataDisplay
-                    label="Office Address"
-                    value={formData.officeAddress}
-                  />
-                  <DataDisplay label="GST Number" value={formData.gstNumber} />
-                </dl>
-              </div>
-
-              <div>
-                <h3 className="mb-4 text-lg font-medium text-gray-700">
-                  Documents
-                </h3>
-                <dl className="space-y-4">
-                  <DataDisplay
-                    label="PAN Card"
-                    value={kycData.documents?.panCard}
-                    type="file"
-                  />
-                  <DataDisplay
-                    label="Cancelled Cheque"
-                    value={kycData.documents?.cancelledCheque}
-                    type="file"
-                  />
-                  <DataDisplay
-                    label="Agreement"
-                    value={kycData.documents?.agreement}
-                    type="file"
-                  />
-                  <DataDisplay
-                    label="Address Proof"
-                    value={kycData.documents?.addressProof}
-                    type="file"
-                  />
-                  {formData.businessType === "company" && (
-                    <>
-                      <DataDisplay
-                        label="GST Certificate"
-                        value={kycData.documents?.gstCertificate}
-                        type="file"
-                      />
-                      <DataDisplay
-                        label="CIN Certificate"
-                        value={kycData.documents?.cinCertificate}
-                        type="file"
-                      />
-                    </>
-                  )}
-                  {formData.businessType === "individual" && (
-                    <DataDisplay
-                      label="Aadhaar Card"
-                      value={kycData.documents?.aadhaarCard}
-                      type="file"
-                    />
-                  )}
-                </dl>
-              </div>
-            </div>
-
-            {kycStatus === "rejected" && (
-              <div className="mt-8 border-t pt-6">
-                <button
-                  onClick={() => dispatch(getKycInfo())}
-                  className="rounded-lg bg-teal-600 px-6 py-3 font-medium text-white transition-colors hover:bg-teal-700"
-                >
-                  Update and Resubmit KYC
-                </button>
-              </div>
-            )}
           </div>
-        </div>
-      </div>
-    );
-  }
+        </button>
+      ))}
+    </div>
+  </div>
+));
+
+const KycForm = () => {
+  const {
+    formData,
+    errors,
+    isDirty,
+    deletingDoc,
+    loading,
+    success,
+    error,
+    kycStatus,
+    handleInputChange,
+    handleBusinessTypeChange,
+    handleFileUpload,
+    handleRemoveFile,
+    handleSubmit,
+    handleDownloadAgreement,
+  } = useKycForm();
+
+  // Memoize document config to prevent unnecessary recalculations
+  const documentConfig = useCallback((businessType) => {
+    const base = [
+      { label: "PAN Card", type: "panCard", accept: "image/*,.pdf" },
+      {
+        label: "Cancelled Cheque",
+        type: "cancelledCheque",
+        accept: "image/*,.pdf",
+      },
+      { label: "Address Proof", type: "addressProof", accept: "image/*,.pdf" },
+    ];
+
+    if (businessType === "individual") {
+      base.push({
+        label: "Aadhaar Card",
+        type: "aadhaarCard",
+        accept: "image/*,.pdf",
+      });
+    } else {
+      base.push(
+        {
+          label: "GST Certificate",
+          type: "gstCertificate",
+          accept: "image/*,.pdf",
+        },
+        {
+          label: "CIN Certificate",
+          type: "cinCertificate",
+          accept: "image/*,.pdf",
+        },
+      );
+    }
+
+    return base;
+  }, []);
+
+  const docs = documentConfig(formData.businessType);
 
   return (
-    <div className="font-mont min-h-screen bg-gray-50 px-4 py-8">
-      <div className="mx-auto max-w-4xl">
+    <div className="min-h-screen bg-gray-50 px-4 py-8">
+      <div className="mx-auto max-w-6xl">
+        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
             Complete KYC Verification
@@ -1128,36 +1597,14 @@ const KycForm = () => {
           </p>
         </div>
 
-        <StatusCard status={kycStatus} />
+        {/* Status Card */}
+        {kycStatus && <StatusCard status={kycStatus} />}
 
+        {/* Form */}
         <div className="rounded-xl bg-white p-6 shadow-lg">
           {success && (
             <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
-                  <svg
-                    className="h-5 w-5 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium text-green-800">
-                    KYC submitted successfully!
-                  </p>
-                  <p className="text-sm text-green-700">
-                    Your documents are under review.
-                  </p>
-                </div>
-              </div>
+              <p className="text-green-800">KYC submitted successfully!</p>
             </div>
           )}
 
@@ -1168,59 +1615,10 @@ const KycForm = () => {
           )}
 
           <form onSubmit={handleSubmit}>
-            <div className="mb-8">
-              <label className="mb-4 block text-sm font-medium text-gray-700">
-                Select Business Type <span className="text-red-500">*</span>
-              </label>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => handleBusinessTypeChange("company")}
-                  className={`rounded-xl border-2 p-5 text-left transition-all ${formData.businessType === "company" ? "border-teal-500 bg-teal-50" : "border-gray-200 hover:border-gray-300"}`}
-                  disabled={kycStatus === "requested"}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`flex h-5 w-5 items-center justify-center rounded-full border ${formData.businessType === "company" ? "border-teal-500 bg-teal-500" : "border-gray-300"}`}
-                    >
-                      {formData.businessType === "company" && (
-                        <div className="h-2 w-2 rounded-full bg-white"></div>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">Company</h3>
-                      <p className="mt-1 text-sm text-gray-500">
-                        GST and business documents required
-                      </p>
-                    </div>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleBusinessTypeChange("individual")}
-                  className={`rounded-xl border-2 p-5 text-left transition-all ${formData.businessType === "individual" ? "border-teal-500 bg-teal-50" : "border-gray-200 hover:border-gray-300"}`}
-                  disabled={kycStatus === "requested"}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`flex h-5 w-5 items-center justify-center rounded-full border ${formData.businessType === "individual" ? "border-teal-500 bg-teal-500" : "border-gray-300"}`}
-                    >
-                      {formData.businessType === "individual" && (
-                        <div className="h-2 w-2 rounded-full bg-white"></div>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">
-                        Individual
-                      </h3>
-                      <p className="mt-1 text-sm text-gray-500">
-                        PAN and cancelled cheque only
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
+            <BusinessTypeSelector
+              businessType={formData.businessType}
+              onTypeChange={handleBusinessTypeChange}
+            />
 
             <div className="mb-8">
               <h3 className="mb-6 text-lg font-semibold text-gray-800">
@@ -1234,177 +1632,75 @@ const KycForm = () => {
                   formData={formData}
                   onChange={handleInputChange}
                   errors={errors}
-                  disabled={kycStatus === "requested"}
                 />
               ) : (
                 <IndividualForm
                   formData={formData}
                   onChange={handleInputChange}
                   errors={errors}
-                  disabled={kycStatus === "requested"}
                 />
               )}
             </div>
 
             <div className="mb-8">
-              <div className="mb-6 border-b pb-4">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Required Documents
-                </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Upload clear photos or scanned copies
-                </p>
+              <h3 className="mb-6 text-lg font-semibold text-gray-800">
+                Required Documents
+              </h3>
+
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {docs.map((doc) => (
+                  <FileInput
+                    key={doc.type}
+                    {...doc}
+                    file={formData.documents[doc.type]}
+                    // onFileUpload={(e) => handleFileUpload(e, doc.type)}
+                    // onRemoveFile={() =>
+                    //   handleRemoveFile(doc.type, formData.documents[doc.type])
+                    // }
+                    onFileUpload={handleFileUpload}
+                    onRemoveFile={handleRemoveFile}
+                    isDeleting={deletingDoc === doc.type}
+                    required
+                  />
+                ))}
               </div>
 
-              <div className="flex flex-col gap-5 md:flex-row">
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <FileInput
-                    label="PAN Card"
-                    documentType="panCard"
-                    accept="image/*,.pdf"
-                    file={kycData.documents?.panCard}
-                    onFileUpload={handleFileUpload}
-                    // onRemoveFile={handleRemoveFile}
-                    onRemoveFile={() =>
-                      handleRemoveFile("panCard", kycData.documents?.panCard)
-                    }
-                    required
-                    disabled={kycStatus === "requested"}
-                  />
-
-                  {formData.businessType === "individual" && (
-                    <FileInput
-                      label="Aadhaar Card"
-                      documentType="aadhaarCard"
-                      accept="image/*,.pdf"
-                      file={kycData.documents?.aadhaarCard}
-                      onFileUpload={handleFileUpload}
-                      // onRemoveFile={handleRemoveFile}
-                      // onRemoveFile={() => handleRemoveFile("aadhaarCard")}
-                      onRemoveFile={() =>
-                        handleRemoveFile(
-                          "aadhaarCard",
-                          kycData.documents?.aadhaarCard,
-                        )
-                      }
-                      required
-                      disabled={kycStatus === "requested"}
-                    />
-                  )}
-
-                  {formData.businessType === "company" && (
-                    <>
-                      <FileInput
-                        label="GST Certificate"
-                        documentType="gstCertificate"
-                        accept="image/*,.pdf"
-                        file={kycData.documents?.gstCertificate}
-                        onFileUpload={handleFileUpload}
-                        // onRemoveFile={handleRemoveFile}
-                        // onRemoveFile={() => handleRemoveFile("gstCertificate")}
-                        onRemoveFile={() =>
-                          handleRemoveFile(
-                            "gstCertificate",
-                            kycData.documents?.gstCertificate,
-                          )
-                        }
-                        required
-                        disabled={kycStatus === "requested"}
-                      />
-                      <FileInput
-                        label="CIN Certificate"
-                        documentType="cinCertificate"
-                        accept="image/*,.pdf"
-                        file={kycData.documents?.cinCertificate}
-                        onFileUpload={handleFileUpload}
-                        // onRemoveFile={handleRemoveFile}
-                        // onRemoveFile={() => handleRemoveFile("cinCertificate")}
-                        onRemoveFile={() =>
-                          handleRemoveFile(
-                            "cinCertificate",
-                            kycData.documents?.cinCertificate,
-                          )
-                        }
-                        required
-                        disabled={kycStatus === "requested"}
-                      />
-                    </>
-                  )}
-
-                  <FileInput
-                    label="Cancelled Cheque / Bank Statement"
-                    documentType="cancelledCheque"
-                    accept="image/*,.pdf"
-                    file={kycData.documents?.cancelledCheque}
-                    onFileUpload={handleFileUpload}
-                    // onRemoveFile={handleRemoveFile}
-                    // onRemoveFile={() => handleRemoveFile("cancelledCheque")}
-                    onRemoveFile={() =>
-                      handleRemoveFile(
-                        "cancelledCheque",
-                        kycData.documents?.cancelledCheque,
-                      )
-                    }
-                    required
-                    disabled={kycStatus === "requested"}
-                  />
-                  <FileInput
-                    label="Address Proof (lightbill, rental agreement, etc..)"
-                    documentType="addressProof"
-                    accept="image/*,.pdf"
-                    file={kycData.documents?.addressProof}
-                    onFileUpload={handleFileUpload}
-                    // onRemoveFile={handleRemoveFile}
-                    onRemoveFile={() =>
-                      handleRemoveFile(
-                        "addressProof",
-                        kycData.documents?.addressProof,
-                      )
-                    }
-                    required
-                    disabled={kycStatus === "requested"}
-                  />
-                </div>
-
-                <FileInput
-                  label="Terms & Agreement"
-                  documentType="agreement"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  file={kycData.documents?.agreement}
-                  onFileUpload={handleFileUpload}
-                  onRemoveFile={() =>
-                    handleRemoveFile("agreement", kycData.documents?.agreement)
-                  }
-                  required={true}
-                  disabled={kycStatus === "requested"}
-                  isAgreement={true}
-                  onDownloadAgreement={handleDownloadAgreement} // Pass the download function
-                />
-              </div>
+              <FileInput
+                label="Terms & Agreement"
+                type="agreement"
+                accept=".pdf,.jpg,.jpeg,.png"
+                file={formData.documents.agreement}
+                onFileUpload={handleFileUpload}
+                onRemoveFile={handleRemoveFile}
+                isDeleting={deletingDoc === "agreement"}
+                required
+                isAgreement
+                onDownloadAgreement={handleDownloadAgreement}
+              />
             </div>
 
-            {kycStatus !== "requested" && (
-              <div className="border-t pt-6">
-                <button
-                  type="submit"
-                  disabled={loading || kycStatus === "requested"}
-                  className={`w-full rounded-lg px-4 py-3 font-medium text-white transition-colors ${loading ? "cursor-not-allowed bg-gray-400" : "bg-teal-600 hover:bg-teal-700"}`}
-                >
-                  {loading ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                      Submitting...
-                    </div>
-                  ) : (
-                    "Submit KYC Verification"
-                  )}
-                </button>
-                <p className="mt-3 text-center text-xs text-gray-500">
-                  By submitting, you agree to our terms and confirm the
-                  information is accurate
-                </p>
-              </div>
-            )}
+            <div className="border-t pt-6">
+              <button
+                type="submit"
+                disabled={loading || !isDirty}
+                className={`w-full rounded-lg px-4 py-3 font-medium text-white transition-colors ${
+                  loading || !isDirty
+                    ? "cursor-not-allowed bg-gray-400"
+                    : "bg-teal-600 hover:bg-teal-700"
+                }`}
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Submitting...
+                  </div>
+                ) : isDirty ? (
+                  "Update KYC Information"
+                ) : (
+                  "Submit KYC Verification"
+                )}
+              </button>
+            </div>
           </form>
         </div>
       </div>

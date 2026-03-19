@@ -233,7 +233,8 @@ const Dashboard = () => {
                           {service.serviceName}
                         </h3>
                         <p className="text-sm text-gray-600">
-                          {service.category}
+                          {service.categoryPathNames &&
+                            `${service.categoryPathNames[0]} - ${service.categoryPathNames[1]}`}
                         </p>
                       </div>
                       <div className="text-right">

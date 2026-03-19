@@ -3,6 +3,19 @@ import { useNavigate, useParams } from "react-router-dom";
 import UserLayout from "../../layouts/user/UserLayout";
 import request from "../../axios/requests";
 import Spinner from "../../components/Spinner";
+// import {
+//   FaArrowLeft,
+//   FaChevronLeft,
+//   FaChevronRight,
+//   FaPlay,
+//   FaHeart,
+//   FaShare,
+//   FaStar,
+//   FaShoppingCart,
+//   FaComment,
+//   FaCheckCircle,
+//   FaTrash,
+// } from "react-icons/fa";
 import {
   FaArrowLeft,
   FaChevronLeft,
@@ -14,14 +27,26 @@ import {
   FaShoppingCart,
   FaComment,
   FaCheckCircle,
-  FaTrash,
+  FaRupeeSign,
+  FaClock,
+  FaCalendar,
+  FaMapMarkerAlt,
+  FaBusinessTime,
+  FaTools,
+  FaCheck,
+  FaCalendarCheck,
+  FaRegClock,
+  FaRegCalendarAlt,
 } from "react-icons/fa";
+import { MdOutlineDescription } from "react-icons/md";
 import EditServiceForm from "../../components/service/EditServiceForm";
 import { toast } from "react-toastify";
 import { FaPen } from "react-icons/fa6";
 import { setSidebarTab } from "../../redux/slices/sidebarSlice";
 import { useDispatch } from "react-redux";
-
+import { useCategories } from "../../hooks/useCategories";
+import { useServiceImage } from "../../hooks/useServiceImage";
+import { formatDateWithoutTime } from "../../../../frontend/src/utils/helpers";
 const ServiceDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -31,7 +56,7 @@ const ServiceDetail = () => {
   const [error, setError] = useState("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
-  const [activeTab, setActiveTab] = useState("description");
+  const [activeTab, setActiveTab] = useState("overview");
   const [showEditModal, setShowEditModal] = useState(false);
   const dispatch = useDispatch();
 
@@ -39,6 +64,8 @@ const ServiceDetail = () => {
     dispatch(setSidebarTab(1));
   }, []);
 
+  const { categories } = useCategories();
+  const imageSrc = useServiceImage(service, categories, currentImageIndex);
   // Fetch service details
   const fetchServiceDetails = async (serviceId) => {
     try {
@@ -81,135 +108,36 @@ const ServiceDetail = () => {
     }
   };
 
-  const tabContent = useMemo(() => {
-    if (!service) return null;
-    switch (activeTab) {
-      case "description":
-        return (
-          <div className="font-mont rounded-lg bg-white p-6 shadow-sm">
-            <div className="prose max-w-none">
-              <div className="leading-relaxed whitespace-pre-line text-gray-700">
-                {service.fullDescription || service.description}
-              </div>
-            </div>
+  const calculateAverageRating = (ratingDistribution) => {
+    if (!ratingDistribution) return 0;
+    const total = Object.values(ratingDistribution).reduce((a, b) => a + b, 0);
+    if (total === 0) return 0;
+    const weightedSum = Object.entries(ratingDistribution).reduce(
+      (sum, [rating, count]) => sum + parseInt(rating) * count,
+      0,
+    );
+    return (weightedSum / total).toFixed(1);
+  };
+  const avgRating = calculateAverageRating(service?.ratingDistribution || 0);
 
-            <div className="my-6 border-t border-gray-200"></div>
-
-            <div>
-              <h3 className="mb-3 font-semibold text-gray-900">
-                Service Details
-              </h3>
-              <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
-                <div>
-                  <span className="text-gray-500">Category:</span>
-                  <span className="ml-2 font-medium">
-                    {service.mainCategory}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-500">Category:</span>
-                  <span className="ml-2 font-medium">{service.category}</span>
-                </div>
-                <div>
-                  <span className="text-gray-500">Availability:</span>
-                  <span className="ml-2 font-medium">
-                    {service.availability}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-500">Working Time:</span>
-                  <span className="ml-2 font-medium">
-                    {service.workingStartTime} - {service.workingEndTime}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      case "features":
-        return (
-          <div className="font-mont rounded-lg bg-white p-6 shadow-sm">
-            <h3 className="mb-4 font-semibold text-gray-900">Scope Of Work</h3>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <p className="text-gray-500">{service.scopeOfWork}</p>
-            </div>
-          </div>
-        );
-        break;
-      case "reviews":
-        return (
-          <div className="font-mont rounded-lg bg-white p-6 shadow-sm">
-            {service.reviews && service.reviews.length > 0 ? (
-              <div className="space-y-6">
-                {service.reviews.map((review) => (
-                  <div
-                    key={review._id}
-                    className="border-b border-gray-200 pb-6 last:border-0 last:pb-0"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-800">
-                        {review.user?.name?.[0] || "U"}
-                      </div>
-                      <div className="flex-1">
-                        <div className="mb-2 flex items-center gap-2">
-                          <span className="font-semibold text-gray-900">
-                            {review.user?.name || "Anonymous"}
-                          </span>
-                          <div className="flex items-center gap-1">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <FaStar
-                                key={i}
-                                className={`h-4 w-4 ${
-                                  i < review.rating
-                                    ? "fill-yellow-400 text-yellow-400"
-                                    : "text-gray-300"
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-sm text-gray-500">
-                            {new Date(review.date).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <p className="leading-relaxed text-gray-700">
-                          {review.comment}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">No reviews yet.</p>
-            )}
-          </div>
-        );
-        break;
-      case "serviceAreas":
-        return (
-          <div className="font-mont rounded-lg bg-white p-6 shadow-sm">
-            {service.serviceAreas && service.serviceAreas.length > 0 ? (
-              <div className="flex gap-2">
-                {service.serviceAreas.map((area) => (
-                  <span
-                    key={area._id}
-                    className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800"
-                  >
-                    {area.areaName}, {area.city} - {area.pincode}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">No reviews yet.</p>
-            )}
-          </div>
-        );
-        break;
-
-      default:
-        return null;
-    }
-  }, [activeTab, service]);
+  const getRatingStars = (rating) => {
+    return Array.from({ length: 5 }).map((_, index) => (
+      <FaStar
+        key={index}
+        className={`h-4 w-4 ${
+          index < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+        }`}
+      />
+    ));
+  };
+  const formatTime = (timeString) => {
+    if (!timeString) return "";
+    const [hours, minutes] = timeString.split(":");
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const formattedHour = hour % 12 || 12;
+    return `${formattedHour}:${minutes} ${ampm}`;
+  };
 
   if (loading) {
     return (
@@ -295,8 +223,9 @@ const ServiceDetail = () => {
                   <>
                     <img
                       src={
-                        ` ${import.meta.env.VITE_API_URL}${service.documents.photos[currentImageIndex]}` ||
-                        "/placeholder-image.jpg"
+                        service.documents.photos.length > 0
+                          ? ` ${import.meta.env.VITE_API_URL}${service.documents.photos[currentImageIndex]}`
+                          : imageSrc
                       }
                       alt={service.serviceName}
                       className="h-full w-full object-cover"
@@ -483,7 +412,7 @@ const ServiceDetail = () => {
               </div>
 
               {/* Provider Info */}
-              <div className="rounded-lg bg-white p-6 shadow-sm">
+              {/* <div className="rounded-lg bg-white p-6 shadow-sm">
                 <div className="mb-4 flex items-center gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-800">
                     {service.vendor.firstName?.[0]}
@@ -503,21 +432,8 @@ const ServiceDetail = () => {
                   </div>
                 </div>
 
-                {/* <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-500">Response Time:</span>
-                    <span className="ml-2 font-medium">
-                      {service.vendor.responseTime || "Within hours"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Member Since:</span>
-                    <span className="ml-2 font-medium">
-                      {new Date(service.vendor.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div> */}
-              </div>
+                
+              </div> */}
               {/* pricing info */}
               <div className="rounded-lg bg-white p-4 shadow-sm">
                 <h3 className="mb-2 font-semibold text-gray-900">
@@ -531,55 +447,44 @@ const ServiceDetail = () => {
                   </p>
                 </div>
               </div>
-
-              {/* Service Areas */}
-              {service.serviceAreas && service.serviceAreas.length > 0 && (
-                <div className="rounded-lg bg-white p-6 shadow-sm">
-                  <h3 className="mb-3 font-semibold text-gray-900">
-                    Scope of Work
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {service.scopeOfWork}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
           {/* Detailed Information Tabs */}
           <div className="mt-12">
             <div className="border-b border-gray-200">
-              <nav className="flex space-x-8">
+              <nav className="flex flex-wrap space-x-8">
                 <button
-                  onClick={() => setActiveTab("description")}
+                  onClick={() => setActiveTab("overview")}
                   className={`border-b-2 px-1 py-4 text-sm font-medium ${
-                    activeTab === "description"
+                    activeTab === "overview"
                       ? "border-blue-500 text-blue-600"
                       : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                   }`}
                 >
-                  Description
+                  Overview
                 </button>
                 <button
-                  onClick={() => setActiveTab("features")}
+                  onClick={() => setActiveTab("ratings")}
                   className={`border-b-2 px-1 py-4 text-sm font-medium ${
-                    activeTab === "features"
+                    activeTab === "ratings"
                       ? "border-blue-500 text-blue-600"
                       : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                   }`}
                 >
-                  What's Included
+                  Ratings & Reviews
                 </button>
                 <button
-                  onClick={() => setActiveTab("reviews")}
+                  onClick={() => setActiveTab("service-info")}
                   className={`border-b-2 px-1 py-4 text-sm font-medium ${
-                    activeTab === "reviews"
+                    activeTab === "service-info"
                       ? "border-blue-500 text-blue-600"
                       : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                   }`}
                 >
-                  Reviews
+                  Service Information
                 </button>
+
                 <button
                   onClick={() => setActiveTab("serviceAreas")}
                   className={`border-b-2 px-1 py-4 text-sm font-medium ${
@@ -593,44 +498,433 @@ const ServiceDetail = () => {
               </nav>
             </div>
 
-            <div className="mt-6">{tabContent}</div>
+            <div className="mt-6">
+              {activeTab === "overview" && (
+                <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+                  <div className="space-y-8">
+                    {/* Scope of Work Section */}
+                    <div className="rounded-lg bg-gradient-to-r from-gray-50 to-white p-5 transition-all hover:shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                          <MdOutlineDescription className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="mb-2 flex items-center gap-2 text-lg font-semibold text-gray-900">
+                            Scope of Work
+                          </h4>
+                          <div className="rounded-lg border-l-4 border-blue-400 bg-white p-4 shadow-sm">
+                            <p className="leading-relaxed text-gray-700">
+                              {service.scopeOfWork ? (
+                                service.scopeOfWork
+                              ) : (
+                                <span className="text-gray-400 italic">
+                                  No description available.
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-            {/* Edit Service Modal */}
-            {showEditModal && (
-              <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-                <div className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-white">
-                  <div className="sticky top-0 flex items-center justify-between border-b bg-white p-4">
-                    <h2 className="text-xl font-bold">Edit Service</h2>
-                    <button
-                      onClick={() => setShowEditModal(false)}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      <svg
-                        className="h-6 w-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="p-4">
-                    <EditServiceForm
-                      serviceId={service._id}
-                      onSuccess={handleServiceUpdateSuccess}
-                      onCancel={handleCancelEdit}
-                      service={service}
-                    />
+                    {/* Warranty Section */}
+                    <div className="rounded-lg bg-gradient-to-r from-gray-50 to-white p-5 transition-all hover:shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div
+                          className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${
+                            service.warranty
+                              ? "bg-green-100 text-green-600"
+                              : "bg-gray-100 text-gray-500"
+                          }`}
+                        >
+                          <FaCheckCircle className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="mb-2 flex items-center gap-2 text-lg font-semibold text-gray-900">
+                            Warranty Information
+                            {service.warranty && (
+                              <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                Included
+                              </span>
+                            )}
+                          </h4>
+
+                          {service.warranty ? (
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div className="rounded-lg bg-white p-4 shadow-sm">
+                                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <FaRegClock className="h-4 w-4 text-gray-400" />
+                                    <span>Warranty Period</span>
+                                  </div>
+                                  <p className="mt-1 text-lg font-semibold text-gray-900">
+                                    {service.warrantyPeriod}
+                                  </p>
+                                </div>
+
+                                <div className="rounded-lg bg-white p-4 shadow-sm">
+                                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <FaTools className="h-4 w-4 text-gray-400" />
+                                    <span>Coverage</span>
+                                  </div>
+                                  <p className="mt-1 text-sm font-medium text-gray-900">
+                                    {service.warrantyIncludes}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-3 rounded-lg bg-gray-100/80 p-4 text-gray-600">
+                              <div className="rounded-full bg-gray-200 p-2">
+                                <FaTools className="h-4 w-4 text-gray-500" />
+                              </div>
+                              <p className="text-sm">
+                                This service does not include any warranty
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Additional Work/Material Section - NEW */}
+                    <div className="rounded-lg bg-gradient-to-r from-gray-50 to-white p-5 transition-all hover:shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600">
+                          <FaTools className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-md mb-2 flex items-center gap-2 font-semibold text-gray-900">
+                            Note: Additional Work / Material
+                          </h4>
+
+                          <div className="flex items-center gap-3 rounded-sm bg-red-50 p-4 text-red-600">
+                            <div className="rounded-full bg-gray-200 p-2">
+                              <FaTools className="h-4 w-4 text-red-500" />
+                            </div>
+                            <p className="text-sm">
+                              Any additional tasks, materials, modifications
+                              that are required beyond the standard scope of
+                              work should be communicated in advance with the
+                              customers and will be charged seperately through
+                              SooQuick platform only.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Optional: Timeline/Quick Info Section */}
+                    {(service.estimatedDuration || service.serviceType) && (
+                      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        {service.estimatedDuration && (
+                          <div className="flex items-center gap-3 rounded-lg bg-gray-50 p-3">
+                            <div className="rounded-full bg-blue-100 p-2 text-blue-600">
+                              <FaRegClock className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">
+                                Estimated Duration
+                              </p>
+                              <p className="text-sm font-medium text-gray-900">
+                                {service.estimatedDuration}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {service.serviceType && (
+                          <div className="flex items-center gap-3 rounded-lg bg-gray-50 p-3">
+                            <div className="rounded-full bg-purple-100 p-2 text-purple-600">
+                              <FaTools className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">
+                                Service Type
+                              </p>
+                              <p className="text-sm font-medium text-gray-900">
+                                {service.serviceType}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {activeTab === "ratings" && (
+                <div className="rounded-lg bg-white p-6 shadow-sm">
+                  <div className="mb-6">
+                    <h3 className="mb-2 text-xl font-semibold text-gray-900">
+                      Ratings & Reviews
+                    </h3>
+                    <div className="flex items-center gap-4">
+                      <div className="text-center">
+                        <div className="text-4xl font-bold text-gray-900">
+                          {avgRating}
+                        </div>
+                        <div className="flex justify-center">
+                          {getRatingStars(Math.round(avgRating))}
+                        </div>
+                        <div className="mt-1 text-sm text-gray-600">
+                          {service.totalReviews} reviews
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {service.ratingDistribution && (
+                    <div className="mb-8">
+                      <h4 className="mb-4 font-medium text-gray-900">
+                        Rating Distribution
+                      </h4>
+                      <div className="space-y-3">
+                        {[5, 4, 3, 2, 1].map((rating) => {
+                          const count = service.ratingDistribution[rating] || 0;
+                          const total = service.totalReviews || 1;
+                          const percentage = (count / total) * 100;
+                          return (
+                            <div
+                              key={rating}
+                              className="flex items-center gap-3"
+                            >
+                              <div className="flex w-20 items-center gap-1">
+                                <span className="text-sm text-gray-600">
+                                  {rating}
+                                </span>
+                                <FaStar className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="h-2 w-full rounded-full bg-gray-200">
+                                  <div
+                                    className="h-full rounded-full bg-yellow-400"
+                                    style={{ width: `${percentage}%` }}
+                                  />
+                                </div>
+                              </div>
+                              <div className="w-12 text-right text-sm text-gray-600">
+                                {count}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {service.ratings && service.ratings.length > 0 ? (
+                    <div className="space-y-6">
+                      {service.ratings.map((review) => (
+                        <div
+                          key={review._id}
+                          className="border-b border-gray-200 pb-6 last:border-0 last:pb-0"
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-800">
+                              {review.user?.name?.[0] || "U"}
+                            </div>
+                            <div className="flex-1">
+                              <div className="mb-2 flex items-center gap-2">
+                                <span className="font-semibold text-gray-900">
+                                  {review.user?.name || "Anonymous"}
+                                </span>
+                                <div className="flex items-center gap-1">
+                                  {getRatingStars(review.rating)}
+                                </div>
+                                <span className="text-sm text-gray-500">
+                                  {new Date(
+                                    review.createdAt,
+                                  ).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <p className="leading-relaxed text-gray-700">
+                                {review.comment}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center">
+                      <FaStar className="mx-auto h-12 w-12 text-gray-300" />
+                      <p className="mt-4 text-gray-500">
+                        No reviews yet. Be the first to review this service!
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "service-info" && (
+                <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+                  {/* Header with improved styling */}
+                  <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      Service Information
+                    </h3>
+                    <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+                      ID: {service.customServiceId}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+                    {/* Left Column */}
+                    <div className="space-y-6">
+                      {/* Basic Information Card */}
+                      <div className="rounded-lg bg-gray-50 p-4 transition-all hover:shadow-sm">
+                        <h4 className="mb-3 flex items-center gap-2 font-semibold text-gray-900">
+                          <MdOutlineDescription className="h-4 w-4 text-gray-500" />
+                          Basic Information
+                        </h4>
+                        <div className="space-y-3">
+                          <InfoRow
+                            label="Service Name"
+                            value={service.serviceName}
+                            highlighted
+                          />
+                          <InfoRow
+                            label="Category"
+                            value={service.categoryPathNames[1]}
+                            badge
+                          />
+                          <InfoRow
+                            label="Main Category"
+                            value={service.categoryPathNames[0]}
+                            badge
+                          />
+                          <InfoRow
+                            label="Service Type"
+                            value={service.categoryPathNames[2]}
+                            badge
+                          />
+                        </div>
+                      </div>
+
+                      {/* Pricing & Availability Card */}
+                      <div className="rounded-lg bg-gray-50 p-4 transition-all hover:shadow-sm">
+                        <h4 className="mb-3 flex items-center gap-2 font-semibold text-gray-900">
+                          {/* <HiOutlineCurrencyDollar className="h-4 w-4 text-gray-500" /> */}
+                          Pricing & Availability
+                        </h4>
+                        <div className="space-y-3">
+                          <InfoRow
+                            label="Pricing Type"
+                            value={service.pricingType}
+                            badge
+                          />
+                          <InfoRow
+                            label="Final Price"
+                            value={`₹${service.finalPrice}`}
+                            valueClassName="text-lg font-bold text-gray-900"
+                          />
+                          <InfoRow
+                            label="Availability"
+                            value={service.availability}
+                            badge={
+                              service.availability === "24/7" ? "green" : "blue"
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Column */}
+                    <div className="space-y-6">
+                      {/* Working Schedule Card */}
+                      <div className="rounded-lg bg-gray-50 p-4 transition-all hover:shadow-sm">
+                        <h4 className="mb-3 flex items-center gap-2 font-semibold text-gray-900">
+                          <FaCalendarCheck className="h-4 w-4 text-gray-500" />
+                          Working Schedule
+                        </h4>
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between">
+                            <span className="text-sm text-gray-600">
+                              Working Days:
+                            </span>
+                            <div className="flex flex-wrap justify-end gap-1.5">
+                              {service.workingDays.map((day, index) => (
+                                <span
+                                  key={index}
+                                  className="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-gray-200"
+                                  title={day}
+                                >
+                                  {day.substring(0, 3)}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          <InfoRow
+                            label="Start Time"
+                            value={formatTime(service.workingStartTime)}
+                            icon={<FaClock className="h-3 w-3 text-gray-400" />}
+                          />
+                          <InfoRow
+                            label="End Time"
+                            value={formatTime(service.workingEndTime)}
+                            icon={<FaClock className="h-3 w-3 text-gray-400" />}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Service Status Card */}
+                      <div className="rounded-lg bg-gray-50 p-4 transition-all hover:shadow-sm">
+                        <h4 className="mb-3 flex items-center gap-2 font-semibold text-gray-900">
+                          <FaCheckCircle className="h-4 w-4 text-gray-500" />
+                          Service Status
+                        </h4>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">
+                              Status:
+                            </span>
+                            <StatusBadge status={service.isApproved} />
+                          </div>
+                          <InfoRow
+                            label="Active From"
+                            value={formatDateWithoutTime(service.createdAt)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "serviceAreas" && (
+                <div>
+                  {/* Service Areas */}
+                  {service.serviceAreas && service.serviceAreas.length > 0 && (
+                    <div className="rounded-lg bg-white p-6 shadow-sm">
+                      <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-gray-900">
+                        <FaMapMarkerAlt className="h-5 w-5 text-red-500" />
+                        Service Areas
+                      </h3>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        {service.serviceAreas.map((area) => (
+                          <div
+                            key={area._id}
+                            className="rounded-lg border border-gray-200 p-3 hover:border-blue-200 hover:bg-blue-50"
+                          >
+                            <div className="font-medium text-gray-900">
+                              {area.areaName}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {area.city}, {area.state}
+                            </div>
+                            <div className="text-sm font-medium text-gray-700">
+                              Pincode: {area.pincode}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -639,3 +933,66 @@ const ServiceDetail = () => {
 };
 
 export default ServiceDetail;
+
+// Helper Components
+const InfoRow = ({
+  label,
+  value,
+  badge,
+  highlighted,
+  valueClassName = "",
+  icon,
+}) => {
+  const getBadgeColor = (badgeType) => {
+    if (badgeType === true) return "bg-blue-100 text-blue-800";
+    if (badgeType === "green") return "bg-green-100 text-green-800";
+    if (badgeType === "blue") return "bg-blue-100 text-blue-800";
+    if (badgeType === "yellow") return "bg-yellow-100 text-yellow-800";
+    return "bg-gray-100 text-gray-800";
+  };
+
+  return (
+    <div className="flex items-center justify-between">
+      <span className="flex items-center gap-1 text-sm text-gray-600">
+        {icon && <span className="inline-flex">{icon}</span>}
+        {label}:
+      </span>
+      {badge ? (
+        <span
+          className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getBadgeColor(badge)}`}
+        >
+          {value}
+        </span>
+      ) : (
+        <span
+          className={`text-sm font-medium text-gray-900 ${highlighted ? "font-semibold" : ""} ${valueClassName}`}
+        >
+          {value}
+        </span>
+      )}
+    </div>
+  );
+};
+
+const StatusBadge = ({ status }) => {
+  const getStatusStyles = () => {
+    switch (status) {
+      case "approved":
+        return "bg-green-100 text-green-800 ring-1 ring-green-600/20";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 ring-1 ring-yellow-600/20";
+      case "rejected":
+        return "bg-red-100 text-red-800 ring-1 ring-red-600/20";
+      default:
+        return "bg-gray-100 text-gray-800 ring-1 ring-gray-600/20";
+    }
+  };
+
+  return (
+    <span
+      className={`rounded-full px-3 py-1 text-sm font-medium capitalize ${getStatusStyles()}`}
+    >
+      {status}
+    </span>
+  );
+};
