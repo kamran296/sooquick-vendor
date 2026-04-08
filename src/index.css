@@ -1,6 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 @import "tailwindcss";
 
+/* Fix for react-simple-wysiwyg lists */
+.rsw-ce ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+}
+
+.rsw-ce ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+}
 
 @theme {
   --font-mont: "Montserrat", sans-serif;

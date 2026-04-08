@@ -51,11 +51,11 @@ export const useServiceImage = (service, categories, imageIndex = 0) => {
 };
 
 export const getServiceImage = (service, categories) => {
-  if (!service || !categories) return Placeholder;
+  if (!service || !categories) return null;
 
   const categoryImage = categories.find(
     (cat) => cat._id === service.category,
   )?.image;
 
-  return `${import.meta.env.VITE_API_URL}${categoryImage}` || Placeholder;
+  return `${import.meta.env.VITE_API_URL}${categoryImage}` || null;
 };

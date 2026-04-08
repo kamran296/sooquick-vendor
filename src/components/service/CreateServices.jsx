@@ -3,10 +3,15 @@ import axios from "axios";
 import PincodeInput from "./Pincode";
 import request from "../../axios/requests";
 import {
-  mainCategories,
-  serviceTypeExamples,
-  subCategories,
-} from "../../utils/categories";
+  Editor,
+  Toolbar,
+  BtnBold,
+  BtnItalic,
+  BtnUnderline,
+  BtnBulletList,
+  BtnNumberedList,
+  EditorProvider,
+} from "react-simple-wysiwyg";
 import { useDispatch, useSelector } from "react-redux";
 import { setSidebarTab } from "../../redux/slices/sidebarSlice";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +23,16 @@ import {
   FiLoader,
   FiPackage,
 } from "react-icons/fi";
+
+const DAYS = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
 
 const FileUploadSection = ({ images, setImages, video, setVideo }) => {
   const imageInputRefs = [
@@ -521,41 +536,6 @@ const CreateService = () => {
     setServiceAreas(areas);
   };
 
-  // const handleInputChange = (e) => {
-  //   const { name, value } = e.target;
-
-  //   // If mainCategory changes, reset category and serviceType
-  //   if (name === "mainCategory") {
-  //     setFormData({
-  //       ...formData,
-  //       mainCategory: value,
-  //       category: "",
-  //       serviceType: "",
-  //     });
-  //   }
-  //   // If category changes, reset serviceType
-  //   else if (name === "category") {
-  //     setFormData({
-  //       ...formData,
-  //       category: value,
-  //       serviceType: "",
-  //     });
-  //   } else {
-  //     setFormData({
-  //       ...formData,
-  //       [name]: value,
-  //     });
-  //   }
-
-  //   // Clear error when user starts typing
-  //   if (errors[name]) {
-  //     setErrors({
-  //       ...errors,
-  //       [name]: "",
-  //     });
-  //   }
-  // };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -567,6 +547,8 @@ const CreateService = () => {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
+
+  const stripHtml = (html) => html.replace(/<[^>]*>/g, "").trim();
 
   const validateForm = () => {
     const newErrors = {};
@@ -583,11 +565,12 @@ const CreateService = () => {
     if (formData.mainCategory && !formData.category)
       newErrors.category = "Category required";
 
-    if (formData.warranty && !formData.warrantyPeriod) {
+    if (formData.warranty === true && !formData.warrantyPeriod) {
+      console.log(typeof formData.warranty, formData.warranty, "wwww");
       newErrors.warrantyPeriod =
         "Warranty period required if warranty is provided";
     }
-    if (formData.warranty && !formData.warrantyIncludes) {
+    if (formData.warranty === true && !formData.warrantyIncludes) {
       newErrors.warrantyIncludes =
         "Warranty inclusions required if warranty is provided";
     }
@@ -599,8 +582,11 @@ const CreateService = () => {
     if (!formData.servicePrice || parseInt(formData.servicePrice) <= 0)
       newErrors.servicePrice = "Valid service price is required";
 
-    if (!formData.scopeOfWork.trim())
+    // if (!formData.scopeOfWork.trim())
+    //   newErrors.scopeOfWork = "Scope of work is required";
+    if (!stripHtml(formData.scopeOfWork)) {
       newErrors.scopeOfWork = "Scope of work is required";
+    }
     if (serviceAreas.length === 0) {
       newErrors.serviceAreas = "At least one service area is required";
     }
@@ -653,9 +639,9 @@ const CreateService = () => {
 
       // Debug: Log all form data entries
 
-      for (let [key, value] of formDataToSend.entries()) {
-        console.log(key, value);
-      }
+      // for (let [key, value] of formDataToSend.entries()) {
+      //   console.log(key, value);
+      // }
 
       const response = await request.createService(formDataToSend, {
         headers: {
@@ -705,7 +691,6 @@ const CreateService = () => {
         navigate("/services?tab=pending");
       }
     } catch (error) {
-      console.error("Error creating service:", error);
       setMessage(
         "Error creating service: " +
           (error.response?.data?.message || error.message),
@@ -714,13 +699,32 @@ const CreateService = () => {
       setLoading(false);
     }
   };
+  // const handleDayToggle = (day) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     workingDays: prev.workingDays.includes(day)
+  //       ? prev.workingDays.filter((d) => d !== day)
+  //       : [...prev.workingDays, day],
+  //   }));
+  // };
   const handleDayToggle = (day) => {
-    setFormData((prev) => ({
-      ...prev,
-      workingDays: prev.workingDays.includes(day)
-        ? prev.workingDays.filter((d) => d !== day)
-        : [...prev.workingDays, day],
-    }));
+    setFormData((prev) => {
+      let updatedDays;
+
+      if (prev.workingDays.includes(day)) {
+        updatedDays = prev.workingDays.filter((d) => d !== day);
+      } else {
+        updatedDays = [...prev.workingDays, day];
+      }
+
+      //  SORT HERE
+      updatedDays.sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b));
+
+      return {
+        ...prev,
+        workingDays: updatedDays,
+      };
+    });
   };
 
   // Get icon for category type
@@ -1020,7 +1024,10 @@ const CreateService = () => {
           </label>
           <button
             onClick={() => {
-              setFormData((prev) => ({ ...prev, warranty: !prev.warranty }));
+              setFormData((prev) => ({
+                ...prev,
+                warranty: !Boolean(prev.warranty),
+              }));
             }}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:outline-none ${
               formData.warranty ? "bg-teal-600" : "bg-gray-300"
@@ -1047,7 +1054,7 @@ const CreateService = () => {
                   onChange={handleInputChange}
                   className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
                 />
-                {errors.warrantyPeriod && (
+                {formData.warranty && errors.warrantyPeriod && (
                   <p className="mt-1 text-xs text-red-500">
                     {errors.warrantyPeriod}
                   </p>
@@ -1073,7 +1080,7 @@ const CreateService = () => {
           )}
         </div>
         {/* scope of work */}
-        <div>
+        {/* <div>
           <label className="block text-sm font-medium text-gray-700">
             Scope of Work
           </label>
@@ -1084,6 +1091,40 @@ const CreateService = () => {
             rows={3}
             className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-teal-500 focus:ring-teal-500"
           />
+          {errors.scopeOfWork && (
+            <p className="text-xs text-red-500">{errors.scopeOfWork}</p>
+          )}
+        </div> */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Scope of Work
+          </label>
+
+          <div className="mt-1 rounded-md border">
+            <EditorProvider>
+              <Editor
+                value={formData.scopeOfWork}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    scopeOfWork: e.target.value,
+                  }))
+                }
+                containerProps={{
+                  style: { minHeight: "120px" },
+                }}
+              >
+                <Toolbar>
+                  <BtnBold />
+                  <BtnItalic />
+                  <BtnUnderline />
+                  <BtnBulletList />
+                  <BtnNumberedList />
+                </Toolbar>
+              </Editor>
+            </EditorProvider>
+          </div>
+
           {errors.scopeOfWork && (
             <p className="text-xs text-red-500">{errors.scopeOfWork}</p>
           )}
@@ -1133,15 +1174,7 @@ const CreateService = () => {
               Available Days
             </label>
             <div className="mt-2 flex flex-wrap gap-2">
-              {[
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-                "Sunday",
-              ].map((day) => (
+              {DAYS.map((day) => (
                 <button
                   key={day}
                   type="button"

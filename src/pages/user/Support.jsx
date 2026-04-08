@@ -22,6 +22,7 @@ import { setSidebarTab } from "../../redux/slices/sidebarSlice";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import UserLayout from "../../layouts/user/UserLayout";
+import { FaCopy } from "react-icons/fa";
 
 const Support = () => {
   const [tickets, setTickets] = useState([]);
@@ -437,6 +438,28 @@ const Support = () => {
                   className="rounded-2xl bg-[#0b8263] px-6 py-3 text-sm text-white hover:cursor-pointer"
                 >
                   + Create Ticket
+                </button>
+              </div>
+            </div>
+            {/* contact email */}
+            <div className="mt-4 flex items-center justify-end gap-3">
+              <div className="flex items-center gap-2 rounded-lg bg-slate-100 px-4 py-2">
+                <span className="text-sm text-slate-600">Contact Support:</span>
+                <a
+                  href="mailto:vendor@sooquick.com"
+                  className="text-sm font-medium text-[#0b8263] hover:underline"
+                >
+                  vendor@sooquick.com
+                </a>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText("support@example.com");
+                    // Optional: Add toast notification here
+                  }}
+                  className="ml-1 rounded p-1 text-slate-500 transition-colors hover:bg-slate-200 hover:text-[#0b8263]"
+                  title="Copy email address"
+                >
+                  <FaCopy className="h-4 w-4" />
                 </button>
               </div>
             </div>
