@@ -9,6 +9,7 @@ const appRoutes = {
   verifyEmail: "/verify/:token",
   services: "/services",
   serviceDetail: "/service/:id",
+  editService: "/service/edit/:serviceId",
   membership: "/membership",
   membershipInfo: "/membership-info",
   orderDashboard: "/orders",

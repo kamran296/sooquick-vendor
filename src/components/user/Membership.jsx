@@ -274,7 +274,8 @@ const VendorMembershipPurchase = () => {
     {
       id: "premium",
       name: "Premium",
-      description: "For established vendors with high demand",
+      description:
+        "Become a premium vendor and stay on top. Upgrade to SooQuick Premium Today!",
       icon: <FaStar className="h-6 w-6" />,
       color: "text-amber-600",
       borderColor: "border-amber-200",
@@ -498,14 +499,14 @@ const VendorMembershipPurchase = () => {
                 </div>
 
                 {/* Features List */}
-                <div className="space-y-3">
+                {/* <div className="space-y-3">
                   {plan.features.map((feature, index) => (
                     <div key={index} className="flex items-start">
                       <FaCheck className="mt-1 mr-2 h-4 w-4 flex-shrink-0 text-green-500" />
                       <span className="text-sm text-gray-700">{feature}</span>
                     </div>
                   ))}
-                </div>
+                </div> */}
               </CardContent>
 
               <CardFooter>

@@ -277,7 +277,7 @@ const CreateService = () => {
     service: false,
   });
   const [categoryPath, setCategoryPath] = useState([]);
-
+  const [priceRange, setPriceRange] = useState(null);
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(setSidebarTab(1));
@@ -518,6 +518,12 @@ const CreateService = () => {
       serviceName: selectedCategory?.name || "", // Auto-fill service name from category
     }));
 
+    // set price range
+    if (selectedCategory?.priceRange) {
+      setPriceRange(selectedCategory.priceRange);
+    } else {
+      setPriceRange(null);
+    }
     // Update category path
     setCategoryPath((prev) => {
       if (selectedCategory) {
@@ -581,7 +587,14 @@ const CreateService = () => {
     //   newErrors.serviceType = "Service type is required";
     if (!formData.servicePrice || parseInt(formData.servicePrice) <= 0)
       newErrors.servicePrice = "Valid service price is required";
+    // PRICE RANGE VALIDATION
+    if (priceRange && formData.servicePrice) {
+      const price = parseInt(formData.servicePrice);
 
+      if (price < priceRange.min || price > priceRange.max) {
+        newErrors.servicePrice = `Price must be between ₹${priceRange.min} and ₹${priceRange.max}`;
+      }
+    }
     // if (!formData.scopeOfWork.trim())
     //   newErrors.scopeOfWork = "Scope of work is required";
     if (!stripHtml(formData.scopeOfWork)) {
@@ -979,6 +992,7 @@ const CreateService = () => {
             <label className="block text-sm font-medium text-gray-700">
               Pricing Type
             </label>
+
             <select
               name="pricingType"
               value={formData.pricingType}
@@ -1003,10 +1017,17 @@ const CreateService = () => {
           <label className="block text-sm font-medium text-gray-700">
             Service Price (₹)
           </label>
+          {priceRange && (
+            <p className="mb-1 text-sm text-gray-500">
+              Allowed Price Range: ₹{priceRange.min} - ₹{priceRange.max}
+            </p>
+          )}
           <input
             type="text"
             // step="10"
             // min={0}
+            min={priceRange?.min || 0}
+            max={priceRange?.max || undefined}
             name="servicePrice"
             value={formData.servicePrice}
             onChange={handleInputChange}

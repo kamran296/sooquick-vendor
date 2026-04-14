@@ -26,6 +26,7 @@ const Dashboard = lazy(() => import("./pages/user/Dashboard"));
 const Setting = lazy(() => import("./pages/user/Setting"));
 const Services = lazy(() => import("./pages/user/Services"));
 const ServiceDetail = lazy(() => import("./pages/user/ServiceDetail"));
+const EditService = lazy(() => import("./pages/user/EditService"));
 const PurchaseMembership = lazy(
   () => import("./pages/user/PurchaseMembership"),
 );
@@ -62,6 +63,7 @@ function App() {
             <Route path={appRoutes.setting} element={<Setting />} />
             <Route path={appRoutes.services} element={<Services />} />
             <Route path={appRoutes.serviceDetail} element={<ServiceDetail />} />
+            <Route path={appRoutes.editService} element={<EditService />} />
 
             <Route
               path={appRoutes.membership}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import PincodeInput from "./Pincode";
 import request from "../../axios/requests";
@@ -24,8 +24,12 @@ import {
 } from "react-icons/fi";
 import { MdCategory, MdWarning, MdInfo, MdCheckCircle } from "react-icons/md";
 import { FaPlus, FaMinus, FaTrash, FaExclamationCircle } from "react-icons/fa";
+import { useNavigate, useParams } from "react-router-dom";
 
-const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
+const EditServiceForm = ({ onSuccess, onCancel }) => {
+  const { serviceId } = useParams();
+  const navigate = useNavigate();
+  const [initialFormData, setInitialFormData] = useState(null);
   const [formData, setFormData] = useState({
     serviceName: "",
     mainCategory: "",
@@ -44,7 +48,7 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
     warrantyPeriod: "",
     warrantyIncludes: "",
   });
-
+  const [service, setService] = useState(null);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [loading, setLoading] = useState(true);
@@ -52,6 +56,7 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [categoryPath, setCategoryPath] = useState([]);
+  const [priceRange, setPriceRange] = useState(null);
   const MAX_IMAGES = 4;
 
   // Service areas management
@@ -68,6 +73,29 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
   const [videoToRemove, setVideoToRemove] = useState(false);
   const [deletingImage, setDeletingImage] = useState(false);
   const [deletingVideo, setDeletingVideo] = useState(false);
+
+  useEffect(() => {
+    if (serviceId) {
+      // Fetch service details
+      const fetchServiceDetails = async (serviceId) => {
+        try {
+          setLoading(true);
+          const response = await request.getServiceDetails(serviceId);
+          const data = await response.data;
+
+          if (data) {
+            setService(data.service);
+          }
+        } catch (error) {
+          setError("Failed to fetch service details");
+          console.error("Error fetching service:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchServiceDetails(serviceId);
+    }
+  }, [serviceId]);
 
   // Categories state
   const [categories, setCategories] = useState({
@@ -151,8 +179,7 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
           [mainCat, subCat, groupCat, serviceCat].filter(Boolean),
         );
 
-        setFormData((prev) => ({
-          ...prev,
+        const updatedData = {
           serviceName: service.serviceName || serviceCat?.name || "",
           mainCategory: mainCat?._id || "",
           subCategory: subCat?._id || "",
@@ -169,7 +196,28 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
           warranty: service.warranty || false,
           warrantyPeriod: service.warrantyPeriod || "",
           warrantyIncludes: service.warrantyIncludes || "",
-        }));
+        };
+        // setFormData((prev) => ({
+        //   ...prev,
+        //   serviceName: service.serviceName || serviceCat?.name || "",
+        //   mainCategory: mainCat?._id || "",
+        //   subCategory: subCat?._id || "",
+        //   groupCategory: groupCat?._id || "",
+        //   category: serviceCat || "",
+        //   pricingType: service.pricingType || "Fixed",
+        //   servicePrice: service.servicePrice || "",
+        //   availability: service.availability || "",
+        //   serviceAreas: service.serviceAreas || [],
+        //   scopeOfWork: service.scopeOfWork || "",
+        //   workingStartTime: service.workingStartTime || "",
+        //   workingEndTime: service.workingEndTime || "",
+        //   workingDays: service.workingDays || [],
+        //   warranty: service.warranty || false,
+        //   warrantyPeriod: service.warrantyPeriod || "",
+        //   warrantyIncludes: service.warrantyIncludes || "",
+        // }));
+        setFormData(updatedData);
+        setInitialFormData(updatedData);
 
         if (mainCat) {
           await fetchSubCategories(mainCat._id);
@@ -198,7 +246,6 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
       initializeFormData();
     }
   }, [service]);
-  console.log(formData, "formdata");
 
   // Fetch functions
   const fetchMainCategories = async () => {
@@ -263,6 +310,16 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
         ...prev,
         service: res.data?.data || [],
       }));
+      // set price range based on selected category
+      const selectedCat = res.data?.data?.find(
+        (c) => c._id === formData.category,
+      );
+      if (selectedCat) {
+        setPriceRange({
+          min: selectedCat.priceRange.min || 0,
+          max: selectedCat.priceRange.max || 0,
+        });
+      }
     } catch (error) {
       console.error("Error fetching service categories:", error);
     } finally {
@@ -379,6 +436,19 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
     if (formData.workingStartTime && formData.workingEndTime) {
       if (formData.workingEndTime <= formData.workingStartTime) {
         newErrors.workingEndTime = "End time must be after start time";
+      }
+    }
+
+    // price if in the range or not
+    if (formData.servicePrice && selectedCategories.service?.priceRange) {
+      const price = parseFloat(formData.servicePrice);
+      const min = selectedCategories.service.priceRange.min || 0;
+      const max = selectedCategories.service.priceRange.max || 0;
+      if (price < min || price > max) {
+        newErrors.servicePrice = `Price must be between ₹${min} and ₹${max}`;
+      }
+      if (price <= 0) {
+        newErrors.servicePrice = "Price must be greater than 0";
       }
     }
 
@@ -591,16 +661,28 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
       serviceName: "",
     }));
   };
-  console.log(errors, "error");
+  // console.log(errors, "error");
 
   // Working days handler
+  // const handleWorkingDaysChange = (day) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     workingDays: prev.workingDays.includes(day)
+  //       ? prev.workingDays.filter((d) => d !== day)
+  //       : [...prev.workingDays, day],
+  //   }));
+  // };
   const handleWorkingDaysChange = (day) => {
-    setFormData((prev) => ({
-      ...prev,
-      workingDays: prev.workingDays.includes(day)
+    setFormData((prev) => {
+      const updated = prev.workingDays.includes(day)
         ? prev.workingDays.filter((d) => d !== day)
-        : [...prev.workingDays, day],
-    }));
+        : [...prev.workingDays, day];
+
+      return {
+        ...prev,
+        workingDays: workingDaysOptions.filter((d) => updated.includes(d)),
+      };
+    });
   };
 
   // Service Areas Management
@@ -728,7 +810,10 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
   // Form Submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    if (!isFormChanged) {
+      toast.info("No changes to update");
+      return;
+    }
     if (!validateForm()) {
       // Scroll to first error
       const firstError = document.querySelector(".error-border");
@@ -792,10 +877,10 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
 
       toast.success("Service updated successfully!");
       setSuccess("Service updated successfully!");
-
-      if (onSuccess) {
-        onSuccess(response.data.service);
-      }
+      setInitialFormData(formData);
+      // if (onSuccess) {
+      //   onSuccess(response.data.service);
+      // }
     } catch (err) {
       const errorMessage =
         err.response?.data?.message || "Failed to update service";
@@ -834,6 +919,48 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
     );
   };
 
+  const isFormChanged = useMemo(() => {
+    if (!initialFormData) return false;
+
+    const isFormDifferent =
+      JSON.stringify(formData) !== JSON.stringify(initialFormData);
+
+    const isImagesChanged =
+      newImages.length > 0 ||
+      imagesToRemove.length > 0 ||
+      existingImages.length !== service?.documents?.photos?.length;
+
+    const isVideoChanged =
+      newVideo !== null ||
+      videoToRemove ||
+      (existingVideo || null) !== (service?.documents?.video?.[0] || null);
+
+    const isAreasChanged =
+      newServiceAreas.length > 0 || areasToRemove.length > 0;
+    console.log(
+      newVideo,
+      videoToRemove,
+      existingVideo,
+      service?.documents?.video?.[0],
+      "isFormChanged",
+    );
+    return (
+      isFormDifferent || isImagesChanged || isVideoChanged || isAreasChanged
+    );
+  }, [
+    formData,
+    initialFormData,
+    newImages,
+    imagesToRemove,
+    existingImages,
+    newVideo,
+    videoToRemove,
+    existingVideo,
+    newServiceAreas,
+    areasToRemove,
+    service,
+  ]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -842,9 +969,19 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
       </div>
     );
   }
-
+  console.log("service", selectedCategories);
   return (
-    <div className="font-mont mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-md">
+    <div className="font-mont mx-auto rounded-lg bg-white p-6 shadow-md lg:max-w-5xl">
+      <div className="mb-6">
+        <div
+          onClick={() => navigate(-1)}
+          className="mb-2 cursor-pointer text-sm hover:underline"
+        >
+          ← Back to Services
+        </div>
+        <h1 className="text-2xl font-bold">Edit Service</h1>
+      </div>
+
       {/* Category Path Display */}
       {categoryPath.length > 0 && (
         <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -853,7 +990,7 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
             {categoryPath.map(
               (cat, index) =>
                 cat && (
-                  <React.Fragment key={cat._id}>
+                  <React.Fragment key={index}>
                     <span
                       className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${
                         cat.type === "main"
@@ -1035,7 +1172,7 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
             <ErrorMessage field="category" />
           </div>
           {/* Service Name */}
-          <div className="md:col-span-2">
+          {/* <div className="md:col-span-2">
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Service Name <span className="text-red-500">*</span>
             </label>
@@ -1053,7 +1190,7 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
               }`}
             />
             <ErrorMessage field="serviceName" />
-          </div>
+          </div> */}
           {/* Pricing Type */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -1077,13 +1214,29 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Service Price (₹) <span className="text-red-500">*</span>
             </label>
+            {selectedCategories.service?.priceRange && (
+              <p className="mb-1 text-xs text-gray-500">
+                Price must be between ₹
+                {selectedCategories.service?.priceRange?.min} and ₹
+                {selectedCategories.service?.priceRange?.max}
+              </p>
+            )}
             <input
               type="number"
               name="servicePrice"
               value={formData.servicePrice}
               onChange={handleInputChange}
               onBlur={() => handleBlur("servicePrice")}
-              min="0"
+              min={
+                selectedCategories.service?.priceRange
+                  ? selectedCategories.service?.priceRange?.min
+                  : 0
+              }
+              max={
+                selectedCategories.service?.priceRange
+                  ? selectedCategories.service?.priceRange?.max
+                  : undefined
+              }
               step="10"
               placeholder="Enter price"
               className={`w-full rounded-md border px-3 py-2 focus:border-[#0b8263] focus:ring-[#0b8263] ${
@@ -1584,15 +1737,17 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
           <div className="col-span-2 mt-8 flex justify-end space-x-3 border-t border-gray-200 pt-6">
             <button
               type="button"
-              onClick={onCancel}
+              // onClick={onCancel}
+              onClick={() => navigate(-1)}
               className="rounded-md border border-gray-300 px-6 py-2 text-gray-700 transition-colors hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={submitting || !formData.category}
-              className="flex items-center gap-2 rounded-md bg-[#0b8263] px-6 py-2 text-white transition-colors hover:bg-[#096d52] disabled:opacity-50"
+              // disabled={submitting || !formData.category}
+              disabled={submitting || !isFormChanged}
+              className={`flex items-center gap-2 ${isFormChanged ? "cursor-pointer" : "cursor-not-allowed"} " rounded-md bg-[#0b8263] px-6 py-2 text-white transition-colors hover:bg-[#096d52] disabled:opacity-50`}
             >
               {submitting ? (
                 <>
@@ -1600,7 +1755,7 @@ const EditServiceForm = ({ serviceId, onSuccess, onCancel, service }) => {
                   Updating...
                 </>
               ) : (
-                "Update Service"
+                <div>Update Service</div>
               )}
             </button>
           </div>

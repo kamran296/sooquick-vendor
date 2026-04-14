@@ -10,6 +10,7 @@ import { FiX } from "react-icons/fi";
 import { MdCategory } from "react-icons/md";
 import { useCategories } from "../../hooks/useCategories";
 import { useServiceImage } from "../../hooks/useServiceImage";
+import appRoutes from "../../appRoutes";
 
 const ServiceCard = ({ service, onDelete, deleting }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -321,7 +322,8 @@ const ServiceCard = ({ service, onDelete, deleting }) => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setShowEditModal(true);
+                    // setShowEditModal(true);
+                    navigate(`/service/edit/${service._id}`);
                   }}
                   className="rounded-lg bg-[#0b8263] px-6 py-2 text-white transition-colors hover:bg-teal-700"
                 >
@@ -377,7 +379,8 @@ const ServiceCard = ({ service, onDelete, deleting }) => {
                 Edit Service
               </h2>
               <button
-                onClick={() => setShowEditModal(false)}
+                // onClick={() => setShowEditModal(false)}
+                onClick={() => navigate(`/service/edit/${service._id}`)}
                 className="text-gray-500 hover:text-gray-700"
               >
                 <FiX />
