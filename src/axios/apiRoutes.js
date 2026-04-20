@@ -15,6 +15,7 @@ const API = {
     GET: "/vendor",
     UPDATE: "/vendor/update",
     PUECHASE_MEMBERSHIP: "/vendor/membership",
+    INITIATE_MEMBERSHIP_PURCHASE: "/vendor/initiate-membership-purchase",
     CANCEL_MEMBERSHIP: "/vendor/cancel-membership",
     GET_WALLET: "/vendor/wallet",
     REQUEST_CASHOUT: "/vendor/cashout",

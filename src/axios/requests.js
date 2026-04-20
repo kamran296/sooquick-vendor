@@ -69,7 +69,12 @@ const activateFreeMembership = async (payload) => {
     payload,
   );
 };
-
+const initiateMembershipPurchase = async (payload) => {
+  return await instances.privateRequest.post(
+    API.USER.INITIATE_MEMBERSHIP_PURCHASE,
+    payload,
+  );
+};
 const cancelMembership = async () => {
   return await instances.privateRequest.post(API.USER.CANCEL_MEMBERSHIP);
 };
@@ -263,6 +268,7 @@ const request = {
   cancelMembership,
   validateCoupon,
   activateFreeMembership,
+  initiateMembershipPurchase,
   verifyTwoFactor,
 
   getUnreadNotification,

@@ -707,7 +707,7 @@ const OrdersDashboard = () => {
                           {order.status === "additional_payment_pending" &&
                             order.additionalCosts && (
                               <span className="rounded-full bg-orange-50 px-2 py-1 text-xs text-orange-600">
-                                Payment: ${order.additionalCosts.total}
+                                Payment: ₹{order.additionalCosts.total}
                               </span>
                             )}
                         </div>

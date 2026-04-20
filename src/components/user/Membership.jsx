@@ -172,27 +172,81 @@ const VendorMembershipPurchase = () => {
     }
   };
 
+  // const initiatePaidPayment = async (amount) => {
+  //   await initiatePayment({
+  //     createOrderApi: () =>
+  //       request.createPaymentOrder({
+  //         purpose: "membership",
+  //         referenceId: planToPurchase.id,
+  //         amount: amount,
+  //       }),
+
+  //     verifyPaymentApi: (payload) =>
+  //       request.verifyRazorpayPayment({
+  //         ...payload,
+  //         purpose: "membership",
+  //         membershipType: planToPurchase.id,
+  //         planDuration: selectedDuration,
+  //         referenceId: planToPurchase.id,
+  //       }),
+
+  //     onSuccess: () => {
+  //       toast.success("Membership activated successfully!");
+  //       navigate("/membership-info");
+  //     },
+
+  //     onFailure: (error) => {
+  //       console.error("Payment failed:", error);
+  //       toast.error("Payment failed. Please try again.");
+  //     },
+
+  //     prefill: {
+  //       name: user?.firstName,
+  //       email: user?.email,
+  //       phone: user?.phone,
+  //     },
+  //   });
+  // };
+
   const initiatePaidPayment = async (amount) => {
     await initiatePayment({
-      createOrderApi: () =>
-        request.createPaymentOrder({
+      // STEP 1: Initiate in DB first, then create Razorpay order
+      createOrderApi: async () => {
+        // 1️⃣ DB-first — creates intent, validates coupon, locks amount
+        const initiateRes = await request.initiateMembershipPurchase({
+          membershipType: planToPurchase.id,
+          planDuration: selectedDuration,
+          // couponCode: appliedCoupon?.code || null, // if you add coupon UI here later
+        });
+
+        const { referenceId, amount: finalAmount } = initiateRes.data;
+
+        // 2️⃣ Create Razorpay order against that intent
+        const paymentOrderRes = await request.createPaymentOrder({
           purpose: "membership",
-          referenceId: planToPurchase.id,
-          amount: amount,
-        }),
+          referenceId, // entity._id
+          currency: "INR",
+        });
+
+        return { data: { order: paymentOrderRes.data.order } };
+      },
 
       verifyPaymentApi: (payload) =>
         request.verifyRazorpayPayment({
           ...payload,
           purpose: "membership",
-          membershipType: planToPurchase.id,
-          planDuration: selectedDuration,
-          referenceId: planToPurchase.id,
+          referenceId: planToPurchase.id, // entity._id — same as above
         }),
 
-      onSuccess: () => {
-        toast.success("Membership activated successfully!");
-        navigate("/membership-info");
+      onSuccess: (verifyData) => {
+        if (verifyData?.membershipStatus === "Active") {
+          toast.success("Membership activated!");
+          navigate("/membership-info");
+        } else {
+          // Webhook hasn't fired yet — navigate anyway, page can re-fetch
+          toast.info("Activating your membership...");
+          setTimeout(() => navigate("/membership-info"), 3000);
+        }
       },
 
       onFailure: (error) => {
@@ -449,7 +503,7 @@ const VendorMembershipPurchase = () => {
                 </CardDescription>
 
                 {/* Commission and Service Posts Highlights */}
-                <div className="mt-4 grid grid-cols-2 gap-2">
+                {/* <div className="mt-4 grid grid-cols-2 gap-2">
                   <div className="rounded-lg bg-blue-50 p-2 text-center">
                     <div className="text-sm text-blue-700">Commission</div>
                     <div className="font-bold text-blue-900">
@@ -462,7 +516,7 @@ const VendorMembershipPurchase = () => {
                       {plan.servicePosts}
                     </div>
                   </div>
-                </div>
+                </div> */}
               </CardHeader>
 
               <CardContent>
@@ -475,7 +529,7 @@ const VendorMembershipPurchase = () => {
                       return (
                         <button
                           key={duration}
-                          className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                          className={`w-full rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                             selectedPlan === plan.id &&
                             selectedDuration === duration
                               ? plan.id === "silver"
@@ -487,8 +541,8 @@ const VendorMembershipPurchase = () => {
                           }`}
                           onClick={() => handleSelectPlan(plan.id, duration)}
                         >
-                          <div>{duration}</div>
-                          <div className="font-bold">
+                          <div className="text-center">{duration}</div>
+                          <div className="text-center font-bold">
                             ₹{plan.pricing[duration]}
                           </div>
                         </button>
