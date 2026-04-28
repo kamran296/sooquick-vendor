@@ -647,7 +647,8 @@ const OrdersDashboard = () => {
                     <tr key={order._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          #{order._id?.slice(-8)}
+                          {/* #{order._id?.slice(-8)} */}
+                          {order.customOrderId || ""}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -896,7 +897,8 @@ const OrdersDashboard = () => {
                   <div className="mt-4 rounded-md bg-blue-50 p-3">
                     <p className="text-sm text-blue-800">
                       <strong>Order ID:</strong> #
-                      {selectedOrderForAdditional._id?.slice(-8)}
+                      {selectedOrderForAdditional.customOrderId ||
+                        selectedOrderForAdditional._id?.slice(-8)}
                     </p>
                     <p className="text-sm text-blue-800">
                       <strong>Service:</strong>{" "}
@@ -1014,60 +1016,6 @@ const OrdersDashboard = () => {
 
         {/* Cancel Modal */}
         {showCancelModal && (
-          // <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-          //   <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
-          //     <div className="mb-4 flex items-center justify-between">
-          //       <h3 className="text-lg font-semibold text-gray-900">
-          //         Cancel Order
-          //       </h3>
-          //       <button
-          //         onClick={closeCancelModal}
-          //         disabled={cancellingOrder}
-          //         className="text-gray-400 hover:text-gray-600"
-          //       >
-          //         <LuX className="h-5 w-5" />
-          //       </button>
-          //     </div>
-
-          //     <p className="mb-4 text-sm text-gray-600">
-          //       Please provide a reason for cancelling this order.
-          //     </p>
-
-          //     <textarea
-          //       value={cancelMessage}
-          //       onChange={(e) => setCancelMessage(e.target.value)}
-          //       rows="4"
-          //       placeholder="Enter cancellation reason..."
-          //       className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-red-500 focus:outline-none"
-          //     />
-
-          //     <div className="mt-6 flex justify-end space-x-3">
-          //       <button
-          //         onClick={closeCancelModal}
-          //         disabled={cancellingOrder}
-          //         className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          //       >
-          //         Close
-          //       </button>
-
-          //       <button
-          //         onClick={handleCancelOrder}
-          //         disabled={cancellingOrder || !cancelMessage.trim()}
-          //         className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-          //       >
-          //         {cancellingOrder ? (
-          //           <>
-          //             <div className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
-          //             Cancelling...
-          //           </>
-          //         ) : (
-          //           "Confirm Cancel"
-          //         )}
-          //       </button>
-          //     </div>
-          //   </div>
-          // </div>
-
           <div
             className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-gray-300/30 p-4"
             onClick={closeCancelModal}

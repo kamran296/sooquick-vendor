@@ -147,10 +147,10 @@ const deleteServiceImage = async (payload) => {
     data: payload,
   });
 };
-const toggleServiceStatus = async (serviceId) => {
+const toggleServiceStatus = async (serviceId, payload) => {
   return await instances.privateRequest.patch(
     API.SERVICES.TOGGLE_STATUS(serviceId),
-    null,
+    payload ? payload : { forceStatus: null },
   );
 };
 

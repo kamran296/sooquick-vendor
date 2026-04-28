@@ -1,0 +1,1 @@
+import{j as r}from"./index-DBJYkzoX.js";import{U as t}from"./UserLayout-VhXc0LjF.js";import{E as o}from"./EditServiceForm-DVtdfg-O.js";import"./index-BZ6x6EmK.js";import"./iconBase-Dk4s9vSI.js";import"./index-n6fTq0VU.js";import"./index-CXwOVJQ0.js";import"./index-Bq-nSSwc.js";const d=()=>r.jsx(t,{children:r.jsx(o,{})});export{d as default};

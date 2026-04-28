@@ -6,51 +6,181 @@ import { toast } from "react-toastify";
 import { setServices } from "../../redux/slices/serviceSlice";
 import request from "../../axios/requests";
 
+// const AllServices = ({ filter = "all" }) => {
+//   const { services } = useSelector((state) => state.service);
+//   const [selectedService, setSelectedService] = useState(null);
+//   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+//   const [isModalOpen, setIsModalOpen] = useState(false);
+//   const [deletingId, setDeletingId] = useState(null);
+
+//   const dispatch = useDispatch();
+//   useEffect(() => {
+//     dispatch(setSidebarTab(1));
+//   }, []);
+
+//   // Filter services based on the filter prop and your existing isApproved field
+//   const filteredServices = useMemo(() => {
+//     if (!services || services.length === 0) return [];
+
+//     switch (filter) {
+//       case "all":
+//         return services;
+//       case "requested":
+//         return services.filter((service) => service.isApproved === "requested");
+//       case "rejected":
+//         return services.filter((service) => service.isApproved === "rejected");
+//       case "active":
+//         // Assuming approved services are considered active
+//         return services.filter((service) => service.isApproved === "approved");
+//       default:
+//         return services;
+//     }
+//   }, [services, filter]);
+
+//   const handleDeleteService = async (serviceId) => {
+//     try {
+//       setDeletingId(serviceId);
+//       await request.deleteService(serviceId);
+
+//       // Refresh services after delete
+//       // dispatch(fetchServices());
+//       const service = await request.getAllServices();
+//       dispatch(setServices(service.data.services));
+//     } catch (error) {
+//       console.error("Failed to delete service", error);
+//       toast.error("Failed to delete service. Please try again.");
+//     } finally {
+//       setDeletingId(null);
+//     }
+//   };
+
+//   if (!services || services.length === 0) {
+//     return (
+//       <div className="p-6 text-center text-gray-500">
+//         No services found. Create your first service to get started.
+//       </div>
+//     );
+//   }
+
+//   if (filteredServices.length === 0) {
+//     return (
+//       <div className="p-6 text-center text-gray-500">
+//         No {filter !== "all" ? filter : ""} services found.
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="p-6">
+//       <h2 className="mb-6 text-2xl font-bold text-gray-800">
+//         {filter === "all"
+//           ? "Your Services"
+//           : filter === "requested"
+//             ? "Pending Approvals"
+//             : filter === "rejected"
+//               ? "Rejected Services"
+//               : `${filter.charAt(0).toUpperCase() + filter.slice(1)} Services`}
+//       </h2>
+
+//       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+//         {filteredServices.map((service) => (
+//           <ServiceCard
+//             key={service._id || service.id}
+//             service={service}
+//             onDelete={handleDeleteService}
+//             deleting={deletingId === service._id}
+//           />
+//         ))}
+//       </div>
+
+//       {/* Service Modal */}
+//       {isModalOpen && selectedService && (
+//         <ServiceModal
+//           service={selectedService}
+//           selectedImageIndex={selectedImageIndex}
+//           onImageSelect={setSelectedImageIndex}
+//           onClose={() => {
+//             setIsModalOpen(false);
+//             setSelectedService(null);
+//             setSelectedImageIndex(0);
+//           }}
+//         />
+//       )}
+//     </div>
+//   );
+// };
+
+// Your existing ServiceModal component remains the same...
+
 const AllServices = ({ filter = "all" }) => {
   const { services } = useSelector((state) => state.service);
   const [selectedService, setSelectedService] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [bulkToggling, setBulkToggling] = useState(false); // ✅ NEW
 
   const dispatch = useDispatch();
+
   useEffect(() => {
     dispatch(setSidebarTab(1));
   }, []);
 
-  // Filter services based on the filter prop and your existing isApproved field
   const filteredServices = useMemo(() => {
     if (!services || services.length === 0) return [];
-
     switch (filter) {
       case "all":
         return services;
       case "requested":
-        return services.filter((service) => service.isApproved === "requested");
+        return services.filter((s) => s.isApproved === "requested");
       case "rejected":
-        return services.filter((service) => service.isApproved === "rejected");
+        return services.filter((s) => s.isApproved === "rejected");
       case "active":
-        // Assuming approved services are considered active
-        return services.filter((service) => service.isApproved === "approved");
+        return services.filter((s) => s.isApproved === "approved");
       default:
         return services;
     }
   }, [services, filter]);
 
+  // ✅ Derived — are ALL approved services currently active?
+  const allActive =
+    filteredServices.length > 0 && filteredServices.every((s) => s.isActive);
+  const allInactive = filteredServices.every((s) => !s.isActive);
+
+  const refreshServices = async () => {
+    const res = await request.getAllServices();
+    dispatch(setServices(res.data.services));
+  };
+
   const handleDeleteService = async (serviceId) => {
     try {
       setDeletingId(serviceId);
       await request.deleteService(serviceId);
-
-      // Refresh services after delete
-      // dispatch(fetchServices());
-      const service = await request.getAllServices();
-      dispatch(setServices(service.data.services));
+      await refreshServices();
     } catch (error) {
       console.error("Failed to delete service", error);
       toast.error("Failed to delete service. Please try again.");
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  // ✅ NEW — bulk toggle handler
+  const handleBulkToggle = async (forceStatus) => {
+    setBulkToggling(true);
+    try {
+      await request.toggleServiceStatus("all", { forceStatus });
+      await refreshServices();
+      toast.success(
+        forceStatus
+          ? "All services set to active"
+          : "All services set to inactive",
+      );
+    } catch (err) {
+      console.error("Bulk toggle failed", err);
+      toast.error("Failed to update services. Please try again.");
+    } finally {
+      setBulkToggling(false);
     }
   };
 
@@ -72,15 +202,47 @@ const AllServices = ({ filter = "all" }) => {
 
   return (
     <div className="p-6">
-      <h2 className="mb-6 text-2xl font-bold text-gray-800">
-        {filter === "all"
-          ? "Your Services"
-          : filter === "requested"
-            ? "Pending Approvals"
-            : filter === "rejected"
-              ? "Rejected Services"
-              : `${filter.charAt(0).toUpperCase() + filter.slice(1)} Services`}
-      </h2>
+      {/* Header */}
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-800">
+          {filter === "all"
+            ? "Your Services"
+            : filter === "requested"
+              ? "Pending Approvals"
+              : filter === "rejected"
+                ? "Rejected Services"
+                : `${filter.charAt(0).toUpperCase() + filter.slice(1)} Services`}
+        </h2>
+
+        {/* ✅ Bulk toggle — only shown for approved/active tab */}
+        {filteredServices.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">
+              {allActive
+                ? "All active"
+                : allInactive
+                  ? "All inactive"
+                  : "Mixed status"}
+            </span>
+            <button
+              onClick={() => handleBulkToggle(!allActive)}
+              disabled={bulkToggling}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:outline-none ${allActive ? "bg-teal-600" : "bg-gray-300"} ${bulkToggling ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+            >
+              {bulkToggling ? (
+                // Spinner inside toggle while loading
+                <span className="absolute inset-0 flex items-center justify-center">
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                </span>
+              ) : (
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${allActive ? "translate-x-6" : "translate-x-1"}`}
+                />
+              )}
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredServices.map((service) => (
@@ -93,7 +255,6 @@ const AllServices = ({ filter = "all" }) => {
         ))}
       </div>
 
-      {/* Service Modal */}
       {isModalOpen && selectedService && (
         <ServiceModal
           service={selectedService}
@@ -110,7 +271,6 @@ const AllServices = ({ filter = "all" }) => {
   );
 };
 
-// Your existing ServiceModal component remains the same...
 const ServiceModal = ({
   service,
   selectedImageIndex,
